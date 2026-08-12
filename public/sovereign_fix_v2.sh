@@ -5,10 +5,12 @@ INSTALL_DIR="/root/lovablack_final"
 
 echo "💣 [LOVABLACK] EXTERMINADOR DE CONFLITOS E INSTALAÇÃO FINAL V2..."
 
-# 1. PARADA TOTAL
+# 1. PARADA SELETIVA (Preserva outros processos do PM2)
 sudo systemctl stop nginx
-sudo killall -9 node 2>/dev/null
-sudo killall -9 pm2 2>/dev/null
+sudo pm2 stop lovablack 2>/dev/null
+# O killall node ainda é necessário se o build travar, mas o PM2 deve gerenciar o resto.
+# Removido: sudo killall -9 pm2
+
 
 # 2. LIMPEZA RADICAL DO NGINX
 echo "🧹 Faxina pesada no Nginx..."
