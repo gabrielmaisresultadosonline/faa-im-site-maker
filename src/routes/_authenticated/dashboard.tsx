@@ -1,14 +1,15 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getSubscriptionStatus, getProfile, getAppSettings } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Download, PlayCircle, Clock, AlertTriangle, CreditCard, Check } from 'lucide-react';
+import { Download, PlayCircle, Clock, AlertTriangle, CreditCard, Check, Gift, KeyRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useEffect, useState } from 'react';
 import { getStoredLanguage } from "@/lib/language";
 import { createPaymentLink } from '@/lib/payments.functions';
+import { startTrial } from '@/lib/trial.functions';
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/_authenticated/dashboard')({
@@ -18,6 +19,7 @@ export const Route = createFileRoute('/_authenticated/dashboard')({
 function Dashboard() {
   const [timeLeft, setTimeLeft] = useState<string>('');
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -47,6 +49,24 @@ function Dashboard() {
   const { data: settings } = useQuery({
     queryKey: ['app-settings'],
     queryFn: getAppSettings
+  });
+
+  // Ativa o teste de 20 minutos (uma unica vez por conta) e revela as credenciais.
+  const trialMutation = useMutation({
+    mutationFn: () => startTrial({ data: undefined }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
+      toast.success(isEn ? 'Trial activated! You have 20 minutes.' : 'Teste ativado! Você tem 20 minutos.');
+    },
+    onError: (error: any) => {
+      const alreadyUsed = String(error?.message ?? '').includes('TRIAL_ALREADY_USED');
+      toast.error(
+        alreadyUsed
+          ? (isEn ? 'This account already used the free test.' : 'Esta conta já usou o teste gratuito.')
+          : (isEn ? 'Could not activate the test. Try again.' : 'Não foi possível ativar o teste. Tente novamente.')
+      );
+    }
   });
 
   const paymentMutation = useMutation({
@@ -152,7 +172,7 @@ function Dashboard() {
             </p>
             <Button
               className="h-14 px-8 text-lg font-bold bg-[#DC0D0D] hover:bg-[#1A1B1A] transition-colors gap-2"
-              onClick={() => trialMutation.mutate({})}
+              onClick={() => trialMutation.mutate()}
               disabled={trialMutation.isPending}
             >
               <Clock className="w-5 h-5" />
