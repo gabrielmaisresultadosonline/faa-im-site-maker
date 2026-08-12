@@ -17,6 +17,7 @@ import { Route as ThanksRouteImport } from './routes/thanks'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as ApiPublicWebhookInfinitepayRouteImport } from './routes/api/public/webhook-infinitepay'
+import { Route as ApiPublicWebhookStripeRouteImport } from './routes/api/public/webhook-stripe'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -58,6 +59,11 @@ const ApiPublicWebhookInfinitepayRoute =
     path: '/api/public/webhook-infinitepay',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWebhookStripeRoute = ApiPublicWebhookStripeRouteImport.update({
+  id: '/api/public/webhook-stripe',
+  path: '/api/public/webhook-stripe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/api/public/webhook-infinitepay': typeof ApiPublicWebhookInfinitepayRoute
+  '/api/public/webhook-stripe': typeof ApiPublicWebhookStripeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/api/public/webhook-infinitepay': typeof ApiPublicWebhookInfinitepayRoute
+  '/api/public/webhook-stripe': typeof ApiPublicWebhookStripeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/api/public/webhook-infinitepay': typeof ApiPublicWebhookInfinitepayRoute
+  '/api/public/webhook-stripe': typeof ApiPublicWebhookStripeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/admin/dashboard'
     | '/api/public/webhook-infinitepay'
+    | '/api/public/webhook-stripe'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/admin/dashboard'
     | '/api/public/webhook-infinitepay'
+    | '/api/public/webhook-stripe'
   id:
     | '__root__'
     | '/'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/admin/dashboard'
     | '/api/public/webhook-infinitepay'
+    | '/api/public/webhook-stripe'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -126,6 +138,7 @@ export interface RootRouteChildren {
   InglesRoute: typeof InglesRoute
   ThanksRoute: typeof ThanksRoute
   ApiPublicWebhookInfinitepayRoute: typeof ApiPublicWebhookInfinitepayRoute
+  ApiPublicWebhookStripeRoute: typeof ApiPublicWebhookStripeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -186,6 +199,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhookInfinitepayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/webhook-stripe': {
+      id: '/api/public/webhook-stripe'
+      path: '/api/public/webhook-stripe'
+      fullPath: '/api/public/webhook-stripe'
+      preLoaderRoute: typeof ApiPublicWebhookStripeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -219,6 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   InglesRoute: InglesRoute,
   ThanksRoute: ThanksRoute,
   ApiPublicWebhookInfinitepayRoute: ApiPublicWebhookInfinitepayRoute,
+  ApiPublicWebhookStripeRoute: ApiPublicWebhookStripeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

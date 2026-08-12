@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useNavigate } from '@tanstack/react-router';
+import { setStoredLanguage } from '@/lib/language';
 
 interface AuthModalProps {
   initialMode?: 'login' | 'signup';
@@ -27,7 +28,13 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
   const [fullName, setFullName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const navigate = useNavigate();
-  
+
+  // Guarda o idioma da pagina de origem para o dashboard ja abrir no idioma certo
+  // (e o pagamento sair na moeda certa) mesmo antes do perfil carregar.
+  useEffect(() => {
+    setStoredLanguage(lang);
+  }, [lang]);
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
