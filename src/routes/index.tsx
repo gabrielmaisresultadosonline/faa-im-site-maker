@@ -336,7 +336,7 @@ function Index() {
         <div className="mt-20 pt-8 border-t border-neutral-100 flex flex-col md:flex-row justify-between items-center gap-6 text-neutral-400 text-sm">
            <p>© 2026 LOVABLACK. Todos os direitos reservados.</p>
             <div className="flex gap-8">
-               <Link to="/admin" className="hover:text-neutral-900 transition-colors">Admin</Link>
+               <Link to="/admin" className="font-bold text-[#DC0D0D] hover:underline transition-colors">Painel Admin</Link>
                <a href="#" className="hover:text-neutral-900 transition-colors">Termos de Uso</a>
                <a href="#" className="hover:text-neutral-900 transition-colors">Privacidade</a>
             </div>
