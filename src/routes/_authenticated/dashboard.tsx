@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Download, PlayCircle, Clock, AlertTriangle, CreditCard, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useEffect, useState } from 'react';
+import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
 import { createPaymentLink } from '@/lib/payments.functions';
 import { toast } from 'sonner';
 
@@ -121,6 +122,7 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#F7F1EB] p-4 md:p-8 pb-20">
+      <LanguageSelectorModal />
       <div className="max-w-6xl mx-auto space-y-8">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
