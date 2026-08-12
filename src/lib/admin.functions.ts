@@ -119,10 +119,14 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const patch: Record<string, unknown> = {};
-    if (data.blocked !== undefined) patch['blocked'] = data.blocked;
-    if (data.customMessage !== undefined) patch['custom_message'] = data.customMessage;
-    if (data.resetSession) patch['session_id'] = null;
+    const patch: {
+      blocked?: boolean;
+      custom_message?: string | null;
+      session_id?: string | null;
+    } = {};
+    if (data.blocked !== undefined) patch.blocked = data.blocked;
+    if (data.customMessage !== undefined) patch.custom_message = data.customMessage;
+    if (data.resetSession) patch.session_id = null;
 
     if (Object.keys(patch).length === 0) return { ok: true };
 
