@@ -1,32 +1,76 @@
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { isAdmin } from '@/lib/auth';
+import { AuthModal } from '@/components/auth/AuthModal';
+import { Button } from '@/components/ui/button';
+
+interface AdminRouteContext {
+  isAuthenticated: boolean;
+  userIsAdmin: boolean;
+}
 
 export const Route = createFileRoute('/admin')({
-  beforeLoad: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    // Debug log para ajudar a identificar o problema no console do usuário
-    console.log('[Admin Guard] Session check:', { 
-      email: session?.user?.email, 
-      id: session?.user?.id 
-    });
+  ssr: false,
+  beforeLoad: async ({ location }) => {
+    const { data, error } = await supabase.auth.getUser();
+    const user = data.user;
 
-    if (!session) {
-      console.warn('[Admin Guard] No session found, redirecting to /');
-      throw redirect({ to: '/' });
+    if (error || !user) {
+      if (location.pathname !== '/admin' && location.pathname !== '/admin/') {
+        throw redirect({ to: '/admin' });
+      }
+      return { isAuthenticated: false, userIsAdmin: false } satisfies AdminRouteContext;
     }
-    
-    // Explicitly check for admin email or role
-    // O email 'mro@Gmail.com' é o admin mestre
-    const isMasterAdmin = session.user.email?.toLowerCase() === 'mro@gmail.com';
-    const isUserAdmin = await isAdmin(session.user.id);
 
-    console.log('[Admin Guard] Permission check:', { isMasterAdmin, isUserAdmin });
-
-    if (!isMasterAdmin && !isUserAdmin) {
-      console.warn('[Admin Guard] User is not admin, redirecting to /dashboard');
-      throw redirect({ to: '/dashboard' });
+    const userIsAdmin = await isAdmin(user.id);
+    if (!userIsAdmin) {
+      if (location.pathname !== '/admin' && location.pathname !== '/admin/') {
+        throw redirect({ to: '/admin' });
+      }
+      return { isAuthenticated: true, userIsAdmin: false } satisfies AdminRouteContext;
     }
+
+    if (location.pathname === '/admin' || location.pathname === '/admin/') {
+      throw redirect({ to: '/admin/dashboard' });
+    }
+
+    return { isAuthenticated: true, userIsAdmin: true } satisfies AdminRouteContext;
   },
+  component: AdminLayout,
 });
+
+function AdminLayout() {
+  const { isAuthenticated, userIsAdmin } = Route.useRouteContext();
+
+  if (!isAuthenticated) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+        <AuthModal initialMode="login" lang="pt" />
+      </main>
+    );
+  }
+
+  if (!userIsAdmin) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <section className="w-full max-w-md rounded-md border border-border bg-card p-6 text-center shadow-sm">
+          <h1 className="text-2xl font-bold text-foreground">Acesso administrativo necessário</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Sua conta está conectada, mas ainda não possui a função de administrador.
+          </p>
+          <Button
+            className="mt-6 w-full"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              window.location.assign('/admin');
+            }}
+          >
+            Entrar com outra conta
+          </Button>
+        </section>
+      </main>
+    );
+  }
+
+  return <Outlet />;
+}
