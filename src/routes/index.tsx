@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
 import logoHeart from "@/assets/logo-heart.png.asset.json";
 import logoFull from "@/assets/logo-full.png.asset.json";
 
@@ -84,6 +85,7 @@ function Index() {
 
   return (
     <div className="min-h-screen font-sans selection:bg-primary/20" style={{ backgroundColor: "#F7F1EB" }}>
+      <LanguageSelectorModal />
       {/* Hero Section */}
       <header className="container mx-auto px-4 pt-20 pb-16 text-center">
         <div className="flex justify-between items-center mb-8">
@@ -91,7 +93,7 @@ function Index() {
             <img src={logoFull.url} alt="LOVABLACK Logo" className="h-20 md:h-24 object-contain cursor-pointer hover:scale-105 transition-transform" />
           </Link>
           <Link to="/ingles" className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#D8D0C8] hover:bg-[#F7F1EB] transition-all text-sm font-bold text-[#1A1B1A]">
-            <Globe className="w-4 h-4" /> English
+            <Globe className="w-4 h-4" /> 🇺🇸 English
           </Link>
         </div>
         <h1 className="text-4xl md:text-7xl font-black text-[#1A1B1A] mb-6 tracking-tight leading-[1.1]">
@@ -284,7 +286,7 @@ function Index() {
             ))}
           </div>
           <div className="mt-12 text-center flex items-center justify-center gap-6 text-neutral-400 text-sm">
-             <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> Pagamento Seguro via PIX</span>
+             <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> Pagamento Seguro via InfinitePay</span>
              <span className="flex items-center gap-2 font-bold text-neutral-500 italic">⚡ Últimas vagas com este preço</span>
           </div>
         </div>
