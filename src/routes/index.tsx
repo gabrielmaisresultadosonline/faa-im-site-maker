@@ -48,7 +48,7 @@ function Index() {
       features: ["Acesso total", "Ativação instantânea", "Sem compromisso"],
       button: "COMEÇAR AGORA",
       popular: false,
-      cents: 0,
+      key: null,
       days: 0
     },
     { 
@@ -58,7 +58,7 @@ function Index() {
       features: ["Prompts ilimitados", "Todos os navegadores", "Hospedagem inclusa", "Suporte WhatsApp"],
       button: "ASSINAR AGORA",
       popular: false,
-      cents: 4700,
+      key: "monthly",
       days: 30
     },
     { 
@@ -68,7 +68,7 @@ function Index() {
       features: ["Melhor custo-benefício", "Prompts ilimitados", "Hospedagem inclusa", "Suporte Prioritário"],
       button: "GARANTIR AGORA",
       popular: true,
-      cents: 14700,
+      key: "semiannual",
       days: 180
     },
     { 
@@ -78,7 +78,7 @@ function Index() {
       features: ["Acesso total", "Todas atualizações", "Hospedagem inclusa", "Suporte VIP"],
       button: "ASSINAR ANUAL",
       popular: false,
-      cents: 39700,
+      key: "annual",
       days: 365
     }
   ];
@@ -271,9 +271,7 @@ function Index() {
                         initialMode="signup" 
                         isTrial={plan.name === "Teste Grátis"} 
                         onSuccessRedirect={plan.name === "Teste Grátis" ? undefined : {
-                          planName: plan.name,
-                          priceCents: plan.cents,
-                          planDurationDays: plan.days
+                          key: plan.key
                         }}
                       />
                     </DialogContent>
