@@ -52,32 +52,32 @@ function Index() {
     },
     { 
       name: "Monthly", 
-      price: "$ 9", 
+      price: "$ 47", 
       period: "per month", 
       features: ["Unlimited prompts", "All browsers", "Hosting included", "WhatsApp support"],
       button: "SUBSCRIBE NOW",
       popular: false,
-      cents: 900,
+      cents: 4700,
       days: 30
     },
     { 
       name: "6 Months", 
-      price: "$ 27", 
+      price: "$ 147", 
       period: "6 months", 
       features: ["Best value for money", "Unlimited prompts", "Hosting included", "Priority Support"],
       button: "SECURE NOW",
       popular: true,
-      cents: 2700,
+      cents: 14700,
       days: 180
     },
     { 
       name: "Annual", 
-      price: "$ 77", 
+      price: "$ 397", 
       period: "365 days", 
       features: ["Full access", "All updates", "Hosting included", "VIP Support"],
       button: "SUBSCRIBE ANNUAL",
       popular: false,
-      cents: 7700,
+      cents: 39700,
       days: 365
     }
   ];
