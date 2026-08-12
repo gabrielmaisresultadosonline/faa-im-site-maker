@@ -91,6 +91,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          access_password: string | null
           created_at: string | null
           full_name: string | null
           id: string
@@ -98,6 +99,7 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          access_password?: string | null
           created_at?: string | null
           full_name?: string | null
           id: string
@@ -105,6 +107,7 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          access_password?: string | null
           created_at?: string | null
           full_name?: string | null
           id?: string
