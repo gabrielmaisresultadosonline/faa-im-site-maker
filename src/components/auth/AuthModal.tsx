@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useNavigate } from '@tanstack/react-router';
+import { setStoredLanguage } from '@/lib/language';
 
 interface AuthModalProps {
   initialMode?: 'login' | 'signup';
