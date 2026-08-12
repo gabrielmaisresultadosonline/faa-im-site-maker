@@ -190,7 +190,7 @@ function AdminDashboard() {
                       <div className="font-bold">{tx.profiles?.full_name || 'Usuário'}</div>
                       <div className="text-xs text-neutral-400">{tx.profiles?.whatsapp}</div>
                     </TableCell>
-                    <TableCell>{tx.profiles?.language === 'en' ? '🇺🇸 EN' : '🇧🇷 PT'}</TableCell>
+                    <TableCell><LangTag lang={tx.profiles?.language} /></TableCell>
                     <TableCell>
                       <Badge className={tx.provider === 'stripe' ? 'bg-indigo-100 text-indigo-800' : 'bg-neutral-100 text-neutral-800'}>
                         {tx.provider === 'stripe' ? 'Stripe' : 'InfinitePay'}
