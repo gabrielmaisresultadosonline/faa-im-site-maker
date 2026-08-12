@@ -181,7 +181,11 @@ function AdminDashboard() {
                 <TabsTrigger value="config">Configurações</TabsTrigger>
                 <TabsTrigger value="docs">Documentação</TabsTrigger>
               </TabsList>
+            </Tabs>
+          </main>
+        </div>
 
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           {/* ============ USUÁRIOS ============ */}
           <TabsContent value="usuarios" className="space-y-6">
             <Card className="bg-white border-neutral-200">
