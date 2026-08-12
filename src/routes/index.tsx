@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
-import logoHeart from "@/assets/logo-heart.png.asset.json";
-import logoFull from "@/assets/logo-full.png.asset.json";
+// Logos servidas como arquivos estaticos em /public para funcionar em qualquer host (Lovable e VPS).
+const logoHeart = { url: "/logo-heart.png" };
+const logoFull = { url: "/logo-full.png" };
 
 export const Route = createFileRoute("/")({
   component: Index,
