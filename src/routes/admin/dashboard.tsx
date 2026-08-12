@@ -493,9 +493,8 @@ function AdminDashboard() {
             <ApiDocs />
           </TabsContent>
         </Tabs>
-      </main>
+      </div>
     </div>
-  </div>
   );
 }
 
