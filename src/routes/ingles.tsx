@@ -47,7 +47,7 @@ function Index() {
       features: ["Full access", "Instant activation", "No commitment"],
       button: "START NOW",
       popular: false,
-      cents: 0,
+      key: null,
       days: 0
     },
     { 
@@ -57,7 +57,7 @@ function Index() {
       features: ["Unlimited prompts", "All browsers", "Hosting included", "WhatsApp support"],
       button: "SUBSCRIBE NOW",
       popular: false,
-      cents: 4700,
+      key: "monthly",
       days: 30
     },
     { 
@@ -67,7 +67,7 @@ function Index() {
       features: ["Best value for money", "Unlimited prompts", "Hosting included", "Priority Support"],
       button: "SECURE NOW",
       popular: true,
-      cents: 14700,
+      key: "semiannual",
       days: 180
     },
     { 
@@ -77,7 +77,7 @@ function Index() {
       features: ["Full access", "All updates", "Hosting included", "VIP Support"],
       button: "SUBSCRIBE ANNUAL",
       popular: false,
-      cents: 39700,
+      key: "annual",
       days: 365
     }
   ];
@@ -270,9 +270,7 @@ function Index() {
                         isTrial={plan.name === "Free Trial"} 
                         lang="en"
                         onSuccessRedirect={plan.name === "Free Trial" ? undefined : {
-                          planName: plan.name,
-                          priceCents: plan.cents,
-                          planDurationDays: plan.days
+                          key: plan.key
                         }}
                       />
                     </DialogContent>
