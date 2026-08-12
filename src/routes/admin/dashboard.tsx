@@ -279,3 +279,24 @@ function StatCard({ icon: Icon, label, value, color = "text-[#1A1B1A]" }: any) {
     </Card>
   );
 }
+
+interface LangTagProps {
+  lang?: string | null;
+  withCurrency?: boolean;
+}
+
+function LangTag({ lang, withCurrency = false }: LangTagProps) {
+  const isEn = lang === 'en';
+  return (
+    <Badge
+      className={
+        isEn
+          ? 'bg-blue-100 text-blue-800 border border-blue-200 font-bold'
+          : 'bg-green-100 text-green-800 border border-green-200 font-bold'
+      }
+    >
+      {isEn ? '🇺🇸 EN' : '🇧🇷 PT'}
+      {withCurrency ? (isEn ? ' · US$' : ' · R$') : ''}
+    </Badge>
+  );
+}
