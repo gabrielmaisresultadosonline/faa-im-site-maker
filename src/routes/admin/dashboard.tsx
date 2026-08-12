@@ -456,7 +456,7 @@ interface CreateUserPayload {
   email: string;
   password: string;
   fullName: string;
-  whatsapp?: string;
+  whatsapp?: string | undefined;
   language: 'pt' | 'en';
   plan: PlanType;
 }
