@@ -33,6 +33,7 @@ const PLAN_LABELS: Record<PlanType, string> = {
 
 function AdminDashboard() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('usuarios');
 
   const listUsers = useServerFn(adminListUsers);
   const createUser = useServerFn(adminCreateUser);
@@ -133,13 +134,53 @@ function AdminDashboard() {
           <StatCard icon={Clock} label="Testes (Trials)" value={stats?.trials || 0} color="text-blue-600" />
         </div>
 
-        <Tabs defaultValue="usuarios" className="space-y-6">
-          <TabsList className="bg-white border border-neutral-200 p-1 rounded-xl flex-wrap h-auto">
-            <TabsTrigger value="usuarios" className="gap-2"><Users className="w-4 h-4" /> Usuários</TabsTrigger>
-            <TabsTrigger value="vendas" className="gap-2"><CreditCard className="w-4 h-4" /> Vendas</TabsTrigger>
-            <TabsTrigger value="config" className="gap-2"><Settings className="w-4 h-4" /> Configurações</TabsTrigger>
-            <TabsTrigger value="docs" className="gap-2"><BookOpen className="w-4 h-4" /> Documentação</TabsTrigger>
-          </TabsList>
+        <div className="flex flex-col md:flex-row gap-8">
+          <aside className="w-full md:w-64 space-y-2">
+            <nav className="flex flex-col space-y-1">
+              {[
+                { id: 'usuarios', label: 'Usuários', icon: Users },
+                { id: 'vendas', label: 'Vendas', icon: CreditCard },
+                { id: 'config', label: 'Configurações', icon: Settings },
+                { id: 'docs', label: 'Documentação', icon: BookOpen },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${
+                    activeTab === item.id 
+                      ? 'bg-[#1A1B1A] text-white shadow-lg' 
+                      : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+
+            <div className="pt-8 border-t border-neutral-200 mt-8">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start gap-3 rounded-xl border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700"
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.assign('/');
+                }}
+              >
+                <Ban className="w-5 h-5" />
+                Sair do Painel
+              </Button>
+            </div>
+          </aside>
+
+          <main className="flex-1 min-w-0">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="hidden">
+                <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+                <TabsTrigger value="vendas">Vendas</TabsTrigger>
+                <TabsTrigger value="config">Configurações</TabsTrigger>
+                <TabsTrigger value="docs">Documentação</TabsTrigger>
+              </TabsList>
 
           {/* ============ USUÁRIOS ============ */}
           <TabsContent value="usuarios" className="space-y-6">
@@ -328,7 +369,9 @@ function AdminDashboard() {
                 </Table>
               </CardContent>
             </Card>
-          </TabsContent>
+            </Tabs>
+          </main>
+        </div>
 
           {/* ============ CONFIGURAÇÕES ============ */}
           <TabsContent value="config" className="space-y-6">
