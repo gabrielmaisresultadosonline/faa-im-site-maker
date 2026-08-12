@@ -1,14 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { getPlan, PLAN_KEYS, type PlanKey } from "@/lib/plan-catalog";
 
 const PaymentInput = z.object({
-  planName: z.string().min(1),
-  priceCents: z.number().int().positive(),
-  planDurationDays: z.number().int().positive(),
-  customerName: z.string().min(1),
+  // Somente a CHAVE do plano vem do cliente. Preco/duracao sao derivados no servidor.
+  planKey: z.enum(PLAN_KEYS as [PlanKey, ...PlanKey[]]),
+  customerName: z.string().min(1).max(200),
   customerEmail: z.string().email(),
-  customerPhone: z.string().optional(),
+  customerPhone: z.string().max(40).optional(),
   redirectUrl: z.string().url(),
   webhookUrl: z.string().url(),
   currency: z.enum(["BRL", "USD"]).default("BRL"),
@@ -18,8 +18,8 @@ const PaymentInput = z.object({
  * Gera o link de pagamento conforme o idioma/moeda:
  * - USD (pagina /ingles)  -> Stripe Checkout
  * - BRL (homepage em PT)  -> InfinitePay
- * Toda transacao e registrada em `infinitepay_transactions` com provider/currency,
- * para que o painel /admin liste as vendas dos dois canais.
+ * Preco e duracao SEMPRE vem do catalogo server-side (src/lib/plan-catalog.ts),
+ * impedindo adulteracao do valor cobrado ou do tempo de assinatura.
  */
 export const createPaymentLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -28,7 +28,12 @@ export const createPaymentLink = createServerFn({ method: "POST" })
     const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const orderNsu = `order-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const plan = getPlan(data.currency, data.planKey);
+    const priceCents = plan.priceCents;
+    const planDurationDays = plan.durationDays;
+    const planName = plan.name;
+
+    const orderNsu = `order-${Date.now()}-${crypto.randomUUID()}`;
 
     if (data.currency === "USD") {
       const stripeKey = process.env["STRIPE_SECRET_KEY"];
@@ -46,13 +51,14 @@ export const createPaymentLink = createServerFn({ method: "POST" })
           mode: "payment",
           customer_email: data.customerEmail,
           "line_items[0][price_data][currency]": "usd",
-          "line_items[0][price_data][product_data][name]": `LOVABLACK - ${data.planName}`,
-          "line_items[0][price_data][unit_amount]": data.priceCents.toString(),
+          "line_items[0][price_data][product_data][name]": `LOVABLACK - ${planName}`,
+          "line_items[0][price_data][unit_amount]": priceCents.toString(),
           "line_items[0][quantity]": "1",
           "metadata[user_id]": userId,
           "metadata[order_nsu]": orderNsu,
-          "metadata[plan_name]": data.planName,
-          "metadata[plan_duration_days]": data.planDurationDays.toString(),
+          "metadata[plan_key]": data.planKey,
+          "metadata[plan_name]": planName,
+          "metadata[plan_duration_days]": planDurationDays.toString(),
         }).toString(),
       });
 
@@ -70,9 +76,9 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       await supabaseAdmin.from("infinitepay_transactions").insert({
         user_id: userId,
         order_nsu: orderNsu,
-        amount: data.priceCents,
-        plan_name: data.planName,
-        plan_duration_days: data.planDurationDays,
+        amount: priceCents,
+        plan_name: planName,
+        plan_duration_days: planDurationDays,
         payment_link: session.url,
         status: "pending",
         currency: "USD",
@@ -95,7 +101,7 @@ export const createPaymentLink = createServerFn({ method: "POST" })
         phone_number: data.customerPhone,
       },
       items: [
-        { quantity: 1, price: data.priceCents, description: `LOVABLACK - ${data.planName}` },
+        { quantity: 1, price: priceCents, description: `LOVABLACK - ${planName}` },
       ],
     };
 
@@ -115,9 +121,9 @@ export const createPaymentLink = createServerFn({ method: "POST" })
     await supabaseAdmin.from("infinitepay_transactions").insert({
       user_id: userId,
       order_nsu: orderNsu,
-      amount: data.priceCents,
-      plan_name: data.planName,
-      plan_duration_days: data.planDurationDays,
+      amount: priceCents,
+      plan_name: planName,
+      plan_duration_days: planDurationDays,
       payment_link: result.url,
       status: "pending",
       currency: "BRL",
