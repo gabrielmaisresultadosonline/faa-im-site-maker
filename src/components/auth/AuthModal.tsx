@@ -14,9 +14,8 @@ interface AuthModalProps {
   isTrial?: boolean;
   lang?: 'pt' | 'en';
   onSuccessRedirect?: {
-    planName: string;
-    priceCents: number;
-    planDurationDays: number;
+    /** Apenas a chave do plano; preco/duracao sao resolvidos no servidor. */
+    key: string | null;
   } | undefined;
 }
 
