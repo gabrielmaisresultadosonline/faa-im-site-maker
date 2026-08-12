@@ -38,10 +38,16 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         if (onSuccessRedirect) {
-          // Store redirect info in session storage to handle after navigation
           sessionStorage.setItem('lovablack_pending_payment', JSON.stringify(onSuccessRedirect));
         }
-        navigate({ to: '/dashboard' });
+        
+        // Redirecionamento inteligente: Admin vai para /admin, usuário para /dashboard
+        const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
+        if (isAdminEmail) {
+          navigate({ to: '/admin/dashboard' });
+        } else {
+          navigate({ to: '/dashboard' });
+        }
       }
     });
     return () => subscription.unsubscribe();
@@ -72,7 +78,9 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
       setStoredLanguage(userLang);
 
       toast.success(userLang === 'pt' ? 'Login realizado com sucesso!' : 'Login successful!');
-      navigate({ to: '/dashboard' });
+      
+      const isAdminEmail = data.user?.email?.toLowerCase() === 'mro@gmail.com';
+      navigate({ to: isAdminEmail ? '/admin/dashboard' : '/dashboard' });
     } catch (error: any) {
       toast.error(error.message || (lang === 'pt' ? 'Erro ao fazer login' : 'Login error'));
     } finally {
@@ -101,7 +109,8 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
       
       if (data?.session) {
         toast.success(lang === 'pt' ? 'Cadastro realizado com sucesso!' : 'Registration successful!');
-        navigate({ to: '/dashboard' });
+        const isAdminEmail = data.session.user?.email?.toLowerCase() === 'mro@gmail.com';
+        navigate({ to: isAdminEmail ? '/admin/dashboard' : '/dashboard' });
       } else {
         toast.info(lang === 'pt' ? 'Cadastro realizado! Por favor, verifique seu email para confirmar a conta.' : 'Registration completed! Please check your email to confirm your account.');
       }
