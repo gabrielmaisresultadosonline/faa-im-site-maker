@@ -1,26 +1,28 @@
 #!/bin/bash
-# Script Cirúrgico para Consertar lovblack.online sem quebrar outros sites
+# Script de Reparo Cirúrgico para lovblack.online
+# Este script resolve conflitos de VirtualHost e ajusta a porta do proxy.
 
-echo "--- 🛠️ INICIANDO REPARAÇÃO CIRÚRGICA ---"
+echo "--- 🛠️ INICIANDO REPARAÇÃO NA VPS ---"
 
-# 1. Desativar VirtualHosts conflitantes (apenas os que apontam para lovblack)
-echo "[1/4] Desativando links simbólicos antigos..."
-rm -f /etc/nginx/sites-enabled/lovablack
-# Mantemos o lovablack_exclusivo pois ele é o que queremos
+# 1. Identificação e Limpeza de Lixo
+echo "[1/4] Removendo links simbólicos conflitantes..."
+# Removemos o link antigo que está causando o "sequestro" do domínio
+sudo rm -f /etc/nginx/sites-enabled/lovablack
 
-# 2. Criar configuração definitiva (Porta 80 e Redirecionamento HTTPS se existir)
-echo "[2/4] Refinando configuração exclusiva..."
-cat > /etc/nginx/sites-available/lovablack_exclusivo <<'INNEREOF'
+# 2. Configuração do VirtualHost Exclusivo
+echo "[2/4] Atualizando configuração exclusiva para lovblack.online..."
+sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+
+cat > /tmp/lovablack_exclusivo <<'INNEREOF'
 server {
     listen 80;
     server_name lovblack.online www.lovblack.online;
 
-    # Logs para debug
     access_log /var/log/nginx/lovablack.access.log;
     error_log /var/log/nginx/lovablack.error.log;
 
     location / {
-        proxy_pass http://127.0.0.1:8080; # Porta padrão do TanStack Start
+        proxy_pass http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -33,15 +35,17 @@ server {
 }
 INNEREOF
 
-# 3. Garantir que o link simbólico esteja correto
-ln -sf /etc/nginx/sites-available/lovablack_exclusivo /etc/nginx/sites-enabled/lovablack_exclusivo
+sudo mv /tmp/lovablack_exclusivo /etc/nginx/sites-available/lovablack_exclusivo
+sudo ln -sf /etc/nginx/sites-available/lovablack_exclusivo /etc/nginx/sites-enabled/lovablack_exclusivo
 
-# 4. Testar e Reiniciar
+# 3. Teste de Sintaxe
 echo "[3/4] Validando sintaxe do Nginx..."
 sudo nginx -t
 
-echo "[4/4] Reiniciando Nginx..."
+# 4. Reinicialização
+echo "[4/4] Aplicando mudanças..."
 sudo systemctl restart nginx || sudo service nginx restart
 
 echo "--- ✅ REPARAÇÃO CONCLUÍDA ---"
-echo "Acesse agora: http://lovblack.online"
+echo "URL: http://lovblack.online"
+echo "DICA: Se o site abrir em branco, verifique se o processo Bun está rodando na porta 8080."
