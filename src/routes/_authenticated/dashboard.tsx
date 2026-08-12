@@ -32,7 +32,7 @@ function Dashboard() {
     enabled: !!user
   });
 
-  const lang = profile?.language || 'pt';
+  const lang = (profile as any)?.language || 'pt';
   const isEn = lang === 'en';
 
   const { data: sub } = useQuery({
@@ -93,9 +93,11 @@ function Dashboard() {
   if (!user) return null;
 
 
-  const isActive = sub && sub.status === 'active' && !sub.isExpired;
-
-  const plans = [
+  const plans = isEn ? [
+    { name: "Monthly", price: "$ 47", cents: 4700, days: 30 },
+    { name: "6 Months", price: "$ 147", cents: 14700, days: 180 },
+    { name: "Annual", price: "$ 397", cents: 39700, days: 365 },
+  ] : [
     { name: "Mensal", price: "R$ 47", cents: 4700, days: 30 },
     { name: "Semestral", price: "R$ 147", cents: 14700, days: 180 },
     { name: "Anual", price: "R$ 397", cents: 39700, days: 365 },
