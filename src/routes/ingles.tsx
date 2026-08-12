@@ -93,7 +93,7 @@ function Index() {
             <img src={logoFull.url} alt="LOVABLACK Logo" className="h-20 md:h-24 object-contain cursor-pointer hover:scale-105 transition-transform" />
           </Link>
           <Link to="/" className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#D8D0C8] hover:bg-[#F7F1EB] transition-all text-sm font-bold text-[#1A1B1A]">
-            <Globe className="w-4 h-4" /> Português
+            <Globe className="w-4 h-4" /> 🇧🇷 Português
           </Link>
         </div>
         <h1 className="text-4xl md:text-7xl font-black text-[#1A1B1A] mb-6 tracking-tight leading-[1.1]">
