@@ -147,7 +147,7 @@ function Dashboard() {
                 </div>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
-                {sub.type === 'trial' && (
+                {sub?.type === 'trial' && (
                   <div className="p-4 bg-[#F7F1EB] rounded-2xl flex items-center justify-between">
                     <span className="text-sm font-bold text-[#4F4E4D]">{isEn ? 'Time Left:' : 'Tempo Restante:'}</span>
                     <span className="text-2xl font-black text-[#DC0D0D]">{timeLeft.replace('m', 'm').replace('s', 's')}</span>
