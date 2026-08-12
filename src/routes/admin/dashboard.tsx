@@ -36,7 +36,7 @@ function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('infinitepay_transactions')
-        .select('*, profiles:user_id(full_name, whatsapp)')
+        .select('*, profiles:user_id(full_name, whatsapp, language)')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
