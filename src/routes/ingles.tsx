@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
 import logoHeart from "@/assets/logo-heart.png.asset.json";
 import logoFull from "@/assets/logo-full.png.asset.json";
 
@@ -84,6 +85,7 @@ function Index() {
 
   return (
     <div className="min-h-screen font-sans selection:bg-primary/20" style={{ backgroundColor: "#F7F1EB" }}>
+      <LanguageSelectorModal />
       {/* Hero Section */}
       <header className="container mx-auto px-4 pt-20 pb-16 text-center">
         <div className="flex justify-between items-center mb-8">
