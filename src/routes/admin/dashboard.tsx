@@ -441,8 +441,8 @@ function AdminDashboard() {
                     updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
                   }}>+ Adicionar Vídeo</Button>
                 </CardContent>
-                </CardContent>
               </Card>
+
             </section>
 
             <Card className="bg-white border-neutral-200">
