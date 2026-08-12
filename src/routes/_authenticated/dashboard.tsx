@@ -114,7 +114,7 @@ function Dashboard() {
       customerEmail: user.email || '',
       customerPhone: profile?.whatsapp || '',
       redirectUrl: `${origin}/thanks`,
-      webhookUrl: `${origin}/api/public/webhook-infinitepay`,
+      webhookUrl: `${origin}/api/public/webhook-${isEn ? 'stripe' : 'infinitepay'}`,
       currency: isEn ? 'USD' : 'BRL'
     });
   };
