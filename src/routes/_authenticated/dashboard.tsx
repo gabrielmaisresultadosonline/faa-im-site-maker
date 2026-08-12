@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Download, PlayCircle, Clock, AlertTriangle, CreditCard, Check } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useEffect, useState } from 'react';
-import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
+import { getStoredLanguage } from "@/lib/language";
 import { createPaymentLink } from '@/lib/payments.functions';
 import { toast } from 'sonner';
 
@@ -33,7 +33,8 @@ function Dashboard() {
     enabled: !!user
   });
 
-  const lang = (profile as any)?.language || 'pt';
+  // Idioma vem do perfil (definido no cadastro). Enquanto carrega, usa a escolha salva no navegador.
+  const lang: 'pt' | 'en' = ((profile as any)?.language as 'pt' | 'en' | undefined) ?? getStoredLanguage() ?? 'pt';
   const isEn = lang === 'en';
 
   const { data: sub } = useQuery({
@@ -122,7 +123,6 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#F7F1EB] p-4 md:p-8 pb-20">
-      <LanguageSelectorModal />
       <div className="max-w-6xl mx-auto space-y-8">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
