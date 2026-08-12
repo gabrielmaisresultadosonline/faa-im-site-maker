@@ -92,7 +92,7 @@ function Index() {
         <div className="flex justify-between items-center mb-8">
           <img src={logoFull.url} alt="LOVABLACK Logo" className="h-20 md:h-24 object-contain" />
           <span className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#D8D0C8] text-sm font-bold text-[#1A1B1A]">
-            <Globe className="w-4 h-4" /> 🇧🇷 Português — BRL
+            <Globe className="w-4 h-4" /> Português — BRL
           </span>
         </div>
         <h1 className="text-5xl md:text-8xl font-black text-[#1A1B1A] mb-6 tracking-tight leading-[1.05]">

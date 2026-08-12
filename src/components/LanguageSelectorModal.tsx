@@ -60,7 +60,7 @@ export function LanguageSelectorModal() {
             >
               <span className="text-6xl md:text-7xl font-black text-[#1A1B1A] group-hover:text-[#DC0D0D] transition-colors">BR</span>
               <div className="space-y-1">
-                <span className="text-2xl font-bold text-[#1A1B1A]">Português</span>
+                <span className="text-2xl font-bold text-[#1A1B1A]">🇧🇷 Português</span>
                 <p className="text-sm text-neutral-500">Continuar em Português (R$)</p>
               </div>
             </button>
@@ -72,7 +72,7 @@ export function LanguageSelectorModal() {
             >
               <span className="text-6xl md:text-7xl font-black text-[#1A1B1A] group-hover:text-[#DC0D0D] transition-colors">US</span>
               <div className="space-y-1">
-                <span className="text-2xl font-bold text-[#1A1B1A]">English</span>
+                <span className="text-2xl font-bold text-[#1A1B1A]">🇺🇸 English</span>
                 <p className="text-sm text-neutral-500">Continue in English (US$)</p>
               </div>
             </button>
