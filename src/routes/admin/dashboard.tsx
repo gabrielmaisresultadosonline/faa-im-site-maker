@@ -491,6 +491,7 @@ function AdminDashboard() {
         </Tabs>
       </main>
     </div>
+  </div>
   );
 }
 
