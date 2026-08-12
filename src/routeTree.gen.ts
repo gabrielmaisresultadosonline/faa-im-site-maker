@@ -16,6 +16,7 @@ import { Route as InglesRouteImport } from './routes/ingles'
 import { Route as ThanksRouteImport } from './routes/thanks'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as ApiPublicLovablackApiRouteImport } from './routes/api/public/lovablack-api'
 import { Route as ApiPublicWebhookInfinitepayRouteImport } from './routes/api/public/webhook-infinitepay'
 import { Route as ApiPublicWebhookStripeRouteImport } from './routes/api/public/webhook-stripe'
 
@@ -53,6 +54,11 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const ApiPublicLovablackApiRoute = ApiPublicLovablackApiRouteImport.update({
+  id: '/api/public/lovablack-api',
+  path: '/api/public/lovablack-api',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWebhookInfinitepayRoute =
   ApiPublicWebhookInfinitepayRouteImport.update({
     id: '/api/public/webhook-infinitepay',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/thanks': typeof ThanksRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/api/public/lovablack-api': typeof ApiPublicLovablackApiRoute
   '/api/public/webhook-infinitepay': typeof ApiPublicWebhookInfinitepayRoute
   '/api/public/webhook-stripe': typeof ApiPublicWebhookStripeRoute
 }
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/thanks': typeof ThanksRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/api/public/lovablack-api': typeof ApiPublicLovablackApiRoute
   '/api/public/webhook-infinitepay': typeof ApiPublicWebhookInfinitepayRoute
   '/api/public/webhook-stripe': typeof ApiPublicWebhookStripeRoute
 }
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/thanks': typeof ThanksRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/api/public/lovablack-api': typeof ApiPublicLovablackApiRoute
   '/api/public/webhook-infinitepay': typeof ApiPublicWebhookInfinitepayRoute
   '/api/public/webhook-stripe': typeof ApiPublicWebhookStripeRoute
 }
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/thanks'
     | '/dashboard'
     | '/admin/dashboard'
+    | '/api/public/lovablack-api'
     | '/api/public/webhook-infinitepay'
     | '/api/public/webhook-stripe'
   fileRoutesByTo: FileRoutesByTo
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/thanks'
     | '/dashboard'
     | '/admin/dashboard'
+    | '/api/public/lovablack-api'
     | '/api/public/webhook-infinitepay'
     | '/api/public/webhook-stripe'
   id:
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/thanks'
     | '/_authenticated/dashboard'
     | '/admin/dashboard'
+    | '/api/public/lovablack-api'
     | '/api/public/webhook-infinitepay'
     | '/api/public/webhook-stripe'
   fileRoutesById: FileRoutesById
@@ -137,6 +149,7 @@ export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   InglesRoute: typeof InglesRoute
   ThanksRoute: typeof ThanksRoute
+  ApiPublicLovablackApiRoute: typeof ApiPublicLovablackApiRoute
   ApiPublicWebhookInfinitepayRoute: typeof ApiPublicWebhookInfinitepayRoute
   ApiPublicWebhookStripeRoute: typeof ApiPublicWebhookStripeRoute
 }
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDashboardRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/api/public/lovablack-api': {
+      id: '/api/public/lovablack-api'
+      path: '/api/public/lovablack-api'
+      fullPath: '/api/public/lovablack-api'
+      preLoaderRoute: typeof ApiPublicLovablackApiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhook-infinitepay': {
       id: '/api/public/webhook-infinitepay'
       path: '/api/public/webhook-infinitepay'
@@ -238,19 +258,10 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRouteRoute: AdminRouteRouteWithChildren,
   InglesRoute: InglesRoute,
   ThanksRoute: ThanksRoute,
+  ApiPublicLovablackApiRoute: ApiPublicLovablackApiRoute,
   ApiPublicWebhookInfinitepayRoute: ApiPublicWebhookInfinitepayRoute,
   ApiPublicWebhookStripeRoute: ApiPublicWebhookStripeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
