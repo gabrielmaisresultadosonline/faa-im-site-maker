@@ -112,7 +112,7 @@ function AdminDashboard() {
   });
 
   const createUserMutation = useMutation({
-    mutationFn: (data: { email: string; password: string; fullName: string; whatsapp?: string; language: 'pt' | 'en'; plan: PlanType }) =>
+    mutationFn: (data: CreateUserPayload) =>
       createUser({ data }),
     onSuccess: () => { invalidateUsers(); toast.success('Usuário criado com sucesso!'); },
     onError: (e: Error) => toast.error(e.message),
