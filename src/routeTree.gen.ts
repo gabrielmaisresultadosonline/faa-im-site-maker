@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as InglesRouteImport } from './routes/ingles'
 import { Route as ThanksRouteImport } from './routes/thanks'
+import { Route as ThanksEnRouteImport } from './routes/thanks-en'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 import { Route as ApiPublicLovablackApiRouteImport } from './routes/api/public/lovablack-api'
@@ -42,6 +43,11 @@ const InglesRoute = InglesRouteImport.update({
 const ThanksRoute = ThanksRouteImport.update({
   id: '/thanks',
   path: '/thanks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ThanksEnRoute = ThanksEnRouteImport.update({
+  id: '/thanks-en',
+  path: '/thanks-en',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/ingles': typeof InglesRoute
   '/thanks': typeof ThanksRoute
+  '/thanks-en': typeof ThanksEnRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/api/public/lovablack-api': typeof ApiPublicLovablackApiRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteRouteWithChildren
   '/ingles': typeof InglesRoute
   '/thanks': typeof ThanksRoute
+  '/thanks-en': typeof ThanksEnRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/api/public/lovablack-api': typeof ApiPublicLovablackApiRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteRouteWithChildren
   '/ingles': typeof InglesRoute
   '/thanks': typeof ThanksRoute
+  '/thanks-en': typeof ThanksEnRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/api/public/lovablack-api': typeof ApiPublicLovablackApiRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ingles'
     | '/thanks'
+    | '/thanks-en'
     | '/dashboard'
     | '/admin/dashboard'
     | '/api/public/lovablack-api'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ingles'
     | '/thanks'
+    | '/thanks-en'
     | '/dashboard'
     | '/admin/dashboard'
     | '/api/public/lovablack-api'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ingles'
     | '/thanks'
+    | '/thanks-en'
     | '/_authenticated/dashboard'
     | '/admin/dashboard'
     | '/api/public/lovablack-api'
@@ -149,6 +161,7 @@ export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   InglesRoute: typeof InglesRoute
   ThanksRoute: typeof ThanksRoute
+  ThanksEnRoute: typeof ThanksEnRoute
   ApiPublicLovablackApiRoute: typeof ApiPublicLovablackApiRoute
   ApiPublicWebhookInfinitepayRoute: typeof ApiPublicWebhookInfinitepayRoute
   ApiPublicWebhookStripeRoute: typeof ApiPublicWebhookStripeRoute
@@ -189,6 +202,13 @@ declare module '@tanstack/react-router' {
       path: '/thanks'
       fullPath: '/thanks'
       preLoaderRoute: typeof ThanksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/thanks-en': {
+      id: '/thanks-en'
+      path: '/thanks-en'
+      fullPath: '/thanks-en'
+      preLoaderRoute: typeof ThanksEnRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -258,6 +278,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRouteRoute: AdminRouteRouteWithChildren,
   InglesRoute: InglesRoute,
   ThanksRoute: ThanksRoute,
+  ThanksEnRoute: ThanksEnRoute,
   ApiPublicLovablackApiRoute: ApiPublicLovablackApiRoute,
   ApiPublicWebhookInfinitepayRoute: ApiPublicWebhookInfinitepayRoute,
   ApiPublicWebhookStripeRoute: ApiPublicWebhookStripeRoute,
