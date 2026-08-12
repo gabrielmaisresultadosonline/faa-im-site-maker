@@ -286,7 +286,7 @@ function Index() {
             ))}
           </div>
           <div className="mt-12 text-center flex items-center justify-center gap-6 text-neutral-400 text-sm">
-             <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> Pagamento Seguro via PIX</span>
+             <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> Pagamento Seguro via InfinitePay</span>
              <span className="flex items-center gap-2 font-bold text-neutral-500 italic">⚡ Últimas vagas com este preço</span>
           </div>
         </div>
