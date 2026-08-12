@@ -52,9 +52,27 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      toast.success(lang === 'pt' ? 'Login realizado com sucesso!' : 'Login successful!');
+
+      // Idioma do cadastro manda: o dashboard abre no idioma escolhido no signup.
+      let userLang: 'pt' | 'en' = lang;
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('language')
+          .eq('id', data.user.id)
+          .maybeSingle();
+        if (profile?.language === 'en' || profile?.language === 'pt') {
+          userLang = profile.language;
+        } else {
+          const metaLang = (data.user.user_metadata as { language?: string } | null)?.language;
+          if (metaLang === 'en' || metaLang === 'pt') userLang = metaLang;
+        }
+      }
+      setStoredLanguage(userLang);
+
+      toast.success(userLang === 'pt' ? 'Login realizado com sucesso!' : 'Login successful!');
       navigate({ to: '/dashboard' });
     } catch (error: any) {
       toast.error(error.message || (lang === 'pt' ? 'Erro ao fazer login' : 'Login error'));
@@ -62,6 +80,7 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
       setLoading(false);
     }
   };
+
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();

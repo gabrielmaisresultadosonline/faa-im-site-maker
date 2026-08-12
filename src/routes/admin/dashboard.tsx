@@ -190,7 +190,7 @@ function AdminDashboard() {
                       <div className="font-bold">{tx.profiles?.full_name || 'Usuário'}</div>
                       <div className="text-xs text-neutral-400">{tx.profiles?.whatsapp}</div>
                     </TableCell>
-                    <TableCell>{tx.profiles?.language === 'en' ? '🇺🇸 EN' : '🇧🇷 PT'}</TableCell>
+                    <TableCell><LangTag lang={tx.profiles?.language} /></TableCell>
                     <TableCell>
                       <Badge className={tx.provider === 'stripe' ? 'bg-indigo-100 text-indigo-800' : 'bg-neutral-100 text-neutral-800'}>
                         {tx.provider === 'stripe' ? 'Stripe' : 'InfinitePay'}
@@ -243,7 +243,7 @@ function AdminDashboard() {
                       <div className="font-medium">{sub.profiles?.full_name || 'N/A'}</div>
                       <div className="text-xs text-neutral-400">{sub.profiles?.whatsapp}</div>
                     </TableCell>
-                    <TableCell>{sub.profiles?.language === 'en' ? '🇺🇸 EN (US$)' : '🇧🇷 PT (R$)'}</TableCell>
+                    <TableCell><LangTag lang={sub.profiles?.language} withCurrency /></TableCell>
                     <TableCell><Badge variant="outline">{sub.type.toUpperCase()}</Badge></TableCell>
                     <TableCell>
                       <Badge className={sub.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
@@ -277,5 +277,26 @@ function StatCard({ icon: Icon, label, value, color = "text-[#1A1B1A]" }: any) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+interface LangTagProps {
+  lang?: string | null;
+  withCurrency?: boolean;
+}
+
+function LangTag({ lang, withCurrency = false }: LangTagProps) {
+  const isEn = lang === 'en';
+  return (
+    <Badge
+      className={
+        isEn
+          ? 'bg-blue-100 text-blue-800 border border-blue-200 font-bold'
+          : 'bg-green-100 text-green-800 border border-green-200 font-bold'
+      }
+    >
+      {isEn ? '🇺🇸 EN' : '🇧🇷 PT'}
+      {withCurrency ? (isEn ? ' · US$' : ' · R$') : ''}
+    </Badge>
   );
 }
