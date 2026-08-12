@@ -7,9 +7,9 @@ const INFINITEPAY_HANDLE = 'paguemro';
  * Nunca confiamos no corpo do webhook (que e publico e forjavel).
  */
 async function verifyPaymentWithInfinitePay(params: {
-  transactionNsu?: string;
+  transactionNsu?: string | undefined;
   orderNsu: string;
-  slug?: string;
+  slug?: string | undefined;
 }): Promise<boolean> {
   try {
     const url = new URL(
