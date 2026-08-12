@@ -369,9 +369,7 @@ function AdminDashboard() {
                 </Table>
               </CardContent>
             </Card>
-            </Tabs>
-          </main>
-        </div>
+          </TabsContent>
 
           {/* ============ CONFIGURAÇÕES ============ */}
           <TabsContent value="config" className="space-y-6">
@@ -700,9 +698,11 @@ function ApiDocs() {
     session_id: hwid
   })
 }).then(r => r.json())`}</CodeBlock>
-        </section>
-      </CardContent>
-    </Card>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
   );
 }
 
