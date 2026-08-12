@@ -39,12 +39,15 @@ export type Database = {
         Row: {
           amount: number
           created_at: string | null
+          currency: string
           id: string
           invoice_slug: string | null
           order_nsu: string
           payment_link: string | null
           plan_duration_days: number
           plan_name: string
+          provider: string
+          session_id: string | null
           status: string | null
           transaction_nsu: string | null
           updated_at: string | null
@@ -53,12 +56,15 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string | null
+          currency?: string
           id?: string
           invoice_slug?: string | null
           order_nsu: string
           payment_link?: string | null
           plan_duration_days: number
           plan_name: string
+          provider?: string
+          session_id?: string | null
           status?: string | null
           transaction_nsu?: string | null
           updated_at?: string | null
@@ -67,12 +73,15 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string | null
+          currency?: string
           id?: string
           invoice_slug?: string | null
           order_nsu?: string
           payment_link?: string | null
           plan_duration_days?: number
           plan_name?: string
+          provider?: string
+          session_id?: string | null
           status?: string | null
           transaction_nsu?: string | null
           updated_at?: string | null
@@ -85,18 +94,21 @@ export type Database = {
           created_at: string | null
           full_name: string | null
           id: string
+          language: string
           whatsapp: string | null
         }
         Insert: {
           created_at?: string | null
           full_name?: string | null
           id: string
+          language?: string
           whatsapp?: string | null
         }
         Update: {
           created_at?: string | null
           full_name?: string | null
           id?: string
+          language?: string
           whatsapp?: string | null
         }
         Relationships: []
