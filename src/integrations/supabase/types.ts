@@ -92,26 +92,41 @@ export type Database = {
       profiles: {
         Row: {
           access_password: string | null
+          blocked: boolean
           created_at: string | null
+          custom_message: string | null
+          email: string | null
           full_name: string | null
           id: string
           language: string
+          last_login_at: string | null
+          session_id: string | null
           whatsapp: string | null
         }
         Insert: {
           access_password?: string | null
+          blocked?: boolean
           created_at?: string | null
+          custom_message?: string | null
+          email?: string | null
           full_name?: string | null
           id: string
           language?: string
+          last_login_at?: string | null
+          session_id?: string | null
           whatsapp?: string | null
         }
         Update: {
           access_password?: string | null
+          blocked?: boolean
           created_at?: string | null
+          custom_message?: string | null
+          email?: string | null
           full_name?: string | null
           id?: string
           language?: string
+          last_login_at?: string | null
+          session_id?: string | null
           whatsapp?: string | null
         }
         Relationships: []
