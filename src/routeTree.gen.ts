@@ -14,8 +14,10 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as InglesRouteImport } from './routes/ingles'
 import { Route as ThanksRouteImport } from './routes/thanks'
+import { Route as ThanksEnRouteImport } from './routes/thanks-en'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as ApiPublicLovablackApiRouteImport } from './routes/api/public/lovablack-api'
 import { Route as ApiPublicWebhookInfinitepayRouteImport } from './routes/api/public/webhook-infinitepay'
 import { Route as ApiPublicWebhookStripeRouteImport } from './routes/api/public/webhook-stripe'
 
@@ -43,6 +45,11 @@ const ThanksRoute = ThanksRouteImport.update({
   path: '/thanks',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ThanksEnRoute = ThanksEnRouteImport.update({
+  id: '/thanks-en',
+  path: '/thanks-en',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -52,6 +59,11 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AdminRouteRoute,
+} as any)
+const ApiPublicLovablackApiRoute = ApiPublicLovablackApiRouteImport.update({
+  id: '/api/public/lovablack-api',
+  path: '/api/public/lovablack-api',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicWebhookInfinitepayRoute =
   ApiPublicWebhookInfinitepayRouteImport.update({
@@ -70,8 +82,10 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/ingles': typeof InglesRoute
   '/thanks': typeof ThanksRoute
+  '/thanks-en': typeof ThanksEnRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/api/public/lovablack-api': typeof ApiPublicLovablackApiRoute
   '/api/public/webhook-infinitepay': typeof ApiPublicWebhookInfinitepayRoute
   '/api/public/webhook-stripe': typeof ApiPublicWebhookStripeRoute
 }
@@ -80,8 +94,10 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteRouteWithChildren
   '/ingles': typeof InglesRoute
   '/thanks': typeof ThanksRoute
+  '/thanks-en': typeof ThanksEnRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/api/public/lovablack-api': typeof ApiPublicLovablackApiRoute
   '/api/public/webhook-infinitepay': typeof ApiPublicWebhookInfinitepayRoute
   '/api/public/webhook-stripe': typeof ApiPublicWebhookStripeRoute
 }
@@ -92,8 +108,10 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteRouteWithChildren
   '/ingles': typeof InglesRoute
   '/thanks': typeof ThanksRoute
+  '/thanks-en': typeof ThanksEnRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/api/public/lovablack-api': typeof ApiPublicLovablackApiRoute
   '/api/public/webhook-infinitepay': typeof ApiPublicWebhookInfinitepayRoute
   '/api/public/webhook-stripe': typeof ApiPublicWebhookStripeRoute
 }
@@ -104,8 +122,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ingles'
     | '/thanks'
+    | '/thanks-en'
     | '/dashboard'
     | '/admin/dashboard'
+    | '/api/public/lovablack-api'
     | '/api/public/webhook-infinitepay'
     | '/api/public/webhook-stripe'
   fileRoutesByTo: FileRoutesByTo
@@ -114,8 +134,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ingles'
     | '/thanks'
+    | '/thanks-en'
     | '/dashboard'
     | '/admin/dashboard'
+    | '/api/public/lovablack-api'
     | '/api/public/webhook-infinitepay'
     | '/api/public/webhook-stripe'
   id:
@@ -125,8 +147,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ingles'
     | '/thanks'
+    | '/thanks-en'
     | '/_authenticated/dashboard'
     | '/admin/dashboard'
+    | '/api/public/lovablack-api'
     | '/api/public/webhook-infinitepay'
     | '/api/public/webhook-stripe'
   fileRoutesById: FileRoutesById
@@ -137,6 +161,8 @@ export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   InglesRoute: typeof InglesRoute
   ThanksRoute: typeof ThanksRoute
+  ThanksEnRoute: typeof ThanksEnRoute
+  ApiPublicLovablackApiRoute: typeof ApiPublicLovablackApiRoute
   ApiPublicWebhookInfinitepayRoute: typeof ApiPublicWebhookInfinitepayRoute
   ApiPublicWebhookStripeRoute: typeof ApiPublicWebhookStripeRoute
 }
@@ -178,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ThanksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/thanks-en': {
+      id: '/thanks-en'
+      path: '/thanks-en'
+      fullPath: '/thanks-en'
+      preLoaderRoute: typeof ThanksEnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -191,6 +224,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/dashboard'
       preLoaderRoute: typeof AdminDashboardRouteImport
       parentRoute: typeof AdminRouteRoute
+    }
+    '/api/public/lovablack-api': {
+      id: '/api/public/lovablack-api'
+      path: '/api/public/lovablack-api'
+      fullPath: '/api/public/lovablack-api'
+      preLoaderRoute: typeof ApiPublicLovablackApiRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/webhook-infinitepay': {
       id: '/api/public/webhook-infinitepay'
@@ -238,6 +278,8 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRouteRoute: AdminRouteRouteWithChildren,
   InglesRoute: InglesRoute,
   ThanksRoute: ThanksRoute,
+  ThanksEnRoute: ThanksEnRoute,
+  ApiPublicLovablackApiRoute: ApiPublicLovablackApiRoute,
   ApiPublicWebhookInfinitepayRoute: ApiPublicWebhookInfinitepayRoute,
   ApiPublicWebhookStripeRoute: ApiPublicWebhookStripeRoute,
 }
