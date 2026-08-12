@@ -92,6 +92,7 @@ function Dashboard() {
 
   if (!user) return null;
 
+  const isActive = sub && sub.status === 'active' && !sub.isExpired;
 
   const plans = isEn ? [
     { name: "Monthly", price: "$ 47", cents: 4700, days: 30 },
