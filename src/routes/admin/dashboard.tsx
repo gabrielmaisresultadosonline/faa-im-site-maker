@@ -243,7 +243,7 @@ function AdminDashboard() {
                       <div className="font-medium">{sub.profiles?.full_name || 'N/A'}</div>
                       <div className="text-xs text-neutral-400">{sub.profiles?.whatsapp}</div>
                     </TableCell>
-                    <TableCell>{sub.profiles?.language === 'en' ? '🇺🇸 EN (US$)' : '🇧🇷 PT (R$)'}</TableCell>
+                    <TableCell><LangTag lang={sub.profiles?.language} withCurrency /></TableCell>
                     <TableCell><Badge variant="outline">{sub.type.toUpperCase()}</Badge></TableCell>
                     <TableCell>
                       <Badge className={sub.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
