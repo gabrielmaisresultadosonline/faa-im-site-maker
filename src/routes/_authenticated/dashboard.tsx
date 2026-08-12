@@ -120,21 +120,19 @@ function Dashboard() {
   const accessPassword = (profile as any)?.access_password as string | undefined;
 
   const plans = isEn ? [
-    { name: "Monthly", price: "$ 47", cents: 4700, days: 30 },
-    { name: "6 Months", price: "$ 147", cents: 14700, days: 180 },
-    { name: "Annual", price: "$ 397", cents: 39700, days: 365 },
+    { key: "monthly", name: "Monthly", price: "$ 47", days: 30 },
+    { key: "semiannual", name: "6 Months", price: "$ 147", days: 180 },
+    { key: "annual", name: "Annual", price: "$ 397", days: 365 },
   ] : [
-    { name: "Mensal", price: "R$ 47", cents: 4700, days: 30 },
-    { name: "Semestral", price: "R$ 147", cents: 14700, days: 180 },
-    { name: "Anual", price: "R$ 397", cents: 39700, days: 365 },
+    { key: "monthly", name: "Mensal", price: "R$ 47", days: 30 },
+    { key: "semiannual", name: "Semestral", price: "R$ 147", days: 180 },
+    { key: "annual", name: "Anual", price: "R$ 397", days: 365 },
   ];
 
   const handlePayment = (plan: any) => {
     const origin = window.location.origin;
     paymentMutation.mutate({
-      planName: plan.name,
-      priceCents: plan.cents,
-      planDurationDays: plan.days,
+      planKey: plan.key,
       customerName: profile?.full_name || user.email || 'Cliente',
       customerEmail: user.email || '',
       customerPhone: profile?.whatsapp || '',
