@@ -441,70 +441,8 @@ function AdminDashboard() {
                     updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
                   }}>+ Adicionar Vídeo</Button>
                 </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* ============ DOCUMENTAÇÃO ============ */}
-          <TabsContent value="docs" className="space-y-6">
-            <Card className="bg-white border-neutral-200">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><BookOpen className="w-5 h-5" /> Documentação da API Lovablack</CardTitle>
-                <CardDescription>Especificações técnicas para integração da extensão</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-8">
-                <section className="space-y-4">
-                  <h3 className="text-lg font-bold text-[#1A1B1A]">Visão Geral</h3>
-                  <p className="text-sm text-neutral-600">
-                    API para autenticação e verificação de licenças em extensões Chrome. Toda chamada deve ser feita via POST.
-                  </p>
-                  <div className="bg-neutral-100 p-4 rounded-xl border border-neutral-200">
-                    <p className="text-xs font-bold text-neutral-500 mb-1">ENDPOINT PROD</p>
-                    <code className="text-sm text-[#DC0D0D] font-mono break-all">
-                      https://lovblack.online/api/public/lovablack-api
-                    </code>
-                  </div>
-                </section>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <DocRule icon={Shield} title="1. Autenticação">
-                    A extensão envia <code>email</code> e <code>password</code> (senha de acesso da extensão gerada no dashboard).
-                  </DocRule>
-                  <DocRule icon={Zap} title="2. Verificação de Plano">
-                    O sistema valida se o usuário possui uma assinatura ativa (trial ou paga) e se não está expirada.
-                  </DocRule>
-                  <DocRule icon={RefreshCw} title="3. HWID / Multi-Login">
-                    O primeiro login vincula o <code>session_id</code> (HWID da máquina) ao usuário.
-                  </DocRule>
-                  <DocRule icon={MessageSquare} title="4. Mensagens">
-                    Retorna avisos globais e mensagens personalizadas configuradas no admin.
-                  </DocRule>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
-    </div>
-  );
-}
-
-function CodeBlock({ children }: { children: string }) {
-  return (
-    <pre className="bg-[#1A1B1A] text-neutral-100 text-xs p-4 rounded-xl overflow-x-auto whitespace-pre">
-      {children}
-    </pre>
-  );
-}
-
-function DocRule({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
-  return (
-    <div className="p-4 rounded-xl border border-neutral-200 bg-neutral-50">
-      <h4 className="font-bold text-[#1A1B1A] flex items-center gap-2 mb-1"><Icon className="w-4 h-4" /> {title}</h4>
-      <p className="text-sm text-neutral-600 leading-relaxed">{children}</p>
-    </div>
-  );
-}
-
+                </CardContent>
+              </Card>
             </section>
 
             <Card className="bg-white border-neutral-200">
@@ -547,11 +485,11 @@ function DocRule({ icon: Icon, title, children }: { icon: any; title: string; ch
           </TabsContent>
 
           {/* ============ DOCUMENTAÇÃO ============ */}
-          <TabsContent value="docs">
+          <TabsContent value="docs" className="space-y-6">
             <ApiDocs />
           </TabsContent>
         </Tabs>
-      </div>
+      </main>
     </div>
   );
 }
@@ -738,11 +676,29 @@ function ApiDocs() {
             A extensão compara a versão local do manifest com <code>min_version</code>.
             Se for inferior, o uso é bloqueado com link para baixar a nova versão.
           </DocRule>
-          <DocRule icon={RefreshCw} title="4. Bloqueio Multi-Login (crítico)">
-            Com o bloqueio ativo nas Configurações Globais, o primeiro login vincula o <code>session_id</code> (HWID)
-            ao usuário. Um <code>session_id</code> diferente retorna HTTP 403 com <code>code: "MULTI_LOGIN"</code>.
-            Armazene o <code>session_id</code> localmente e envie em todas as validações.
+          <DocRule icon={MessageSquare} title="5. Mensagens e Alertas">
+            <code>global_announcement</code> vale para toda a base; <code>custom_message</code> é individual.
+            Se não estiverem vazios, exiba em destaque (toast ou modal) na primeira carga da extensão.
           </DocRule>
+        </section>
+
+        <section className="space-y-2">
+          <h3 className="font-bold text-[#1A1B1A]">Exemplo de chamada</h3>
+          <CodeBlock>{`fetch("${endpoint}", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    action: "login",
+    email: email,
+    password: password,
+    session_id: hwid
+  })
+}).then(r => r.json())`}</CodeBlock>
+        </section>
+      </CardContent>
+    </Card>
+  );
+}
 
 function CodeBlock({ children }: { children: string }) {
   return (
@@ -754,6 +710,7 @@ function CodeBlock({ children }: { children: string }) {
 
 function DocRule({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
   return (
+
     <div className="p-4 rounded-xl border border-neutral-200 bg-neutral-50">
       <h4 className="font-bold text-[#1A1B1A] flex items-center gap-2 mb-1"><Icon className="w-4 h-4" /> {title}</h4>
       <p className="text-sm text-neutral-600 leading-relaxed">{children}</p>
