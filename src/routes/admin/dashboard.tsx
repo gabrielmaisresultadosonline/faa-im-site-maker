@@ -163,15 +163,17 @@ function AdminDashboard() {
         <Card className="bg-white border-neutral-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5" /> Vendas InfinitePay (Webhooks)
+              <CreditCard className="w-5 h-5" /> Vendas (InfinitePay R$ + Stripe US$)
             </CardTitle>
-            <CardDescription>Acompanhamento de links e pagamentos em tempo real</CardDescription>
+            <CardDescription>Acompanhamento de links e pagamentos em tempo real, nos dois idiomas</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Comprador</TableHead>
+                  <TableHead>Idioma</TableHead>
+                  <TableHead>Gateway</TableHead>
                   <TableHead>Plano</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
@@ -188,8 +190,18 @@ function AdminDashboard() {
                       <div className="font-bold">{tx.profiles?.full_name || 'Usuário'}</div>
                       <div className="text-xs text-neutral-400">{tx.profiles?.whatsapp}</div>
                     </TableCell>
+                    <TableCell>{tx.profiles?.language === 'en' ? '🇺🇸 EN' : '🇧🇷 PT'}</TableCell>
+                    <TableCell>
+                      <Badge className={tx.provider === 'stripe' ? 'bg-indigo-100 text-indigo-800' : 'bg-neutral-100 text-neutral-800'}>
+                        {tx.provider === 'stripe' ? 'Stripe' : 'InfinitePay'}
+                      </Badge>
+                    </TableCell>
                     <TableCell>{tx.plan_name}</TableCell>
-                    <TableCell>R$ {(tx.amount / 100).toFixed(2)}</TableCell>
+                    <TableCell>
+                      {tx.currency === 'USD' ? 'US$ ' : 'R$ '}
+                      {(tx.amount / 100).toFixed(2)}
+                    </TableCell>
+
                     <TableCell>
                       <Badge className={tx.status === 'paid' ? 'bg-green-100 text-green-800' : tx.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}>
                         {tx.status.toUpperCase()}
