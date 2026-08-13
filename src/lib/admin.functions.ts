@@ -38,6 +38,7 @@ export const adminListUsers = createServerFn({ method: "GET" })
         blocked: p.blocked,
         custom_message: p.custom_message,
         last_login_at: p.last_login_at,
+        last_heartbeat_at: p.last_heartbeat_at,
         session_id: p.session_id,
         access_password: p.access_password,
         created_at: p.created_at,

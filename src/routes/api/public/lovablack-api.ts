@@ -111,7 +111,10 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
 
         await supabaseAdmin
           .from("profiles")
-          .update({ last_login_at: new Date().toISOString() })
+          .update({ 
+            last_login_at: new Date().toISOString(),
+            last_heartbeat_at: new Date().toISOString()
+          })
           .eq("id", profile.id);
 
         return json({

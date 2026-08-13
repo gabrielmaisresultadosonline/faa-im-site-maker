@@ -214,6 +214,7 @@ function AdminDashboard() {
                         <TableHead>Status</TableHead>
                         <TableHead>Expira</TableHead>
                         <TableHead>Último acesso</TableHead>
+                        <TableHead>Online</TableHead>
                         <TableHead>Bloqueio</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
@@ -242,6 +243,20 @@ function AdminDashboard() {
                           </TableCell>
                           <TableCell className="text-xs">
                             {u.last_login_at ? new Date(u.last_login_at).toLocaleString() : 'Nunca acessou'}
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const isOnline = u.last_heartbeat_at && 
+                                (new Date().getTime() - new Date(u.last_heartbeat_at).getTime() < 5 * 60 * 1000);
+                              return (
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-neutral-300'}`} />
+                                  <span className="text-[10px] uppercase font-bold text-neutral-500">
+                                    {isOnline ? 'ON' : 'OFF'}
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell>
                             <Switch
@@ -762,7 +777,12 @@ function ApiDocs() {
           </DocRule>
           <DocRule icon={MessageSquare} title="5. Mensagens e Alertas">
             <code>global_announcement</code> vale para toda a base; <code>custom_message</code> é individual.
-            Se não estiverem vazios, exiba em destaque (toast ou modal) na primeira carga da extensão.
+            Se não estiverem vazios, exiba em destaque (toast ou modal).
+          </DocRule>
+          <DocRule icon={RefreshCw} title="6. Heartbeat e Status Online">
+            Para aparecer como "Online" no painel administrativo, a extensão deve chamar o endpoint de Login periodicamente (ex: a cada 3 a 5 minutos). 
+            O campo <code>last_heartbeat_at</code> no banco de dados é atualizado a cada chamada bem-sucedida ao endpoint de login.
+            Um usuário é considerado "Online" no painel se o último heartbeat foi há menos de 5 minutos.
           </DocRule>
         </section>
 
