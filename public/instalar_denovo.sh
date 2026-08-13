@@ -28,6 +28,11 @@ echo "Instalando dependências e gerando build..."
 bun install
 bun run build
 
+# 3.1 Sincronizar Assets (Correção para imagens quebradas)
+echo "Garantindo que logos e imagens foram copiados..."
+cp -r public/* .output/public/ 2>/dev/null || true
+
+
 # 4. Configurar Nginx (Isolado, sem SSL para limpar cache de protocolo)
 echo "Configurando Nginx na porta $PORT..."
 cat <<EOF > /etc/nginx/sites-available/000-lovblack-priority
