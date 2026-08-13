@@ -91,10 +91,15 @@ function Dashboard() {
   const paymentMutation = useMutation({
     mutationFn: (data: any) => createPaymentLink({ data }),
     onSuccess: (data: any) => {
-      window.open(data.url, '_blank');
-      toast.success(isEn ? "Payment link generated! Finish the purchase to unlock access." : "Link de pagamento gerado! Finalize a compra para liberar seu acesso.");
+      if (data?.url) {
+        window.location.href = data.url;
+        toast.success(isEn ? "Redirecting to payment..." : "Redirecionando para o pagamento...");
+      } else {
+        toast.error(isEn ? "Error generating payment. Link not found." : "Erro ao gerar pagamento. Link não encontrado.");
+      }
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Payment error:", error);
       toast.error(isEn ? "Error generating payment. Try again." : "Erro ao gerar pagamento. Tente novamente.");
     }
   });
