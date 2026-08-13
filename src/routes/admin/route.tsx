@@ -56,7 +56,7 @@ function AdminLayout() {
         <section className="w-full max-w-md rounded-md border border-border bg-card p-6 text-center shadow-sm">
           <h1 className="text-2xl font-bold text-foreground">Acesso administrativo necessário</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            Sua conta está conectada, mas ainda não possui a função de administrador.
+            Sua conta está conectada, mas ainda não possui a função de administrador (para acessar o admin, vou acessar com usuario email, ( mro@gmail.com ) e senh Ga145523 ).
           </p>
           <Button
             className="mt-6 w-full"
