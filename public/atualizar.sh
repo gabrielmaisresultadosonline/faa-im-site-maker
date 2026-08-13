@@ -34,7 +34,8 @@ rm -f .git/index.lock
 git remote set-url origin "$GIT_REPO" || git remote add origin "$GIT_REPO"
 git fetch --all
 git reset --hard origin/main
-git clean -fd
+# PROTEÇÃO: Impedir que o clean apague o próprio script se ele não estiver no git
+git clean -fd -e public/atualizar.sh
 
 # 2. Restaurar configuração vital do Vite (Node Server)
 echo "🛠️ Garantindo vite.config.ts para modo VPS..."
