@@ -913,9 +913,9 @@ function NoticesAndDocsManager() {
   const handlePaste = async (e: React.ClipboardEvent) => {
     const clipboardData = e.clipboardData;
     if (!clipboardData || !clipboardData.items) return;
-    const items = clipboardData.items;
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
+    
+    const items = Array.from(clipboardData.items);
+    for (const item of items) {
       if (item.type.indexOf("image") !== -1) {
         const file = item.getAsFile();
         if (file) {
