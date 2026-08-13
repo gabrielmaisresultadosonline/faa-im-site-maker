@@ -163,13 +163,17 @@ function Dashboard() {
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     
+    // Só inicia o polling se REALMENTE estivermos esperando (não ativado ainda)
     if (isWaitingPayment && !isActive) {
       interval = setInterval(() => {
+        console.log("Polling payment status for user:", user?.id);
         queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] });
       }, 5000);
     }
     
+    // Se ativou durante o polling, redireciona
     if (isWaitingPayment && isActive) {
+      console.log("Payment confirmed! Redirecting...");
       setIsWaitingPayment(false);
       navigate({ to: '/thanks', replace: true });
     }
