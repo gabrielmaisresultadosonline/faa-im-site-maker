@@ -10,7 +10,7 @@ const CORS = {
 };
 
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: CORS });
+  return new Response(JSON.stringify(body, null, 2), { status, headers: CORS });
 }
 
 interface LoginBody {

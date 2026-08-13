@@ -106,8 +106,8 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       ],
     };
 
-    // Tenta primeiro o endpoint de Checkout Integrado (api.checkout.infinitepay.io/links)
-    // conforme fornecido na documentação interativa pelo usuário.
+    // Endpoint Checkout Integrado (POST https://api.checkout.infinitepay.io/links)
+    // Conforme documentação oficial fornecida: Gerar link de pagamento e acompanhar vendas em tempo real.
     const response = await fetch("https://api.checkout.infinitepay.io/links", {
       method: "POST",
       headers: { 
@@ -125,7 +125,7 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       
       // Se deu 404 no endpoint de checkout, tentamos os outros endpoints como fallback
       if (response.status === 404) {
-        console.log("Endpoint api.checkout.infinitepay.io/links deu 404, tentando api.infinitepay.io/v1/checkout/links...");
+        console.log("Endpoint api.checkout.infinitepay.io/links deu 404, tentando fallbacks...");
         
         const fallbacks = [
           "https://api.infinitepay.io/v1/checkout/links",
@@ -165,8 +165,7 @@ export const createPaymentLink = createServerFn({ method: "POST" })
           }
         }
         
-        // Se todos falharem, reporta o erro 404 detalhado
-        throw new Error(`InfinitePay API Error 404: Endpoint não encontrado. Verifique se o seu Handle (${payload.handle}) está correto no App InfinitePay e se o Checkout Integrado está ativo.`);
+        throw new Error(`InfinitePay API Error 404: Endpoint não encontrado. Verifique se o seu Handle (${payload.handle}) está correto no App InfinitePay e se o Checkout Integrado está habilitado.`);
       }
 
       throw new Error(`InfinitePay API Error ${response.status}: ${errorText.substring(0, 200)}`);
