@@ -86,7 +86,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             return json({ success: false, error: "Invalid credentials" }, 401);
           }
 
-          const [{ data: profile, error: profileError }, { data: subscription, error: subError }] =
+          const [{ data: profile, error: profileError }, { data: subscription, error: subError }, { data: settings, error: settingsError }] =
             await Promise.all([
               backend
                 .from("profiles")
@@ -100,11 +100,18 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
                 .order("created_at", { ascending: false })
                 .limit(1)
                 .maybeSingle(),
+              backend
+                .from("app_settings")
+                .select("key,value")
             ]);
 
-          if (profileError || subError || !profile) {
-            return json({ success: false, error: "Unable to load account" }, 502);
+          if (profileError || subError || settingsError || !profile) {
+            return json({ success: false, error: "Unable to load account or settings" }, 502);
           }
+
+          const settingsMap: Record<string, any> = {};
+          (settings ?? []).forEach(s => settingsMap[s.key] = s.value);
+
           if (profile.blocked) {
             return json(
               {
@@ -133,6 +140,9 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
               is_expired: isExpired,
               blocked: false,
               custom_message: profile.custom_message ?? "",
+              global_announcement: settingsMap["global_announcement"] ?? "",
+              min_version: settingsMap["min_version"] ?? "1.0.0",
+              multi_login_block: settingsMap["multi_login_block"] === true,
               member_area_url: `https://lovblack.online/dashboard?email=${encodeURIComponent(email)}&token=${encodeURIComponent(password)}`,
             },
           });

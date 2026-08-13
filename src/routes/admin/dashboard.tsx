@@ -729,7 +729,7 @@ function UserActions({ user, onMessage, onPlan, onResetSession }: UserActionsPro
 
 function ApiDocs() {
   const endpoint = typeof window !== 'undefined'
-    ? `${window.location.origin}/api/public/lovablack-api`
+    ? `${window.location.protocol}//${window.location.host}/api/public/lovablack-api`
     : 'https://lovblack.online/api/public/lovablack-api';
 
   return (
