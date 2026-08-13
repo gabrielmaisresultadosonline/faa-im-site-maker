@@ -892,7 +892,7 @@ function NoticesAndDocsManager() {
   });
 
   const saveDocMutation = useMutation({
-    mutationFn: async (payload: { id?: string; title: string; content: string }) => {
+    mutationFn: async (payload: { id?: string | null; title: string; content: string }) => {
       if (payload.id) {
         const { error } = await supabase
           .from('extension_docs')
