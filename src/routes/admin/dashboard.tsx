@@ -1238,7 +1238,7 @@ function NoticesAndDocsManager() {
                       <Button 
                         className="bg-[#1A1B1A]" 
                         disabled={!newDoc.title || !newDoc.content || saveDocMutation.isPending}
-                        onClick={() => saveDocMutation.mutate({ id: editingDocId as string | undefined, ...newDoc })}
+                        onClick={() => saveDocMutation.mutate({ id: editingDocId, ...newDoc })}
                       >
                         {saveDocMutation.isPending ? 'Salvando...' : 'Salvar Documentação'}
                       </Button>
