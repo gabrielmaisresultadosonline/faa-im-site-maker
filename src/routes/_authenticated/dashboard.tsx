@@ -417,14 +417,19 @@ function Dashboard() {
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold flex flex-col items-center gap-4">
                 <div className="relative">
-                  <Loader2 className="w-16 h-16 text-[#DC0D0D] animate-spin" />
+                  <Loader2 className="w-20 h-20 text-[#DC0D0D] animate-spin" />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <CreditCard className="w-6 h-6 text-[#1A1B1A]" />
+                    <CreditCard className="w-8 h-8 text-[#1A1B1A]" />
                   </div>
                 </div>
-                {isEn ? 'Awaiting Payment' : 'Aguardando Pagamento'}
+                {isEn ? 'CARREGANDO...' : 'TELA CARREGANDO...'}
               </DialogTitle>
-              <DialogDescription className="text-lg pt-4">
+              <DialogDescription className="text-xl font-bold pt-4 text-[#1A1B1A]">
+                {isEn 
+                  ? 'Awaiting Payment' 
+                  : 'Aguardando Pagamento'}
+              </DialogDescription>
+              <DialogDescription className="text-base pt-2">
                 {isEn 
                   ? `We are confirming your ${selectedPlan?.name || ''} plan payment...` 
                   : `Estamos confirmando o pagamento do seu plano ${selectedPlan?.name || ''}...`}
