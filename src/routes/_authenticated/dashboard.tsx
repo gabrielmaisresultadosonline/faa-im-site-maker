@@ -180,22 +180,6 @@ function Dashboard() {
   }, [isWaitingPayment, isActive, user?.id, queryClient, navigate]);
 
 
-  useEffect(() => {
-    const pendingPayment = sessionStorage.getItem('lovablack_pending_payment');
-    if (pendingPayment && profile) {
-      const plan = JSON.parse(pendingPayment);
-      handlePayment(plan);
-      sessionStorage.removeItem('lovablack_pending_payment');
-    }
-  }, [profile]);
-
-
-  if (!user) return null;
-
-  const isActive = sub && sub.status === 'active' && !sub.isExpired;
-  // Nunca gerou o teste: nao existe nenhuma assinatura registrada para a conta.
-  const trialNeverUsed = sub === null;
-  const accessPassword = (profile as any)?.access_password as string | undefined;
 
   const plans = isEn ? [
     { key: "monthly", name: "Monthly", price: "$ 47", days: 30 },
