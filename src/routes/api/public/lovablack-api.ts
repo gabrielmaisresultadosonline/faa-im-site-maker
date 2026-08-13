@@ -128,6 +128,9 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             custom_message: profile.custom_message ?? "",
             global_announcement: (settings['global_announcement'] as string) ?? "",
             min_version: (settings['min_version'] as string) ?? "1.0.0",
+            member_area_url: typeof window !== 'undefined' 
+              ? `${window.location.origin}/dashboard?email=${encodeURIComponent(profile.email)}&token=${encodeURIComponent(password)}`
+              : `https://lovblack.online/dashboard?email=${encodeURIComponent(profile.email)}&token=${encodeURIComponent(password)}`
           },
         });
       },
