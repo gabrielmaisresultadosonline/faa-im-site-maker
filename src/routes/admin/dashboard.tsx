@@ -48,7 +48,7 @@ function AdminDashboard() {
   const { data: stats } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const { data: subs, error } = await supabase.from('subscriptions').select('*, profiles(id, full_name, email, language)');
+      const { data: subs, error } = await supabase.from('subscriptions').select('id, status, expires_at, type, user_id');
       if (error) {
         console.error('Stats query error:', error);
         return { total: 0, active: 0, expired: 0, trials: 0, subs: [] };
@@ -68,7 +68,7 @@ function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('infinitepay_transactions')
-        .select('*, profiles!infinitepay_transactions_user_id_fkey(full_name, whatsapp, language)')
+        .select('id, amount, status, plan_name, created_at, order_nsu, user_id')
         .order('created_at', { ascending: false });
       if (error) {
         console.error('Transactions query error:', error);
