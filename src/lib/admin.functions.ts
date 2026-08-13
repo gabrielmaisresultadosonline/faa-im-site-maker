@@ -2,8 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const planSchema = z.enum(["trial", "monthly", "semiannual", "annual"]);
-
 /** Lista todos os usuarios com perfil, ultimo acesso e assinatura mais recente. */
 export const adminListUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -11,15 +9,13 @@ export const adminListUsers = createServerFn({ method: "GET" })
     const { assertAdmin } = await import("@/lib/admin.server");
     await assertAdmin(context.supabase, context.userId);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { data: profiles, error } = await supabaseAdmin
+    const { data: profiles, error } = await context.supabase
       .from("profiles")
       .select("*")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
-    const { data: subs, error: subsError } = await supabaseAdmin
+    const { data: subs, error: subsError } = await context.supabase
       .from("subscriptions")
       .select("*")
       .order("created_at", { ascending: false });
@@ -59,7 +55,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
         fullName: z.string().min(1),
         whatsapp: z.string().optional(),
         language: z.enum(["pt", "en"]).default("pt"),
-        plan: planSchema,
+        plan: z.enum(["trial", "monthly", "semiannual", "annual"]),
         days: z.number().int().positive().optional(),
       })
       .parse(data),
@@ -69,40 +65,57 @@ export const adminCreateUser = createServerFn({ method: "POST" })
     const { assertAdmin, computeExpiry } = await import("@/lib/admin.server");
     await assertAdmin(context.supabase, context.userId);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { generateAccessPassword } = await import("@/lib/access-code");
 
-    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
-      email: data.email,
-      password: data.password,
-      email_confirm: true,
-      user_metadata: { full_name: data.fullName, language: data.language },
+    const backendUrl = process.env["SUPABASE_URL"];
+    const publishableKey = process.env["SUPABASE_PUBLISHABLE_KEY"];
+    if (!backendUrl || !publishableKey) {
+      throw new Error("Configuração do backend indisponível no servidor.");
+    }
+
+    const signupResponse = await fetch(`${backendUrl}/auth/v1/signup`, {
+      method: "POST",
+      headers: {
+        apikey: publishableKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: data.email,
+        password: data.password,
+        data: { full_name: data.fullName, language: data.language },
+      }),
     });
-    if (error || !created.user) throw new Error(error?.message ?? "Falha ao criar usuário");
+    const signupResult = (await signupResponse.json()) as {
+      id?: string;
+      user?: { id?: string };
+      msg?: string;
+      message?: string;
+      error_description?: string;
+    };
+    const userId = signupResult.user?.id ?? signupResult.id;
+    if (!signupResponse.ok || !userId) {
+      throw new Error(
+        signupResult.msg ?? signupResult.message ?? signupResult.error_description ?? "Falha ao criar usuário",
+      );
+    }
 
-    const userId = created.user.id;
-
-    // Use admin client to set role
-    await supabaseAdmin.from("user_roles").upsert({
-      user_id: userId,
-      role: "user",
-    });
-
-    await supabaseAdmin.from("profiles").upsert({
-      id: userId,
-      email: data.email,
+    const { error: profileError } = await context.supabase.from("profiles").update({
       full_name: data.fullName,
       whatsapp: data.whatsapp ?? null,
       language: data.language,
       access_password: generateAccessPassword(),
-    });
+    }).eq("id", userId);
+    if (profileError) throw new Error(`Usuário criado, mas o perfil falhou: ${profileError.message}`);
 
-    await supabaseAdmin.from("subscriptions").insert({
+    const { error: subscriptionError } = await context.supabase.from("subscriptions").insert({
       user_id: userId,
       type: data.plan,
       status: "active",
       expires_at: computeExpiry(data.plan, data.days),
     });
+    if (subscriptionError) {
+      throw new Error(`Usuário criado, mas o plano falhou: ${subscriptionError.message}`);
+    }
 
     return { userId };
   });
@@ -124,8 +137,6 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
     const { assertAdmin } = await import("@/lib/admin.server");
     await assertAdmin(context.supabase, context.userId);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
     const patch: {
       blocked?: boolean;
       custom_message?: string | null;
@@ -137,7 +148,7 @@ export const adminUpdateUser = createServerFn({ method: "POST" })
 
     if (Object.keys(patch).length === 0) return { ok: true };
 
-    const { error } = await supabaseAdmin.from("profiles").update(patch).eq("id", data.userId);
+    const { error } = await context.supabase.from("profiles").update(patch).eq("id", data.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -148,7 +159,7 @@ export const adminSetPlan = createServerFn({ method: "POST" })
     z
       .object({
         userId: z.string().uuid(),
-        plan: planSchema,
+        plan: z.enum(["trial", "monthly", "semiannual", "annual"]),
         days: z.number().int().positive().optional(),
       })
       .parse(data),
@@ -158,9 +169,7 @@ export const adminSetPlan = createServerFn({ method: "POST" })
     const { assertAdmin, computeExpiry } = await import("@/lib/admin.server");
     await assertAdmin(context.supabase, context.userId);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { error } = await supabaseAdmin.from("subscriptions").upsert({
+    const { error } = await context.supabase.from("subscriptions").upsert({
       user_id: data.userId,
       type: data.plan,
       status: "active",
