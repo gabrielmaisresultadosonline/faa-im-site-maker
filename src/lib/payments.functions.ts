@@ -59,6 +59,7 @@ export const createPaymentLink = createServerFn({ method: "POST" })
           "metadata[plan_key]": data.planKey,
           "metadata[plan_name]": planName,
           "metadata[plan_duration_days]": planDurationDays.toString(),
+          "payment_method_types[0]": "card",
         }).toString(),
       });
 
