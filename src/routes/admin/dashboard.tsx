@@ -849,6 +849,9 @@ function NoticesAndDocsManager() {
     content: '',
     image_thumb_url: ''
   });
+  
+  const [newDoc, setNewDoc] = useState({ title: '', content: '' });
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
 
   const { data: notices, isLoading: loadingNotices } = useQuery({
     queryKey: ['admin-notices', extId],
