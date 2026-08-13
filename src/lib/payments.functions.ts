@@ -106,21 +106,21 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       ],
     };
 
-    const response = await fetch("https://api.checkout.infinitepay.io/v1/links", {
+    const response = await fetch("https://api.infinitepay.io/v1/checkout/links", {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "origin": "https://paguemro.infinitepay.io"
       },
       body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("InfinitePay Error Payload:", payload);
-      console.error("InfinitePay Response:", response.status, errorText);
-      throw new Error(`InfinitePay Error ${response.status}: ${errorText.substring(0, 150)}`);
+      console.error("InfinitePay Error Payload:", JSON.stringify(payload, null, 2));
+      console.error("InfinitePay Response Status:", response.status);
+      console.error("InfinitePay Response Body:", errorText);
+      throw new Error(`InfinitePay API Error ${response.status}: ${errorText.substring(0, 200)}`);
     }
 
     const result = (await response.json()) as { url?: string };
