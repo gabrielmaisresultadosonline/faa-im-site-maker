@@ -29,17 +29,26 @@ function Dashboard() {
 
   // Auto-login logic for extension redirection
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const params = new URLSearchParams(window.location.search);
     const email = params.get('email');
     const token = params.get('token');
 
     if (email && token) {
       const performAutoLogin = async () => {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password: token });
-        if (!error && data.session) {
-          toast.success("Acesso automático realizado!");
-          // Limpa a URL para evitar re-logins desnecessários ao atualizar
-          navigate({ to: '/dashboard', replace: true });
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({ email, password: token });
+          if (!error && data.session) {
+            toast.success("Acesso automático realizado!");
+            // Remove params from URL
+            const url = new URL(window.location.href);
+            url.searchParams.delete('email');
+            url.searchParams.delete('token');
+            navigate({ to: url.pathname + url.search, replace: true });
+          }
+        } catch (err) {
+          console.error("Auto-login error:", err);
         }
       };
       performAutoLogin();
@@ -124,8 +133,8 @@ function Dashboard() {
   });
 
   useEffect(() => {
-    let timer: NodeJS.Timeout | undefined;
-    if (sub?.type === 'trial' && sub.status === 'active') {
+    let timer: any;
+    if (sub?.type === 'trial' && sub.status === 'active' && sub.expires_at) {
       timer = setInterval(() => {
         const now = new Date().getTime();
         const expiry = new Date(sub.expires_at).getTime();
@@ -144,7 +153,7 @@ function Dashboard() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [sub]);
+  }, [sub?.type, sub?.status, sub?.expires_at]);
 
   useEffect(() => {
     const pendingPayment = sessionStorage.getItem('lovablack_pending_payment');
@@ -170,13 +179,13 @@ function Dashboard() {
 
   // Polling para verificar se o pagamento foi confirmado via webhook
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    let interval: any = null;
     
     // Só inicia o polling se REALMENTE estivermos esperando (não ativado ainda)
-    if (isWaitingPayment && !isActive) {
+    if (isWaitingPayment && !isActive && user?.id) {
       interval = setInterval(() => {
-        console.log("Polling payment status for user:", user?.id);
-        queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] });
+        console.log("Polling payment status for user:", user.id);
+        queryClient.invalidateQueries({ queryKey: ['subscription', user.id] });
       }, 5000);
     }
     
