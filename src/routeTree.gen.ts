@@ -17,6 +17,7 @@ import { Route as ThanksRouteImport } from './routes/thanks'
 import { Route as ThanksEnRouteImport } from './routes/thanks-en'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as ApiPublicAtualizarScriptRouteImport } from './routes/api/public/atualizar-script'
 import { Route as ApiPublicLovablackApiRouteImport } from './routes/api/public/lovablack-api'
 import { Route as ApiPublicWebhookInfinitepayRouteImport } from './routes/api/public/webhook-infinitepay'
 import { Route as ApiPublicWebhookStripeRouteImport } from './routes/api/public/webhook-stripe'
@@ -60,6 +61,12 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const ApiPublicAtualizarScriptRoute =
+  ApiPublicAtualizarScriptRouteImport.update({
+    id: '/api/public/atualizar-script',
+    path: '/api/public/atualizar-script',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicLovablackApiRoute = ApiPublicLovablackApiRouteImport.update({
   id: '/api/public/lovablack-api',
   path: '/api/public/lovablack-api',
@@ -85,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/thanks-en': typeof ThanksEnRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/api/public/atualizar-script': typeof ApiPublicAtualizarScriptRoute
   '/api/public/lovablack-api': typeof ApiPublicLovablackApiRoute
   '/api/public/webhook-infinitepay': typeof ApiPublicWebhookInfinitepayRoute
   '/api/public/webhook-stripe': typeof ApiPublicWebhookStripeRoute
@@ -97,6 +105,7 @@ export interface FileRoutesByTo {
   '/thanks-en': typeof ThanksEnRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/api/public/atualizar-script': typeof ApiPublicAtualizarScriptRoute
   '/api/public/lovablack-api': typeof ApiPublicLovablackApiRoute
   '/api/public/webhook-infinitepay': typeof ApiPublicWebhookInfinitepayRoute
   '/api/public/webhook-stripe': typeof ApiPublicWebhookStripeRoute
@@ -111,6 +120,7 @@ export interface FileRoutesById {
   '/thanks-en': typeof ThanksEnRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/api/public/atualizar-script': typeof ApiPublicAtualizarScriptRoute
   '/api/public/lovablack-api': typeof ApiPublicLovablackApiRoute
   '/api/public/webhook-infinitepay': typeof ApiPublicWebhookInfinitepayRoute
   '/api/public/webhook-stripe': typeof ApiPublicWebhookStripeRoute
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
     | '/thanks-en'
     | '/dashboard'
     | '/admin/dashboard'
+    | '/api/public/atualizar-script'
     | '/api/public/lovablack-api'
     | '/api/public/webhook-infinitepay'
     | '/api/public/webhook-stripe'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '/thanks-en'
     | '/dashboard'
     | '/admin/dashboard'
+    | '/api/public/atualizar-script'
     | '/api/public/lovablack-api'
     | '/api/public/webhook-infinitepay'
     | '/api/public/webhook-stripe'
@@ -150,6 +162,7 @@ export interface FileRouteTypes {
     | '/thanks-en'
     | '/_authenticated/dashboard'
     | '/admin/dashboard'
+    | '/api/public/atualizar-script'
     | '/api/public/lovablack-api'
     | '/api/public/webhook-infinitepay'
     | '/api/public/webhook-stripe'
@@ -162,6 +175,7 @@ export interface RootRouteChildren {
   InglesRoute: typeof InglesRoute
   ThanksRoute: typeof ThanksRoute
   ThanksEnRoute: typeof ThanksEnRoute
+  ApiPublicAtualizarScriptRoute: typeof ApiPublicAtualizarScriptRoute
   ApiPublicLovablackApiRoute: typeof ApiPublicLovablackApiRoute
   ApiPublicWebhookInfinitepayRoute: typeof ApiPublicWebhookInfinitepayRoute
   ApiPublicWebhookStripeRoute: typeof ApiPublicWebhookStripeRoute
@@ -225,6 +239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDashboardRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/api/public/atualizar-script': {
+      id: '/api/public/atualizar-script'
+      path: '/api/public/atualizar-script'
+      fullPath: '/api/public/atualizar-script'
+      preLoaderRoute: typeof ApiPublicAtualizarScriptRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/lovablack-api': {
       id: '/api/public/lovablack-api'
       path: '/api/public/lovablack-api'
@@ -279,6 +300,7 @@ const rootRouteChildren: RootRouteChildren = {
   InglesRoute: InglesRoute,
   ThanksRoute: ThanksRoute,
   ThanksEnRoute: ThanksEnRoute,
+  ApiPublicAtualizarScriptRoute: ApiPublicAtualizarScriptRoute,
   ApiPublicLovablackApiRoute: ApiPublicLovablackApiRoute,
   ApiPublicWebhookInfinitepayRoute: ApiPublicWebhookInfinitepayRoute,
   ApiPublicWebhookStripeRoute: ApiPublicWebhookStripeRoute,
