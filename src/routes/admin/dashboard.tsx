@@ -745,9 +745,9 @@ function ApiDocs() {
             Se <code>blocked: true</code> (HTTP 403), a extensão deve encerrar a sessão imediatamente,
             limpar dados sensíveis e exibir a tela de bloqueio administrativo.
           </DocRule>
-          <DocRule icon={Clock} title="2. Expiração de Plano (is_expired)">
+          <DocRule icon={Clock} title="2. Expiração de Plano e Compra Direta (is_expired)">
             Retorna <code>true</code> quando o teste de 20 minutos acabou ou a assinatura expirou.
-            A extensão deve redirecionar para a página de checkout.
+            Nessa documentação, precisa aparecer algo exemplo: se ele está usando 20 min e expirando na própria ferramenta, tem que aparecer para ele pagar. O botão de pagar direto na ferramenta, como ele já está logado, ele vai clicar e vai com e-mail e senha dele direto para a área de membros sem precisar pedir login; ele vai acessar direto ali, aparecerá o dashboard do cliente com o acesso dele e os planos para ele fazer isso dentro da área de dashboard. Ou seja, na ferramenta vai um botão para comprar um plano, ele vai clicar e vai direto para área de membros já logado, pois já vai com e-mail e senha dele que está logado na ferramenta extensão e acessará nosso site direto.
           </DocRule>
           <DocRule icon={Download} title="3. Controle de Versão (min_version)">
             A extensão compara a versão local do manifest com <code>min_version</code>.
