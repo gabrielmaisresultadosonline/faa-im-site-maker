@@ -106,8 +106,9 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       ],
     };
 
-    // Tenta primeiro o endpoint que parece estar documentado para Checkout
-    const response = await fetch("https://api.infinitepay.io/v1/checkout/links", {
+    // Tenta primeiro o endpoint de Checkout Integrado (api.checkout.infinitepay.io/links)
+    // conforme fornecido na documentação interativa pelo usuário.
+    const response = await fetch("https://api.checkout.infinitepay.io/links", {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
@@ -122,38 +123,50 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       console.error("InfinitePay Response Status:", response.status);
       console.error("InfinitePay Response Body:", errorText);
       
-      // Se deu 404 no endpoint de checkout, tentamos o endpoint genérico de links
+      // Se deu 404 no endpoint de checkout, tentamos os outros endpoints como fallback
       if (response.status === 404) {
-        console.log("Endpoint /checkout/links deu 404, tentando /v1/links...");
-        const altResponse = await fetch("https://api.infinitepay.io/v1/links", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+        console.log("Endpoint api.checkout.infinitepay.io/links deu 404, tentando api.infinitepay.io/v1/checkout/links...");
+        
+        const fallbacks = [
+          "https://api.infinitepay.io/v1/checkout/links",
+          "https://api.infinitepay.io/v1/links"
+        ];
 
-        if (altResponse.ok) {
-          const altResult = (await altResponse.json()) as { url?: string };
-          if (altResult.url) {
-            await supabaseAdmin.from("infinitepay_transactions").insert({
-              user_id: userId,
-              order_nsu: orderNsu,
-              amount: priceCents,
-              plan_name: planName,
-              plan_duration_days: planDurationDays,
-              payment_link: altResult.url,
-              status: "pending",
-              currency: "BRL",
-              provider: "infinitepay",
+        for (const url of fallbacks) {
+          try {
+            const altResponse = await fetch(url, {
+              method: "POST",
+              headers: { 
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+              },
+              body: JSON.stringify(payload),
             });
-            return { url: altResult.url };
+
+            if (altResponse.ok) {
+              const altResult = (await altResponse.json()) as { url?: string };
+              if (altResult.url) {
+                await supabaseAdmin.from("infinitepay_transactions").insert({
+                  user_id: userId,
+                  order_nsu: orderNsu,
+                  amount: priceCents,
+                  plan_name: planName,
+                  plan_duration_days: planDurationDays,
+                  payment_link: altResult.url,
+                  status: "pending",
+                  currency: "BRL",
+                  provider: "infinitepay",
+                });
+                return { url: altResult.url };
+              }
+            }
+          } catch (e) {
+            console.error(`Fallback failed for ${url}:`, e);
           }
         }
         
-        // Se ambos falharem, reporta o erro original do 404 com detalhe
-        throw new Error(`InfinitePay API Error 404: O endpoint de pagamentos não foi encontrado. Isso geralmente ocorre quando o "handle" (${payload.handle}) não existe ou o token de API (se necessário) não está configurado. Verifique seu painel InfinitePay.`);
+        // Se todos falharem, reporta o erro 404 detalhado
+        throw new Error(`InfinitePay API Error 404: Endpoint não encontrado. Verifique se o seu Handle (${payload.handle}) está correto no App InfinitePay e se o Checkout Integrado está ativo.`);
       }
 
       throw new Error(`InfinitePay API Error ${response.status}: ${errorText.substring(0, 200)}`);
