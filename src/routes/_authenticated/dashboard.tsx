@@ -180,9 +180,6 @@ function Dashboard() {
       if (interval) clearInterval(interval);
     };
   }, [isWaitingPayment, isActive, user?.id, queryClient, navigate]);
-
-
-
   const plans = isEn ? [
     { key: "monthly", name: "Monthly", price: "$ 47", days: 30 },
     { key: "semiannual", name: "6 Months", price: "$ 147", days: 180 },
