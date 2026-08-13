@@ -6,7 +6,7 @@ export const Route = createFileRoute('/api/public/atualizar-script')({
       GET: async () => {
         const script = `#!/bin/bash
 # ==============================================================================
-# LOVBLACK MASTER UPDATER V10 - HYDRATION FIX & CACHE CLEAN
+# LOVBLACK MASTER UPDATER V11 - HYDRATION FIX & CACHE CLEAN
 # ==============================================================================
 set -e
 
@@ -19,7 +19,7 @@ INSTALL_DIR=$(dirname "$PUBLIC_DIR")
 PM2_NAME="lovblack_master"
 GIT_REPO="https://github.com/gabrielmaisresultadosonline/faa-im-site-maker.git"
 
-echo "🚀 Iniciando Atualizador Mestre V9 (Seguro para Dados)..."
+echo "🚀 Iniciando Atualizador Mestre V11 (Seguro para Dados)..."
 echo "📍 Pasta: $INSTALL_DIR"
 
 cd "$INSTALL_DIR"
@@ -65,8 +65,10 @@ fi
 bun install
 
 # 4. Build de Produção
-echo "🏗️ Criando Build (Limpando caches para evitar erro React #310)..."
-rm -rf .output .vite .nitro node_modules/.cache
+echo "🏗️ Criando Build (Deep Cache Clean contra Erro React #310)..."
+rm -rf .output .vite .nitro .tanstack dist
+rm -rf node_modules/.cache
+# Opcional: bun install --frozen-lockfile
 bun run build
 
 # 5. Sincronização de Imagens/Assets
@@ -91,7 +93,7 @@ echo "🌐 Verificando Status..."
 sleep 5
 if curl -fsS --max-time 10 http://127.0.0.1:8098/ >/dev/null; then
     echo "=================================================="
-    echo "     ✅ ATUALIZADO COM SUCESSO - V9 MASTER"
+    echo "     ✅ ATUALIZADO COM SUCESSO - V11 MASTER"
     echo "=================================================="
 else
     echo "❌ FALHA NA INICIALIZAÇÃO"
