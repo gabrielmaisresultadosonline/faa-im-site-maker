@@ -99,12 +99,16 @@ function Dashboard() {
       }
     },
     onError: (error: any) => {
-      console.error("Payment error:", error);
+      console.error("Detailed Payment Error:", {
+        message: error?.message,
+        stack: error?.stack,
+        error
+      });
       const message = error?.message || "";
       toast.error(
         isEn 
-          ? `Error generating payment: ${message || "Try again."}` 
-          : `Erro ao gerar pagamento: ${message || "Tente novamente."}`
+          ? `Error generating payment: ${message || "Internal Server Error"}` 
+          : `Erro ao gerar pagamento: ${message || "Erro Interno no Servidor"}`
       );
     }
   });

@@ -116,13 +116,18 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       body: JSON.stringify(payload),
     });
 
-    const result = (await response.json()) as { url?: string };
-
-    if (!response.ok || !result.url) {
+    if (!response.ok) {
       const errorText = await response.text();
       console.error("InfinitePay Error Payload:", payload);
       console.error("InfinitePay Response:", response.status, errorText);
-      throw new Error(`Falha ao gerar link de pagamento: ${response.status} ${errorText.substring(0, 100)}`);
+      throw new Error(`InfinitePay Error ${response.status}: ${errorText.substring(0, 150)}`);
+    }
+
+    const result = (await response.json()) as { url?: string };
+
+    if (!result.url) {
+      console.error("InfinitePay Empty URL:", result);
+      throw new Error("InfinitePay retornou sucesso, mas sem link de pagamento (URL vazia).");
     }
 
     await supabaseAdmin.from("infinitepay_transactions").insert({
