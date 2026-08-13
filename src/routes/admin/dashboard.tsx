@@ -124,7 +124,7 @@ function AdminDashboard() {
       <div className="max-w-7xl mx-auto space-y-8">
         <header>
           <h1 className="text-3xl font-bold text-[#1A1B1A]">Painel Administrativo</h1>
-          <p className="text-neutral-500">tente denovo \n\nO push foi rejeitado pelas regras do repositório. Verifique as configurações de proteção da sua filial.</p>
+          <p className="text-neutral-500">Gestão Total LOVABLACK</p>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
