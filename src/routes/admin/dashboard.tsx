@@ -68,7 +68,7 @@ function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('infinitepay_transactions')
-        .select('id, amount, status, plan_name, created_at, order_nsu, user_id')
+        .select('id, amount, status, plan_name, created_at, order_nsu, user_id, provider, currency, payment_link')
         .order('created_at', { ascending: false });
       if (error) {
         console.error('Transactions query error:', error);
@@ -117,14 +117,22 @@ function AdminDashboard() {
 
   const setPlanMutation = useMutation({
     mutationFn: (data: { userId: string; plan: PlanType }) => setPlanFn({ data }),
-    onSuccess: () => { invalidateUsers(); toast.success('Plano liberado!'); },
+    onSuccess: () => {
+      invalidateUsers();
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+      toast.success('Plano liberado!');
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const createUserMutation = useMutation({
     mutationFn: (data: CreateUserPayload) =>
       createUser({ data }),
-    onSuccess: () => { invalidateUsers(); toast.success('Usuário criado com sucesso!'); },
+    onSuccess: () => {
+      invalidateUsers();
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+      toast.success('Usuário criado com sucesso!');
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -374,10 +382,10 @@ function AdminDashboard() {
                     {transactions?.map((tx: any) => (
                       <TableRow key={tx.id}>
                         <TableCell>
-                          <div className="font-bold">{tx.profiles?.full_name || 'Usuário'}</div>
-                          <div className="text-xs text-neutral-400">{tx.profiles?.whatsapp}</div>
+                          <div className="font-bold">{users?.find((user) => user.id === tx.user_id)?.full_name || 'Usuário'}</div>
+                          <div className="text-xs text-neutral-400">{users?.find((user) => user.id === tx.user_id)?.whatsapp}</div>
                         </TableCell>
-                        <TableCell><LangTag lang={tx.profiles?.language} /></TableCell>
+                        <TableCell><LangTag lang={users?.find((user) => user.id === tx.user_id)?.language ?? null} /></TableCell>
                         <TableCell>
                           <Badge className={tx.provider === 'stripe' ? 'bg-indigo-100 text-indigo-800' : 'bg-neutral-100 text-neutral-800'}>
                             {tx.provider === 'stripe' ? 'Stripe' : 'InfinitePay'}
@@ -573,10 +581,10 @@ function AdminDashboard() {
                     {stats?.subs?.map((sub: any) => (
                       <TableRow key={sub.id}>
                         <TableCell>
-                          <div className="font-medium">{sub.profiles?.full_name || 'N/A'}</div>
-                          <div className="text-xs text-neutral-400">{sub.profiles?.whatsapp}</div>
+                          <div className="font-medium">{users?.find((user) => user.id === sub.user_id)?.full_name || 'N/A'}</div>
+                          <div className="text-xs text-neutral-400">{users?.find((user) => user.id === sub.user_id)?.whatsapp}</div>
                         </TableCell>
-                        <TableCell><LangTag lang={sub.profiles?.language} withCurrency /></TableCell>
+                        <TableCell><LangTag lang={users?.find((user) => user.id === sub.user_id)?.language ?? null} withCurrency /></TableCell>
                         <TableCell><Badge variant="outline">{sub.type.toUpperCase()}</Badge></TableCell>
                         <TableCell>
                           <Badge className={sub.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
