@@ -6,7 +6,7 @@ export const Route = createFileRoute('/api/public/atualizar-script')({
       GET: async () => {
         const script = `#!/bin/bash
 # ==============================================================================
-# LOVBLACK MASTER UPDATER V8 - DATA SAFE & GIT SYNC
+# LOVBLACK MASTER UPDATER V9 - DATA SAFE & GIT SYNC
 # ==============================================================================
 set -e
 
@@ -17,9 +17,9 @@ INSTALL_DIR=$(dirname "$PUBLIC_DIR")
 
 # Configurações
 PM2_NAME="lovblack_master"
-GIT_REPO="https://github.com/gabrielmaisresultadosonline/awesome-website-creator.git"
+GIT_REPO="https://github.com/gabrielmaisresultadosonline/faa-im-site-maker.git"
 
-echo "🚀 Iniciando Atualizador Mestre V8 (Seguro para Dados)..."
+echo "🚀 Iniciando Atualizador Mestre V9 (Seguro para Dados)..."
 echo "📍 Pasta: $INSTALL_DIR"
 
 cd "$INSTALL_DIR"
