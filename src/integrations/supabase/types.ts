@@ -162,6 +162,7 @@ export type Database = {
           full_name: string | null
           id: string
           language: string
+          last_heartbeat_at: string | null
           last_login_at: string | null
           session_id: string | null
           whatsapp: string | null
@@ -175,6 +176,7 @@ export type Database = {
           full_name?: string | null
           id: string
           language?: string
+          last_heartbeat_at?: string | null
           last_login_at?: string | null
           session_id?: string | null
           whatsapp?: string | null
@@ -188,6 +190,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           language?: string
+          last_heartbeat_at?: string | null
           last_login_at?: string | null
           session_id?: string | null
           whatsapp?: string | null
