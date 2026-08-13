@@ -144,6 +144,22 @@ function Dashboard() {
     };
   }, [sub]);
 
+  useEffect(() => {
+    const pendingPayment = sessionStorage.getItem('lovablack_pending_payment');
+    if (pendingPayment && profile) {
+      const plan = JSON.parse(pendingPayment);
+      handlePayment(plan);
+      sessionStorage.removeItem('lovablack_pending_payment');
+    }
+  }, [profile]);
+
+  if (!user) return null;
+
+  const isActive = sub && sub.status === 'active' && !sub.isExpired;
+  // Nunca gerou o teste: nao existe nenhuma assinatura registrada para a conta.
+  const trialNeverUsed = sub === null;
+  const accessPassword = (profile as any)?.access_password as string | undefined;
+
   // Polling para verificar se o pagamento foi confirmado via webhook
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -155,13 +171,14 @@ function Dashboard() {
     
     if (isWaitingPayment && isActive) {
       setIsWaitingPayment(false);
-      navigate({ to: '/thanks' });
+      navigate({ to: '/thanks', replace: true });
     }
 
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [isWaitingPayment, isActive, user?.id, queryClient, navigate]);
+
 
   useEffect(() => {
     const pendingPayment = sessionStorage.getItem('lovablack_pending_payment');
