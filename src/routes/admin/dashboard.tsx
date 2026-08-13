@@ -385,7 +385,7 @@ function AdminDashboard() {
                           <div className="font-bold">{users?.find((user) => user.id === tx.user_id)?.full_name || 'Usuário'}</div>
                           <div className="text-xs text-neutral-400">{users?.find((user) => user.id === tx.user_id)?.whatsapp}</div>
                         </TableCell>
-                        <TableCell><LangTag lang={users?.find((user) => user.id === tx.user_id)?.language} /></TableCell>
+                        <TableCell><LangTag lang={users?.find((user) => user.id === tx.user_id)?.language ?? null} /></TableCell>
                         <TableCell>
                           <Badge className={tx.provider === 'stripe' ? 'bg-indigo-100 text-indigo-800' : 'bg-neutral-100 text-neutral-800'}>
                             {tx.provider === 'stripe' ? 'Stripe' : 'InfinitePay'}
@@ -584,7 +584,7 @@ function AdminDashboard() {
                           <div className="font-medium">{users?.find((user) => user.id === sub.user_id)?.full_name || 'N/A'}</div>
                           <div className="text-xs text-neutral-400">{users?.find((user) => user.id === sub.user_id)?.whatsapp}</div>
                         </TableCell>
-                        <TableCell><LangTag lang={users?.find((user) => user.id === sub.user_id)?.language} withCurrency /></TableCell>
+                        <TableCell><LangTag lang={users?.find((user) => user.id === sub.user_id)?.language ?? null} withCurrency /></TableCell>
                         <TableCell><Badge variant="outline">{sub.type.toUpperCase()}</Badge></TableCell>
                         <TableCell>
                           <Badge className={sub.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
