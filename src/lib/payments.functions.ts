@@ -110,7 +110,8 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
+        "origin": "https://paguemro.infinitepay.io"
       },
       body: JSON.stringify(payload),
     });
@@ -118,8 +119,10 @@ export const createPaymentLink = createServerFn({ method: "POST" })
     const result = (await response.json()) as { url?: string };
 
     if (!response.ok || !result.url) {
-      console.error("InfinitePay Error:", result);
-      throw new Error("Falha ao gerar link de pagamento");
+      const errorText = await response.text();
+      console.error("InfinitePay Error Payload:", payload);
+      console.error("InfinitePay Response:", response.status, errorText);
+      throw new Error(`Falha ao gerar link de pagamento: ${response.status} ${errorText.substring(0, 100)}`);
     }
 
     await supabaseAdmin.from("infinitepay_transactions").insert({
