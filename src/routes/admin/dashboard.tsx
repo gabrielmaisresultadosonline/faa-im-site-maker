@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Users, CreditCard, Clock, CheckCircle, XCircle, Download, Video, Settings, BookOpen, Ban, MessageSquare, RefreshCw, UserPlus } from 'lucide-react';
+import { Users, CreditCard, Clock, CheckCircle, XCircle, Download, Video, Settings, BookOpen, Ban, MessageSquare, RefreshCw, UserPlus, AlertTriangle, FileText, Plus, Trash2, Image as ImageIcon, ExternalLink, Clipboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -141,7 +141,8 @@ function AdminDashboard() {
                 { id: 'usuarios', label: 'Usuários', icon: Users },
                 { id: 'vendas', label: 'Vendas', icon: CreditCard },
                 { id: 'config', label: 'Configurações', icon: Settings },
-                { id: 'docs', label: 'Documentação', icon: BookOpen },
+                { id: 'avisos', label: 'Avisos & Docs', icon: AlertTriangle },
+                { id: 'docs', label: 'API Ref', icon: BookOpen },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -179,6 +180,7 @@ function AdminDashboard() {
                 <TabsTrigger value="usuarios">Usuários</TabsTrigger>
                 <TabsTrigger value="vendas">Vendas</TabsTrigger>
                 <TabsTrigger value="config">Configurações</TabsTrigger>
+                <TabsTrigger value="avisos">Avisos & Docs</TabsTrigger>
                 <TabsTrigger value="docs">Documentação</TabsTrigger>
               </TabsList>
             </Tabs>
@@ -313,6 +315,11 @@ function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+          
+          {/* ============ AVISOS & DOCS ============ */}
+          <TabsContent value="avisos" className="space-y-6">
+            <NoticesAndDocsManager />
           </TabsContent>
 
           {/* ============ VENDAS ============ */}
