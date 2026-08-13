@@ -900,9 +900,10 @@ function NoticesAndDocsManager() {
           .eq('id', payload.id);
         if (error) throw error;
       } else {
+        const { id, ...rest } = payload;
         const { error } = await supabase
           .from('extension_docs')
-          .insert([{ ...payload, extension_id: extId }]);
+          .insert([{ ...rest, extension_id: extId }]);
         if (error) throw error;
       }
     },
