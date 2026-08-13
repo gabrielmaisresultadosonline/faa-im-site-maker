@@ -155,6 +155,12 @@ function Dashboard() {
 
   if (!user) return null;
 
+  const isActive = sub && sub.status === 'active' && !sub.isExpired;
+  // Nunca gerou o teste: nao existe nenhuma assinatura registrada para a conta.
+  const trialNeverUsed = sub === null;
+  const accessPassword = (profile as any)?.access_password as string | undefined;
+
+
 
   // Polling para verificar se o pagamento foi confirmado via webhook
   useEffect(() => {
