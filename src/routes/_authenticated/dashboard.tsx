@@ -11,6 +11,9 @@ import { getStoredLanguage } from "@/lib/language";
 import { createPaymentLink } from '@/lib/payments.functions';
 import { startTrial } from '@/lib/trial.functions';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
+
 
 export const Route = createFileRoute('/_authenticated/dashboard')({
   component: Dashboard,
@@ -20,6 +23,9 @@ function Dashboard() {
   const [timeLeft, setTimeLeft] = useState<string>('');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [isWaitingPayment, setIsWaitingPayment] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+
 
   // Auto-login logic for extension redirection
   useEffect(() => {
@@ -92,9 +98,11 @@ function Dashboard() {
     mutationFn: (data: any) => createPaymentLink({ data }),
     onSuccess: (data: any) => {
       if (data?.url) {
-        window.location.href = data.url;
-        toast.success(isEn ? "Redirecting to payment..." : "Redirecionando para o pagamento...");
+        window.open(data.url, '_blank');
+        setIsWaitingPayment(true);
+        toast.success(isEn ? "Payment link opened in new tab!" : "Link de pagamento aberto em nova aba!");
       } else {
+
         toast.error(isEn ? "Error generating payment. Link not found." : "Erro ao gerar pagamento. Link não encontrado.");
       }
     },
@@ -136,6 +144,25 @@ function Dashboard() {
     };
   }, [sub]);
 
+  // Polling para verificar se o pagamento foi confirmado via webhook
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isWaitingPayment && !isActive) {
+      interval = setInterval(() => {
+        queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] });
+      }, 5000);
+    }
+    
+    if (isWaitingPayment && isActive) {
+      setIsWaitingPayment(false);
+      navigate({ to: '/thanks' });
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isWaitingPayment, isActive, user?.id, queryClient, navigate]);
+
   useEffect(() => {
     const pendingPayment = sessionStorage.getItem('lovablack_pending_payment');
     if (pendingPayment && profile) {
@@ -144,6 +171,7 @@ function Dashboard() {
       sessionStorage.removeItem('lovablack_pending_payment');
     }
   }, [profile]);
+
 
   if (!user) return null;
 
@@ -164,6 +192,7 @@ function Dashboard() {
 
   const handlePayment = (plan: any) => {
     const origin = window.location.origin;
+    setSelectedPlan(plan);
     paymentMutation.mutate({
       planKey: plan.key,
       customerName: profile?.full_name || user.email || 'Cliente',
@@ -174,6 +203,7 @@ function Dashboard() {
       currency: isEn ? 'USD' : 'BRL'
     });
   };
+
 
   return (
     <div className="min-h-screen bg-[#F7F1EB] p-4 md:p-8 pb-20">
@@ -356,7 +386,39 @@ function Dashboard() {
             </div>
           </div>
         )}
+
+        <Dialog open={isWaitingPayment} onOpenChange={setIsWaitingPayment}>
+          <DialogContent className="sm:max-w-md bg-white text-center p-8">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold flex flex-col items-center gap-4">
+                <div className="relative">
+                  <Loader2 className="w-16 h-16 text-[#DC0D0D] animate-spin" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <CreditCard className="w-6 h-6 text-[#1A1B1A]" />
+                  </div>
+                </div>
+                {isEn ? 'Awaiting Payment' : 'Aguardando Pagamento'}
+              </DialogTitle>
+              <DialogDescription className="text-lg pt-4">
+                {isEn 
+                  ? `We are confirming your ${selectedPlan?.name} plan payment...` 
+                  : `Estamos confirmando o pagamento do seu plano ${selectedPlan?.name}...`}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <p className="text-sm text-neutral-500">
+                {isEn 
+                  ? 'Payment was opened in a new tab. After completion, this page will update automatically.' 
+                  : 'O pagamento foi aberto em uma nova aba. Após a conclusão, esta página será atualizada automaticamente.'}
+              </p>
+              <Badge variant="outline" className="px-4 py-2 border-[#DC0D0D] text-[#DC0D0D] animate-pulse">
+                {isEn ? 'Real-time Verification' : 'Verificação em Tempo Real'}
+              </Badge>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
 }
+
