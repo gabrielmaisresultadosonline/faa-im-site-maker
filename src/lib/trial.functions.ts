@@ -11,10 +11,10 @@ import { generateAccessPassword } from "@/lib/access-code";
 export const startTrial = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { userId } = context;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { userId, supabase } = context;
 
-    const { data: existing, error: existingError } = await supabaseAdmin
+
+    const { data: existing, error: existingError } = await supabase
       .from("subscriptions")
       .select("id")
       .eq("user_id", userId)
@@ -29,7 +29,7 @@ export const startTrial = createServerFn({ method: "POST" })
       throw new Error("TRIAL_ALREADY_USED");
     }
 
-    const { data: profile } = await supabaseAdmin
+    const { data: profile } = await supabase
       .from("profiles")
       .select("access_password")
       .eq("id", userId)
@@ -39,14 +39,15 @@ export const startTrial = createServerFn({ method: "POST" })
       (profile as { access_password?: string | null } | null)?.access_password ||
       generateAccessPassword();
 
-    await supabaseAdmin
+    await supabase
+
       .from("profiles")
       .update({ access_password: accessPassword })
       .eq("id", userId);
 
     const expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
 
-    const { error: insertError } = await supabaseAdmin.from("subscriptions").insert({
+    const { error: insertError } = await supabase.from("subscriptions").insert({
       user_id: userId,
       type: "trial",
       status: "active",

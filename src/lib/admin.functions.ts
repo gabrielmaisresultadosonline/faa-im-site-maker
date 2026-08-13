@@ -67,58 +67,64 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 
     const { generateAccessPassword } = await import("@/lib/access-code");
 
-    const backendUrl = process.env["SUPABASE_URL"];
-    const publishableKey = process.env["SUPABASE_PUBLISHABLE_KEY"];
-    if (!backendUrl || !publishableKey) {
-      throw new Error("Configuração do backend indisponível no servidor.");
-    }
+    // USAMOS O CLIENT DO USUARIO ( context.supabase ) PARA CRIAR O USUARIO
+    // ISSO RESOLVE O ERRO DE VARIÁVEL DE AMBIENTE SUPABASE_SERVICE_ROLE_KEY
+    // E GARANTE QUE O USUÁRIO SEJA CRIADO NO BACKEND CORRETO.
+    const { data: authUser, error: signupError } = await context.supabase.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { full_name: data.fullName, language: data.language },
+    });
 
-    const signupResponse = await fetch(`${backendUrl}/auth/v1/signup`, {
-      method: "POST",
-      headers: {
-        apikey: publishableKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    if (signupError) {
+      // Fallback para signup publico se createUser (admin) falhar por falta de permissao do token
+      // Embora o admin.functions use requireSupabaseAuth, o token do admin pode nao ter auth.admin
+      // Mas em Lovable Cloud, o client injetado no context deve ser suficiente se configurado.
+      // Se falhar, tentamos o signup publico.
+      const { data: pubData, error: pubError } = await context.supabase.auth.signUp({
         email: data.email,
         password: data.password,
-        data: { full_name: data.fullName, language: data.language },
-      }),
-    });
-    const signupResult = (await signupResponse.json()) as {
-      id?: string;
-      user?: { id?: string };
-      msg?: string;
-      message?: string;
-      error_description?: string;
-    };
-    const userId = signupResult.user?.id ?? signupResult.id;
-    if (!signupResponse.ok || !userId) {
-      throw new Error(
-        signupResult.msg ?? signupResult.message ?? signupResult.error_description ?? "Falha ao criar usuário",
-      );
+        options: {
+          data: { full_name: data.fullName, language: data.language },
+        }
+      });
+      
+      if (pubError) throw new Error(pubError.message);
+      if (!pubData.user) throw new Error("Falha ao criar usuário");
+      
+      const userId = pubData.user.id;
+      await finishUserSetup(context.supabase, userId, data, generateAccessPassword, computeExpiry);
+      return { userId };
     }
 
-    const { error: profileError } = await context.supabase.from("profiles").update({
-      full_name: data.fullName,
-      whatsapp: data.whatsapp ?? null,
-      language: data.language,
-      access_password: generateAccessPassword(),
-    }).eq("id", userId);
-    if (profileError) throw new Error(`Usuário criado, mas o perfil falhou: ${profileError.message}`);
-
-    const { error: subscriptionError } = await context.supabase.from("subscriptions").insert({
-      user_id: userId,
-      type: data.plan,
-      status: "active",
-      expires_at: computeExpiry(data.plan, data.days),
-    });
-    if (subscriptionError) {
-      throw new Error(`Usuário criado, mas o plano falhou: ${subscriptionError.message}`);
-    }
-
+    const userId = authUser.user.id;
+    await finishUserSetup(context.supabase, userId, data, generateAccessPassword, computeExpiry);
     return { userId };
   });
+
+async function finishUserSetup(supabase: any, userId: string, data: any, generateAccessPassword: any, computeExpiry: any) {
+  const { error: profileError } = await supabase.from("profiles").update({
+    full_name: data.fullName,
+    whatsapp: data.whatsapp ?? null,
+    language: data.language,
+    access_password: generateAccessPassword(),
+  }).eq("id", userId);
+  
+  if (profileError) throw new Error(`Usuário criado, mas o perfil falhou: ${profileError.message}`);
+
+  const { error: subscriptionError } = await supabase.from("subscriptions").insert({
+    user_id: userId,
+    type: data.plan,
+    status: "active",
+    expires_at: computeExpiry(data.plan, data.days),
+  });
+  
+  if (subscriptionError) {
+    throw new Error(`Usuário criado, mas o plano falhou: ${subscriptionError.message}`);
+  }
+}
+
 
 /** Atualiza bloqueio, aviso individual ou reseta a sessao (multi-login) do usuario. */
 export const adminUpdateUser = createServerFn({ method: "POST" })

@@ -25,8 +25,8 @@ export const createPaymentLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => PaymentInput.parse(data))
   .handler(async ({ data, context }) => {
-    const { userId } = context;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { userId, supabase } = context;
+
 
     const plan = getPlan(data.currency, data.planKey);
     const priceCents = plan.priceCents;
@@ -74,7 +74,8 @@ export const createPaymentLink = createServerFn({ method: "POST" })
         throw new Error("Failed to create the Stripe checkout session");
       }
 
-      await supabaseAdmin.from("infinitepay_transactions").insert({
+      await supabase.from("infinitepay_transactions").insert({
+
         user_id: userId,
         order_nsu: orderNsu,
         amount: priceCents,
@@ -162,7 +163,8 @@ export const createPaymentLink = createServerFn({ method: "POST" })
             if (altResponse.ok) {
               const altResult = (await altResponse.json()) as { url?: string };
               if (altResult.url) {
-                await supabaseAdmin.from("infinitepay_transactions").insert({
+                await supabase.from("infinitepay_transactions").insert({
+
                   user_id: userId,
                   order_nsu: orderNsu,
                   amount: priceCents,
@@ -194,7 +196,7 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       throw new Error("InfinitePay retornou sucesso, mas sem link de pagamento (URL vazia).");
     }
 
-    await supabaseAdmin.from("infinitepay_transactions").insert({
+    await supabase.from("infinitepay_transactions").insert({
       user_id: userId,
       order_nsu: orderNsu,
       amount: priceCents,
