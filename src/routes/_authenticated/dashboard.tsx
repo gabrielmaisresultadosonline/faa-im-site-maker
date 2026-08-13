@@ -68,7 +68,9 @@ function Dashboard() {
     queryKey: ['subscription', user?.id],
     queryFn: () => getSubscriptionStatus(user!.id),
     enabled: !!user,
-    refetchInterval: 5000 
+    // O refetchInterval só deve ser agressivo se estivermos esperando pagamento,
+    // caso contrário o padrão de 5s ou manual é suficiente.
+    refetchInterval: isWaitingPayment ? 5000 : 30000 
   });
 
   const { data: settings } = useQuery({
