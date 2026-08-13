@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
-import logoHeartAsset from "@/assets/logo-heart.png.asset.json";
-import logoFullAsset from "@/assets/logo-full.png.asset.json";
+// Import images directly to avoid relative path issues in SSR/Nitro
+import logoHeart from "/logo-heart.png?url";
+import logoFull from "/logo-full.png?url";
+
 
 
 export const Route = createFileRoute("/")({
@@ -90,7 +92,7 @@ function Index() {
       {/* Hero Section */}
       <header className="container mx-auto px-4 pt-20 pb-16 text-center">
         <div className="flex justify-between items-center mb-8">
-          <img src={logoFullAsset.url} alt="LOVABLACK Logo" className="h-20 md:h-24 object-contain" />
+          <img src={logoFull} alt="LOVABLACK Logo" className="h-20 md:h-24 object-contain" />
           <span className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#D8D0C8] text-sm font-bold text-[#1A1B1A]">
             <Globe className="w-4 h-4" /> Português — BRL
           </span>
@@ -130,7 +132,7 @@ function Index() {
           {/* Heart Glow Effect */}
           <div className="absolute w-64 h-64 bg-[#FF0000]/20 blur-[80px] rounded-full animate-pulse"></div>
           
-          <img src={logoHeartAsset.url} alt="LOVABLACK Icon" className="w-40 h-40 md:w-60 md:h-60 object-contain animate-pulse relative z-10 drop-shadow-[0_0_30px_rgba(220,13,13,0.5)]" />
+          <img src={logoHeart} alt="LOVABLACK Icon" className="w-40 h-40 md:w-60 md:h-60 object-contain animate-pulse relative z-10 drop-shadow-[0_0_30px_rgba(220,13,13,0.5)]" />
           
           <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-md p-5 rounded-2xl flex items-center justify-between border border-white/20 shadow-xl">
              <div className="flex items-center gap-3">
