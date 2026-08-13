@@ -48,8 +48,11 @@ function AdminDashboard() {
   const { data: stats } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
-      const { data: subs, error } = await supabase.from('subscriptions').select('*, profiles(*)');
-      if (error) throw error;
+      const { data: subs, error } = await supabase.from('subscriptions').select('*, profiles(id, full_name, email, language)');
+      if (error) {
+        console.error('Stats query error:', error);
+        return { total: 0, active: 0, expired: 0, trials: 0, subs: [] };
+      }
 
       const total = subs.length;
       const active = subs.filter(s => s.status === 'active' && new Date(s.expires_at) > new Date()).length;
@@ -65,9 +68,12 @@ function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('infinitepay_transactions')
-        .select('*, profiles:user_id(full_name, whatsapp, language)')
+        .select('*, profiles!infinitepay_transactions_user_id_fkey(full_name, whatsapp, language)')
         .order('created_at', { ascending: false });
-      if (error) throw error;
+      if (error) {
+        console.error('Transactions query error:', error);
+        return [];
+      }
       return data;
     }
   });
@@ -76,7 +82,10 @@ function AdminDashboard() {
     queryKey: ['admin-settings'],
     queryFn: async () => {
       const { data, error } = await supabase.from('app_settings').select('*');
-      if (error) throw error;
+      if (error) {
+        console.error('Settings query error:', error);
+        return {};
+      }
       const s: Record<string, any> = {};
       data.forEach(item => s[item.key] = item.value);
       return s;
