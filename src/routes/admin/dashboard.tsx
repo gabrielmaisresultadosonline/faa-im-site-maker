@@ -381,22 +381,59 @@ function AdminDashboard() {
               <Card className="bg-white border-neutral-200">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Download className="w-5 h-5" /> Download da Extensão
+                    <Download className="w-5 h-5" /> Arquivo da Extensão (.zip)
                   </CardTitle>
-                  <CardDescription>Link do arquivo .zip para os membros</CardDescription>
+                  <CardDescription>Upload direto (até 30MB) ou link externo</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input
-                      key={settings?.['download_link'] || 'dl-empty'}
-                      defaultValue={settings?.['download_link']}
-                      id="download-link-input"
-                      placeholder="https://..."
+                  <div className="space-y-2">
+                    <Label>Link atual</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        key={settings?.['download_link'] || 'dl-empty'}
+                        defaultValue={settings?.['download_link']}
+                        id="download-link-input"
+                        placeholder="https://..."
+                      />
+                      <Button onClick={() => {
+                        const val = (document.getElementById('download-link-input') as HTMLInputElement).value;
+                        updateSettingMutation.mutate({ key: 'download_link', value: val });
+                      }}>Salvar</Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Subir novo arquivo (.zip)</Label>
+                    <Input 
+                      type="file" 
+                      accept=".zip"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 30 * 1024 * 1024) {
+                          toast.error("Arquivo muito grande! Máximo 30MB.");
+                          return;
+                        }
+                        const toastId = toast.loading("Subindo extensão...");
+                        try {
+                          const fileExt = file.name.split('.').pop();
+                          const fileName = `extension-${Math.random()}.${fileExt}`;
+                          const { data, error } = await supabase.storage
+                            .from('assets')
+                            .upload(fileName, file);
+                          if (error) throw error;
+                          
+                          const { data: { publicUrl } } = supabase.storage
+                            .from('assets')
+                            .getPublicUrl(data.path);
+                          
+                          updateSettingMutation.mutate({ key: 'download_link', value: publicUrl });
+                          toast.success("Extensão atualizada!", { id: toastId });
+                        } catch (err: any) {
+                          toast.error(err.message, { id: toastId });
+                        }
+                      }}
                     />
-                    <Button onClick={() => {
-                      const val = (document.getElementById('download-link-input') as HTMLInputElement).value;
-                      updateSettingMutation.mutate({ key: 'download_link', value: val });
-                    }}>Salvar</Button>
+                    <p className="text-[10px] text-neutral-400">Limite: 30MB. O link será atualizado automaticamente ao subir.</p>
                   </div>
                 </CardContent>
               </Card>
@@ -404,13 +441,13 @@ function AdminDashboard() {
               <Card className="bg-white border-neutral-200">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Video className="w-5 h-5" /> Vídeos Tutoriais
+                    <Video className="w-5 h-5" /> Vídeos Tutoriais (.mp4 ou YouTube)
                   </CardTitle>
-                  <CardDescription>Gerencie os vídeos da área de membros</CardDescription>
+                  <CardDescription>Upload de arquivos MP4 (até 300MB) ou links externos</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {(settings?.['tutorials'] || []).map((tut: any, index: number) => (
-                    <div key={index} className="flex flex-col gap-2 p-3 border rounded-lg bg-neutral-50">
+                    <div key={index} className="flex flex-col gap-2 p-3 border rounded-lg bg-neutral-50 relative">
                       <Input
                         placeholder="Título do Vídeo"
                         defaultValue={tut.title}
@@ -423,8 +460,9 @@ function AdminDashboard() {
                       />
                       <div className="flex gap-2">
                         <Input
-                          placeholder="URL Embed YouTube"
+                          placeholder="URL (YouTube ou link MP4)"
                           defaultValue={tut.url}
+                          id={`tut-url-${index}`}
                           onBlur={(e) => {
                             if (!settings) return;
                             const newTuts = [...(settings['tutorials'] || [])];
@@ -437,6 +475,41 @@ function AdminDashboard() {
                           const newTuts = settings['tutorials'].filter((_: any, i: number) => i !== index);
                           updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
                         }}><XCircle className="w-4 h-4" /></Button>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <Label className="text-[10px] text-neutral-500">Ou subir arquivo MP4 (300MB)</Label>
+                        <Input 
+                          type="file" 
+                          accept="video/mp4"
+                          className="h-8 text-[10px]"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 300 * 1024 * 1024) {
+                              toast.error("Vídeo muito grande! Máximo 300MB.");
+                              return;
+                            }
+                            const toastId = toast.loading("Subindo vídeo...");
+                            try {
+                              const fileName = `video-${Math.random()}.mp4`;
+                              const { data, error } = await supabase.storage
+                                .from('assets')
+                                .upload(fileName, file);
+                              if (error) throw error;
+                              
+                              const { data: { publicUrl } } = supabase.storage
+                                .from('assets')
+                                .getPublicUrl(data.path);
+                              
+                              const newTuts = [...(settings?.['tutorials'] || [])];
+                              newTuts[index].url = publicUrl;
+                              updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
+                              toast.success("Vídeo atualizado!", { id: toastId });
+                            } catch (err: any) {
+                              toast.error(err.message, { id: toastId });
+                            }
+                          }}
+                        />
                       </div>
                     </div>
                   ))}
