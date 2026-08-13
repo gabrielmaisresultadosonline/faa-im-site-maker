@@ -849,6 +849,9 @@ function NoticesAndDocsManager() {
     content: '',
     image_thumb_url: ''
   });
+  
+  const [newDoc, setNewDoc] = useState({ title: '', content: '' });
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
 
   const { data: notices, isLoading: loadingNotices } = useQuery({
     queryKey: ['admin-notices', extId],
@@ -869,7 +872,8 @@ function NoticesAndDocsManager() {
       const { data, error } = await supabase
         .from('extension_docs')
         .select('*')
-        .eq('extension_id', extId);
+        .eq('extension_id', extId)
+        .order('created_at', { ascending: true });
       if (error) throw error;
       return data;
     }
@@ -884,6 +888,41 @@ function NoticesAndDocsManager() {
       queryClient.invalidateQueries({ queryKey: ['admin-notices'] });
       toast.success("Aviso adicionado!");
       setNewNotice({ notice_type: 'info', content_type: 'text', content: '', image_thumb_url: '' });
+    }
+  });
+
+  const saveDocMutation = useMutation({
+    mutationFn: async (payload: { id?: string | null; title: string; content: string }) => {
+      if (payload.id) {
+        const { error } = await supabase
+          .from('extension_docs')
+          .update({ title: payload.title, content: payload.content })
+          .eq('id', payload.id);
+        if (error) throw error;
+      } else {
+        const { id, ...rest } = payload;
+        const { error } = await supabase
+          .from('extension_docs')
+          .insert([{ ...rest, extension_id: extId }]);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-docs'] });
+      toast.success("Documentação salva!");
+      setNewDoc({ title: '', content: '' });
+      setEditingDocId(null);
+    }
+  });
+
+  const deleteDocMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('extension_docs').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-docs'] });
+      toast.success("Documentação removida!");
     }
   });
 
@@ -1155,22 +1194,102 @@ function NoticesAndDocsManager() {
             <TabsContent value="docs_list" className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold flex items-center gap-2"><FileText className="w-5 h-5" /> Documentação da {extId}</h3>
-                <Button variant="outline" size="sm" className="gap-2"><Plus className="w-4 h-4" /> Nova Seção</Button>
+                <Dialog 
+                  open={!!editingDocId || (newDoc.title !== '' || newDoc.content !== '')} 
+                  onOpenChange={(open) => {
+                    if (!open) {
+                      setEditingDocId(null);
+                      setNewDoc({ title: '', content: '' });
+                    }
+                  }}
+                >
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+                      setEditingDocId(null);
+                      setNewDoc({ title: '', content: '' });
+                    }}>
+                      <Plus className="w-4 h-4" /> Nova Seção
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[600px]">
+                    <DialogHeader>
+                      <DialogTitle>{editingDocId ? 'Editar Seção' : 'Nova Seção de Documentação'}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label>Título da Seção</Label>
+                        <Input 
+                          placeholder="Ex: Como configurar a extensão" 
+                          value={newDoc.title}
+                          onChange={(e) => setNewDoc({ ...newDoc, title: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Conteúdo (Markdown/Texto)</Label>
+                        <Textarea 
+                          className="min-h-[200px]"
+                          placeholder="Digite o conteúdo da documentação..." 
+                          value={newDoc.content}
+                          onChange={(e) => setNewDoc({ ...newDoc, content: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button 
+                        className="bg-[#1A1B1A]" 
+                        disabled={!newDoc.title || !newDoc.content || saveDocMutation.isPending}
+                        onClick={() => saveDocMutation.mutate({ id: editingDocId, ...newDoc })}
+                      >
+                        {saveDocMutation.isPending ? 'Salvando...' : 'Salvar Documentação'}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
               
               <div className="grid grid-cols-1 gap-4">
-                {docs?.map((doc) => (
-                  <Card key={doc.id}>
-                    <CardHeader className="p-4 flex flex-row items-center justify-between">
-                      <CardTitle className="text-sm">{doc.title}</CardTitle>
-                      <Button variant="ghost" size="icon"><Settings className="w-4 h-4" /></Button>
-                    </CardHeader>
-                  </Card>
-                ))}
-                {(!docs || docs.length === 0) && (
+                {loadingDocs ? (
+                  <div className="flex items-center justify-center py-8"><RefreshCw className="w-5 h-5 animate-spin text-neutral-400" /></div>
+                ) : (docs?.length === 0) ? (
                   <div className="text-center py-8 bg-neutral-50 rounded-xl border border-dashed text-neutral-400 text-sm">
                     Nenhuma documentação específica cadastrada ainda.
                   </div>
+                ) : (
+                  docs?.map((doc) => (
+                    <Card key={doc.id} className="group">
+                      <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0">
+                        <CardTitle className="text-sm font-bold flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-neutral-400" /> {doc.title}
+                        </CardTitle>
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => {
+                              setEditingDocId(doc.id);
+                              setNewDoc({ title: doc.title, content: doc.content });
+                            }}
+                          >
+                            <Settings className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
+                            onClick={() => { if(confirm("Remover esta seção de documentação?")) deleteDocMutation.mutate(doc.id) }}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="px-4 pb-4">
+                        <div className="text-xs text-neutral-600 line-clamp-3 whitespace-pre-wrap">
+                          {doc.content}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
                 )}
               </div>
             </TabsContent>
