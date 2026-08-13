@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -19,78 +20,122 @@ interface LoginBody {
   session_id?: string;
 }
 
+interface LoginResult {
+  success: boolean;
+  code?: string;
+  error?: string;
+  user?: Record<string, unknown>;
+}
+
+function isLoginResult(value: unknown): value is LoginResult {
+  return typeof value === "object" && value !== null && "success" in value;
+}
+
 export const Route = createFileRoute("/api/public/lovablack-api")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       POST: async ({ request }) => {
-        let body: LoginBody;
         try {
-          body = (await request.json()) as LoginBody;
-        } catch {
-          return json({ success: false, error: "Invalid JSON body" }, 400);
-        }
-
-        const email = (body.email ?? "").trim().toLowerCase();
-        const password = body.password ?? "";
-        const sessionId = body.session_id ?? null;
-
-        if (body.action !== "login") {
-          return json({ success: false, error: "Unsupported action" }, 400);
-        }
-        if (!email || !password) {
-          return json({ success: false, error: "Missing credentials" }, 400);
-        }
-
-        // 1. Try Login with Access Password first (Extension specific)
-        const { data: accessData, error: accessError } = await supabase.rpc(
-          "login_extension_with_access_password",
-          {
-            _email: email,
-            _access_password: password,
-            _session_id: sessionId,
+          let body: LoginBody;
+          try {
+            body = (await request.json()) as LoginBody;
+          } catch {
+            return json({ success: false, error: "Invalid JSON body" }, 400);
           }
-        );
 
-        if (!accessError && accessData?.success) {
-          return json(accessData);
-        }
+          const email = (body.email ?? "").trim().toLowerCase();
+          const password = body.password ?? "";
+          const sessionId = body.session_id;
 
-        // If it was a MULTI_LOGIN error from the RPC, return it directly
-        if (accessData?.code === "MULTI_LOGIN" || accessData?.code === "BLOCKED") {
-          return json(accessData, accessData.code === "BLOCKED" ? 403 : 403);
-        }
-
-        // 2. Try Standard Auth
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (authError || !authData.session) {
-          return json({ success: false, error: "Invalid credentials" }, 401);
-        }
-
-        // 3. Get User Data for the authenticated session
-        // Note: Using a fresh client or the existing one that now has session
-        const { data: userData, error: userError } = await supabase.rpc(
-          "get_extension_user_data",
-          {
-            _session_id: sessionId,
+          if (body.action !== "login") {
+            return json({ success: false, error: "Unsupported action" }, 400);
           }
-        );
+          if (!email || !password) {
+            return json({ success: false, error: "Missing credentials" }, 400);
+          }
 
-        // Sign out after getting data to keep it stateless for the API
-        await supabase.auth.signOut();
+          const url = process.env["SUPABASE_URL"];
+          const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+          if (!url || !key) {
+            return json({ success: false, error: "Server configuration unavailable" }, 503);
+          }
 
-        if (userError || !userData?.success) {
-          return json(
-            userData || { success: false, error: userError?.message || "Failed to fetch user data" },
-            userData?.code === "MULTI_LOGIN" || userData?.code === "BLOCKED" ? 403 : 500
+          const backend = createClient<Database>(url, key, {
+            auth: { persistSession: false, autoRefreshToken: false },
+          });
+
+          const { data: accessData, error: accessError } = await backend.rpc(
+            "login_extension_with_access_password",
+            { _email: email, _access_password: password, _session_id: sessionId },
           );
-        }
 
-        return json(userData);
+          if (!accessError && isLoginResult(accessData)) {
+            if (accessData.success) return json(accessData);
+            if (accessData.code === "MULTI_LOGIN" || accessData.code === "BLOCKED") {
+              return json(accessData, 403);
+            }
+          }
+
+          const { data: authData, error: authError } = await backend.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (authError || !authData.user) {
+            return json({ success: false, error: "Invalid credentials" }, 401);
+          }
+
+          const [{ data: profile, error: profileError }, { data: subscription, error: subError }] =
+            await Promise.all([
+              backend
+                .from("profiles")
+                .select("full_name,email,language,blocked,custom_message")
+                .eq("id", authData.user.id)
+                .single(),
+              backend
+                .from("subscriptions")
+                .select("type,status,expires_at")
+                .eq("user_id", authData.user.id)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle(),
+            ]);
+
+          if (profileError || subError || !profile) {
+            return json({ success: false, error: "Unable to load account" }, 502);
+          }
+          if (profile.blocked) {
+            return json({
+              success: false,
+              code: "BLOCKED",
+              user: { blocked: true, custom_message: profile.custom_message ?? "" },
+            }, 403);
+          }
+
+          const isExpired = !subscription
+            || subscription.status !== "active"
+            || new Date(subscription.expires_at).getTime() <= Date.now();
+
+          return json({
+            success: true,
+            user: {
+              name: profile.full_name ?? "",
+              email: profile.email,
+              language: profile.language,
+              plan: subscription?.type ?? null,
+              expires_at: subscription?.expires_at ?? null,
+              is_active: !isExpired,
+              is_expired: isExpired,
+              blocked: false,
+              custom_message: profile.custom_message ?? "",
+              member_area_url: `https://lovblack.online/dashboard?email=${encodeURIComponent(email)}&token=${encodeURIComponent(password)}`,
+            },
+          });
+        } catch (error) {
+          console.error("Lovablack API request failed", error instanceof Error ? error.message : "Unknown error");
+          return json({ success: false, error: "Internal server error" }, 500);
+        }
       },
     },
   },
