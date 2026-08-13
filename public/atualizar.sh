@@ -1,54 +1,98 @@
 #!/bin/bash
-# Lovablack Ultra Updater V3 (Correção de Path e Imagens)
-# Este script detecta automaticamente se a pasta é lovablack_master ou lovablack_final
 
-echo "--- INICIANDO ATUALIZAÇÃO INTELIGENTE (V3) ---"
+set -e
 
-# Detecta a pasta atual ou as pastas possíveis
-if [ -d "/var/www/lovablack_final" ]; then
-    INSTALL_DIR="/var/www/lovablack_final"
-elif [ -d "/var/www/lovablack_master" ]; then
-    INSTALL_DIR="/var/www/lovablack_master"
-else
-    # Se rodar dentro da pasta, usa a atual
-    INSTALL_DIR=$(pwd)
-fi
+INSTALL_DIR="/var/www/lovablack_final"
+PM2_NAME="lovblack_master"
 
-echo "Pasta de instalação detectada: $INSTALL_DIR"
-cd $INSTALL_DIR
+echo "=========================================="
+echo "      LOVBLACK ULTRA UPDATER V4"
+echo "=========================================="
 
-# Tenta detectar o nome do processo PM2 (lovblack_master ou lovablack)
-PM2_NAME=$(pm2 list | grep -E "lovblack_master|lovablack" | awk '{print $4}' | head -n 1)
-if [ -z "$PM2_NAME" ]; then
-    PM2_NAME="lovblack_master"
-fi
-echo "Processo PM2 detectado: $PM2_NAME"
+echo "--- DIRETÓRIO ---"
+echo "$INSTALL_DIR"
 
-echo "Puxando novos arquivos do GitHub..."
+cd "$INSTALL_DIR"
+
+echo "--- ATUALIZANDO GIT ---"
 git reset --hard
 git pull origin main
 
-# Garante que o Bun está no PATH
+echo "--- RESTAURANDO CONFIGURAÇÃO VPS ---"
+
+cat > vite.config.ts <<'CONFIG'
+import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+
+export default defineConfig({
+  nitro: {
+    preset: "node-server",
+  },
+
+  tanstackStart: {
+    server: {
+      entry: "server",
+    },
+  },
+});
+CONFIG
+
+echo "--- BUN ---"
+
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
-if ! command -v bun &> /dev/null; then
-    echo "Bun não encontrado, tentando carregar perfil..."
-    [ -s "$HOME/.bashrc" ] && source "$HOME/.bashrc"
-    [ -s "$HOME/.profile" ] && source "$HOME/.profile"
-fi
-
-echo "Instalando dependências e gerando build..."
 bun install
+
+echo "--- BUILD NODE SERVER ---"
+
+rm -rf .output
+
 bun run build
 
-# CORREÇÃO CRÍTICA: Sincronização de Assets para o diretório de saída do TanStack Start
-echo "Sincronizando logos e imagens estáticas para .output/public..."
+echo "--- VALIDANDO BUILD ---"
+
+PRESET=$(node -e "console.log(require('./.output/nitro.json').preset)")
+
+echo "Preset detectado: $PRESET"
+
+if [ "$PRESET" != "node-server" ]; then
+    echo "ERRO: build não é node-server!"
+    echo "Build cancelado para não derrubar o site."
+    exit 1
+fi
+
+echo "--- COPIANDO PUBLIC ---"
+
 mkdir -p .output/public
 cp -r public/* .output/public/ 2>/dev/null || true
 
-# Reinicia o processo
-echo "Reiniciando aplicação no PM2 ($PM2_NAME)..."
-pm2 restart $PM2_NAME --update-env || pm2 start bun --name "$PM2_NAME" -- run start
+echo "--- REINICIANDO LOVBLACK ---"
 
-echo "--- ATUALIZAÇÃO CONCLUÍDA COM SUCESSO! ---"
+pm2 delete "$PM2_NAME" 2>/dev/null || true
+
+PORT=8098 HOST=127.0.0.1 pm2 start .output/server/index.mjs \
+    --name "$PM2_NAME" \
+    --cwd "$INSTALL_DIR" \
+    --interpreter node
+
+pm2 save
+
+echo "--- TESTANDO PORTA 8098 ---"
+
+sleep 3
+
+if ! curl -fsS --max-time 10 http://127.0.0.1:8098/ >/dev/null; then
+    echo "ERRO: LovBlack não respondeu na porta 8098."
+    pm2 logs "$PM2_NAME" --lines 50 --nostream
+    exit 1
+fi
+
+echo
+echo "=========================================="
+echo "      LOVBLACK ATUALIZADO COM SUCESSO"
+echo "=========================================="
+echo "Preset: node-server"
+echo "Porta: 8098"
+echo "PM2: $PM2_NAME"
+echo "Status: OK"
+echo "=========================================="
