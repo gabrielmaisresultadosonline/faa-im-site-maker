@@ -1,34 +1,34 @@
 #!/bin/bash
 
 # ==============================================================================
-# LOVBLACK ULTRA UPDATER V5 - MASTER RECOVERY & SYNC
+# LOVBLACK ULTRA UPDATER V6 - AUTO-PATH RECOVERY
 # ==============================================================================
-# Este script força a atualização completa do GitHub e restaura o ambiente VPS.
+# Este script detecta automaticamente o diretório de instalação e corrige o path.
 # ==============================================================================
 
 set -e
 
+# Detectar onde o script está sendo executado
+SCRIPT_PATH=$(readlink -f "$0")
+PUBLIC_DIR=$(dirname "$SCRIPT_PATH")
+CURRENT_INSTALL_DIR=$(dirname "$PUBLIC_DIR")
+
 # Configurações
-INSTALL_DIR="/var/www/lovablack_final"
+INSTALL_DIR="$CURRENT_INSTALL_DIR"
 PM2_NAME="lovblack_master"
 GIT_REPO="https://github.com/gabrielmaisresultadosonline/awesome-website-creator.git"
 
-echo "🚀 Iniciando Atualização Mestra V5..."
+echo "🚀 Iniciando Atualização Mestra V6..."
+echo "📍 Diretório Detectado: $INSTALL_DIR"
 
-# 1. Garantir que o diretório existe e está limpo
-if [ ! -d "$INSTALL_DIR" ]; then
-    echo "📁 Criando diretório de instalação..."
-    mkdir -p "$INSTALL_DIR"
-    cd "$INSTALL_DIR"
-    git clone "$GIT_REPO" .
-else
-    cd "$INSTALL_DIR"
-    echo "🧹 Limpando alterações locais e sincronizando com GitHub..."
-    git remote set-url origin "$GIT_REPO" || git remote add origin "$GIT_REPO"
-    git fetch origin main
-    git reset --hard origin/main
-    git clean -fd
-fi
+cd "$INSTALL_DIR"
+
+# 1. Sincronização com GitHub
+echo "🧹 Limpando alterações locais e sincronizando com GitHub..."
+git remote set-url origin "$GIT_REPO" || git remote add origin "$GIT_REPO"
+git fetch origin main
+git reset --hard origin/main
+git clean -fd
 
 # 2. Restaurar configuração vital do Vite (Node Server)
 echo "🛠️ Restaurando vite.config.ts para modo VPS..."
@@ -55,7 +55,7 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 if ! command -v bun &> /dev/null; then
     echo "⚠️ Bun não encontrado. Instalando..."
     curl -fsSL https://bun.sh/install | bash
-    source "$HOME/.bashrc"
+    source "$HOME/.bashrc" || true
 fi
 
 bun install
@@ -68,7 +68,7 @@ bun run build
 # 5. Validação de Segurança
 echo "🔍 Validando Preset do Build..."
 if [ -f ".output/nitro.json" ]; then
-    PRESET=$(node -e "console.log(require('./.output/nitro.json').preset)")
+    PRESET=$(node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('.output/nitro.json', 'utf8')); console.log(data.preset);")
     echo "Preset: $PRESET"
     if [ "$PRESET" != "node-server" ]; then
         echo "❌ ERRO: Build gerado como '$PRESET'. Precisa ser 'node-server'."
@@ -106,5 +106,6 @@ else
 fi
 
 echo "=============================================================================="
-echo "  TUDO PRONTO! Se o /admin não abrir, verifique seu Nginx (proxy para 8098)."
+echo "  TUDO PRONTO! O script agora é auto-localizável."
+echo "  Use sempre: bash public/atualizar.sh dentro da pasta do projeto."
 echo "=============================================================================="
