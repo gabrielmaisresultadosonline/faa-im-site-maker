@@ -164,8 +164,6 @@ function Dashboard() {
     }
   }, [profile]);
 
-  if (!user) return null;
-
   const isActive = !!(sub && sub.status === 'active' && !sub.isExpired);
   const trialNeverUsed = sub === null;
   const accessPassword = (profile as any)?.access_password as string | undefined;
@@ -180,22 +178,15 @@ function Dashboard() {
   // Polling para verificar se o pagamento foi confirmado via webhook
   useEffect(() => {
     let interval: any = null;
-    
-    // Só inicia o polling se REALMENTE estivermos esperando (não ativado ainda)
-    // E se houver um user.id válido.
+
     if (isWaitingPayment && !isActive && user?.id) {
       interval = setInterval(() => {
-        console.log("Polling payment status for user:", user.id);
         queryClient.invalidateQueries({ queryKey: ['subscription', user.id] });
       }, 5000);
     }
-    
-    // Se ativou durante o polling, redireciona
+
     if (isWaitingPayment && isActive) {
-      console.log("Payment confirmed! Redirecting...");
       setIsWaitingPayment(false);
-      // Usamos um pequeno atraso para garantir que o estado do React Query
-      // se estabilize antes da navegação, evitando o erro #310 de re-renderização infinita
       setTimeout(() => {
         navigate({ to: '/thanks', replace: true });
       }, 100);
@@ -205,7 +196,13 @@ function Dashboard() {
       if (interval) clearInterval(interval);
     };
   }, [isWaitingPayment, isActive, user?.id, queryClient, navigate]);
+
+  // IMPORTANTE: o early return fica DEPOIS de todos os hooks,
+  // caso contrário o React renderiza um número diferente de hooks entre renders.
+  if (!user) return null;
+
   const plans = isEn ? [
+
     { key: "monthly", name: "Monthly", price: "$ 47", days: 30 },
     { key: "semiannual", name: "6 Months", price: "$ 147", days: 180 },
     { key: "annual", name: "Annual", price: "$ 397", days: 365 },
