@@ -12,24 +12,29 @@ interface AdminRouteContext {
 export const Route = createFileRoute('/admin')({
   ssr: false,
   beforeLoad: async ({ location }) => {
-    const { data, error } = await supabase.auth.getUser();
-    const user = data.user;
+    // Tenta obter o usuário da sessão atual
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (error || !user) {
+    if (authError || !user) {
+      // Se não estiver logado e tentar acessar sub-rotas, manda para o /admin principal (que tem o form)
       if (location.pathname !== '/admin' && location.pathname !== '/admin/') {
         throw redirect({ to: '/admin' });
       }
       return { isAuthenticated: false, userIsAdmin: false } satisfies AdminRouteContext;
     }
 
+    // Verifica se é admin
     const userIsAdmin = await isAdmin(user.id);
+    
     if (!userIsAdmin) {
+      // Se estiver logado mas não for admin, e tentar acessar dashboard, mostra tela de erro no /admin
       if (location.pathname !== '/admin' && location.pathname !== '/admin/') {
         throw redirect({ to: '/admin' });
       }
       return { isAuthenticated: true, userIsAdmin: false } satisfies AdminRouteContext;
     }
 
+    // SE É ADMIN e está no /admin raiz, manda pro dashboard
     if (location.pathname === '/admin' || location.pathname === '/admin/') {
       throw redirect({ to: '/admin/dashboard' });
     }
