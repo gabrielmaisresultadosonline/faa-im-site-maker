@@ -91,7 +91,7 @@ echo "🌐 Verificando Status..."
 sleep 5
 if curl -fsS --max-time 10 http://127.0.0.1:8098/ >/dev/null; then
     echo "=================================================="
-    echo "     ✅ ATUALIZADO COM SUCESSO - V8 MASTER"
+    echo "     ✅ ATUALIZADO COM SUCESSO - V9 MASTER"
     echo "=================================================="
 else
     echo "❌ FALHA NA INICIALIZAÇÃO"
