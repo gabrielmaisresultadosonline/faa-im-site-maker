@@ -153,7 +153,7 @@ export const createPaymentLink = createServerFn({ method: "POST" })
         }
         
         // Se ambos falharem, reporta o erro original do 404 com detalhe
-        throw new Error(`InfinitePay API Error 404: O endpoint de pagamentos não foi encontrado. Verifique se o seu "handle" (${payload.handle}) está correto no painel da InfinitePay.`);
+        throw new Error(`InfinitePay API Error 404: O endpoint de pagamentos não foi encontrado. Isso geralmente ocorre quando o "handle" (${payload.handle}) não existe ou o token de API (se necessário) não está configurado. Verifique seu painel InfinitePay.`);
       }
 
       throw new Error(`InfinitePay API Error ${response.status}: ${errorText.substring(0, 200)}`);
