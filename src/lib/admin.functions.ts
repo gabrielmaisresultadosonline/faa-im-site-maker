@@ -82,6 +82,12 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 
     const userId = created.user.id;
 
+    // Use admin client to set role
+    await supabaseAdmin.from("user_roles").upsert({
+      user_id: userId,
+      role: "user",
+    });
+
     await supabaseAdmin.from("profiles").upsert({
       id: userId,
       email: data.email,
@@ -154,12 +160,12 @@ export const adminSetPlan = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { error } = await supabaseAdmin.from("subscriptions").insert({
+    const { error } = await supabaseAdmin.from("subscriptions").upsert({
       user_id: data.userId,
       type: data.plan,
       status: "active",
       expires_at: computeExpiry(data.plan, data.days),
-    });
+    }, { onConflict: 'user_id' });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
