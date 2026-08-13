@@ -106,16 +106,20 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             return json({ success: false, error: "Unable to load account" }, 502);
           }
           if (profile.blocked) {
-            return json({
-              success: false,
-              code: "BLOCKED",
-              user: { blocked: true, custom_message: profile.custom_message ?? "" },
-            }, 403);
+            return json(
+              {
+                success: false,
+                code: "BLOCKED",
+                user: { blocked: true, custom_message: profile.custom_message ?? "" },
+              },
+              403,
+            );
           }
 
-          const isExpired = !subscription
-            || subscription.status !== "active"
-            || new Date(subscription.expires_at).getTime() <= Date.now();
+          const isExpired =
+            !subscription ||
+            subscription.status !== "active" ||
+            new Date(subscription.expires_at).getTime() <= Date.now();
 
           return json({
             success: true,
@@ -133,7 +137,10 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             },
           });
         } catch (error) {
-          console.error("Lovablack API request failed", error instanceof Error ? error.message : "Unknown error");
+          console.error(
+            "Lovablack API request failed",
+            error instanceof Error ? error.message : "Unknown error",
+          );
           return json({ success: false, error: "Internal server error" }, 500);
         }
       },
