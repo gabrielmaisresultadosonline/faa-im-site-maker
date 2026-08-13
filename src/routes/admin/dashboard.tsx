@@ -911,7 +911,8 @@ function NoticesAndDocsManager() {
   };
 
   const handlePaste = async (e: React.ClipboardEvent) => {
-    const items = e.clipboardData.items;
+    const items = e.clipboardData?.items;
+    if (!items) return;
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf("image") !== -1) {
         const file = items[i].getAsFile();
@@ -983,12 +984,12 @@ function NoticesAndDocsManager() {
                               <div className="text-sm font-medium text-neutral-800 line-clamp-2">
                                 {n.content_type === 'button' ? JSON.parse(n.content).text : n.content}
                               </div>
-                              <div className="text-[10px] text-neutral-400">{new Date(n.created_at).toLocaleString()}</div>
+                              <div className="text-[10px] text-neutral-400">{n.created_at ? new Date(n.created_at).toLocaleString() : ''}</div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
                             <Switch 
-                              checked={n.is_active} 
+                              checked={!!n.is_active} 
                               onCheckedChange={(val) => toggleNoticeMutation.mutate({ id: n.id, active: val })}
                             />
                             <Button 
