@@ -250,7 +250,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      login_extension_with_access_password: {
+        Args: { _access_password: string; _email: string; _session_id?: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "user"
