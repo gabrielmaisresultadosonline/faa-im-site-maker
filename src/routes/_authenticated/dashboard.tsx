@@ -21,6 +21,25 @@ function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  // Auto-login logic for extension redirection
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get('email');
+    const token = params.get('token');
+
+    if (email && token) {
+      const performAutoLogin = async () => {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password: token });
+        if (!error && data.session) {
+          toast.success("Acesso automático realizado!");
+          // Limpa a URL para evitar re-logins desnecessários ao atualizar
+          navigate({ to: '/dashboard', replace: true });
+        }
+      };
+      performAutoLogin();
+    }
+  }, [navigate]);
+
   const { data: user } = useQuery({
     queryKey: ['user'],
     queryFn: async () => {
