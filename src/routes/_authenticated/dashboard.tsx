@@ -161,6 +161,13 @@ function Dashboard() {
   const trialNeverUsed = sub === null;
   const accessPassword = (profile as any)?.access_password as string | undefined;
 
+  // Verificação inicial: se o usuário já é ativo ao carregar, garante que não fique preso no modal
+  useEffect(() => {
+    if (isActive && isWaitingPayment) {
+      setIsWaitingPayment(false);
+    }
+  }, [isActive, isWaitingPayment]);
+
   // Polling para verificar se o pagamento foi confirmado via webhook
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
