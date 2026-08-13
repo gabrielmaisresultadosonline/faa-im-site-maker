@@ -100,7 +100,12 @@ function Dashboard() {
     },
     onError: (error: any) => {
       console.error("Payment error:", error);
-      toast.error(isEn ? "Error generating payment. Try again." : "Erro ao gerar pagamento. Tente novamente.");
+      const message = error?.message || "";
+      toast.error(
+        isEn 
+          ? `Error generating payment: ${message || "Try again."}` 
+          : `Erro ao gerar pagamento: ${message || "Tente novamente."}`
+      );
     }
   });
 
