@@ -110,7 +110,8 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
+        "origin": "https://paguemro.infinitepay.io"
       },
       body: JSON.stringify(payload),
     });
