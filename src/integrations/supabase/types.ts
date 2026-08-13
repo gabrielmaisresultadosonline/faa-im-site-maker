@@ -35,6 +35,69 @@ export type Database = {
         }
         Relationships: []
       }
+      extension_docs: {
+        Row: {
+          content: string
+          created_at: string | null
+          extension_id: string
+          id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          extension_id: string
+          id?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          extension_id?: string
+          id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      extension_notices: {
+        Row: {
+          content: string
+          content_type: string
+          created_at: string | null
+          extension_id: string
+          id: string
+          image_thumb_url: string | null
+          is_active: boolean | null
+          notice_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          content_type: string
+          created_at?: string | null
+          extension_id: string
+          id?: string
+          image_thumb_url?: string | null
+          is_active?: boolean | null
+          notice_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          content_type?: string
+          created_at?: string | null
+          extension_id?: string
+          id?: string
+          image_thumb_url?: string | null
+          is_active?: boolean | null
+          notice_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       infinitepay_transactions: {
         Row: {
           amount: number

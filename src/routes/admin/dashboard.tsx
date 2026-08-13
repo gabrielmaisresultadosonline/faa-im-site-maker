@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Users, CreditCard, Clock, CheckCircle, XCircle, Download, Video, Settings, BookOpen, Ban, MessageSquare, RefreshCw, UserPlus } from 'lucide-react';
+import { Users, CreditCard, Clock, CheckCircle, XCircle, Download, Video, Settings, BookOpen, Ban, MessageSquare, RefreshCw, UserPlus, AlertTriangle, FileText, Plus, Trash2, Image as ImageIcon, ExternalLink, Clipboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -141,7 +141,8 @@ function AdminDashboard() {
                 { id: 'usuarios', label: 'Usuários', icon: Users },
                 { id: 'vendas', label: 'Vendas', icon: CreditCard },
                 { id: 'config', label: 'Configurações', icon: Settings },
-                { id: 'docs', label: 'Documentação', icon: BookOpen },
+                { id: 'avisos', label: 'Avisos & Docs', icon: AlertTriangle },
+                { id: 'docs', label: 'API Ref', icon: BookOpen },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -179,6 +180,7 @@ function AdminDashboard() {
                 <TabsTrigger value="usuarios">Usuários</TabsTrigger>
                 <TabsTrigger value="vendas">Vendas</TabsTrigger>
                 <TabsTrigger value="config">Configurações</TabsTrigger>
+                <TabsTrigger value="avisos">Avisos & Docs</TabsTrigger>
                 <TabsTrigger value="docs">Documentação</TabsTrigger>
               </TabsList>
             </Tabs>
@@ -313,6 +315,11 @@ function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+          
+          {/* ============ AVISOS & DOCS ============ */}
+          <TabsContent value="avisos" className="space-y-6">
+            <NoticesAndDocsManager />
           </TabsContent>
 
           {/* ============ VENDAS ============ */}
@@ -813,7 +820,349 @@ function StatCard({ icon: Icon, label, value, color = "text-[#1A1B1A]" }: any) {
   );
 }
 
+function NoticesAndDocsManager() {
+  const queryClient = useQueryClient();
+  const [extId, setExtId] = useState('extensao_1');
+  const [newNotice, setNewNotice] = useState({ 
+    notice_type: 'info' as 'info' | 'block', 
+    content_type: 'text' as 'text' | 'video' | 'image' | 'button', 
+    content: '',
+    image_thumb_url: ''
+  });
+
+  const { data: notices, isLoading: loadingNotices } = useQuery({
+    queryKey: ['admin-notices', extId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('extension_notices')
+        .select('*')
+        .eq('extension_id', extId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: docs, isLoading: loadingDocs } = useQuery({
+    queryKey: ['admin-docs', extId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('extension_docs')
+        .select('*')
+        .eq('extension_id', extId);
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const addNoticeMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      const { error } = await supabase.from('extension_notices').insert([{ ...payload, extension_id: extId }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-notices'] });
+      toast.success("Aviso adicionado!");
+      setNewNotice({ notice_type: 'info', content_type: 'text', content: '', image_thumb_url: '' });
+    }
+  });
+
+  const toggleNoticeMutation = useMutation({
+    mutationFn: async ({ id, active }: { id: string, active: boolean }) => {
+      const { error } = await supabase.from('extension_notices').update({ is_active: active }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-notices'] })
+  });
+
+  const deleteNoticeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('extension_notices').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-notices'] })
+  });
+
+  const handleFileUpload = async (file: File, type: 'notice_image' | 'notice_thumb') => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `notices/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('assets')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('assets')
+        .getPublicUrl(filePath);
+
+      if (type === 'notice_image') {
+        setNewNotice(prev => ({ ...prev, content: publicUrl }));
+      } else {
+        setNewNotice(prev => ({ ...prev, image_thumb_url: publicUrl }));
+      }
+      toast.success("Upload concluído!");
+    } catch (error: any) {
+      toast.error("Erro no upload: " + error.message);
+    }
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const clipboardData = e.clipboardData;
+    if (!clipboardData || !clipboardData.items) return;
+    
+    const items = Array.from(clipboardData.items);
+    for (const item of items) {
+      if (item.type.indexOf("image") !== -1) {
+        const file = item.getAsFile();
+        if (file) {
+          await handleFileUpload(file, 'notice_image');
+        }
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card className="bg-white border-neutral-200 shadow-sm overflow-hidden">
+        <CardHeader className="bg-neutral-50/50 border-b border-neutral-100">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-amber-500" /> Gestão de Avisos e Documentação</CardTitle>
+              <CardDescription>Configure avisos (normais ou bloqueios) e documentação por extensão</CardDescription>
+            </div>
+            <div className="flex items-center gap-3 bg-white p-1 rounded-lg border border-neutral-200">
+              <Label className="pl-3 text-xs font-bold text-neutral-500 uppercase">Extensão:</Label>
+              <Select value={extId} onValueChange={setExtId}>
+                <SelectTrigger className="w-[180px] border-none shadow-none focus:ring-0 font-bold">
+                  <SelectValue placeholder="Selecione a extensão" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="extensao_1">Extensão 1 (LOVABLACK)</SelectItem>
+                  <SelectItem value="extensao_2">Extensão 2</SelectItem>
+                  <SelectItem value="extensao_3">Extensão 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <Tabs defaultValue="notices_list" className="space-y-6">
+            <TabsList className="bg-neutral-100 p-1 rounded-xl">
+              <TabsTrigger value="notices_list" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Avisos Ativos</TabsTrigger>
+              <TabsTrigger value="add_notice" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Criar Novo Aviso</TabsTrigger>
+              <TabsTrigger value="docs_list" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Documentação</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="notices_list" className="space-y-4">
+              {loadingNotices ? (
+                <div className="flex items-center justify-center py-12 text-neutral-400"><RefreshCw className="w-6 h-6 animate-spin" /></div>
+              ) : (notices?.length === 0) ? (
+                <div className="text-center py-12 bg-neutral-50 rounded-2xl border-2 border-dashed border-neutral-200">
+                  <MessageSquare className="w-12 h-12 text-neutral-300 mx-auto mb-3" />
+                  <p className="text-neutral-500 font-medium">Nenhum aviso configurado para {extId}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {notices?.map((n) => (
+                    <Card key={n.id} className={`overflow-hidden border-l-4 ${n.notice_type === 'block' ? 'border-l-red-500' : 'border-l-blue-500'}`}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex gap-4">
+                            {n.image_thumb_url && (
+                              <img src={n.image_thumb_url} alt="Thumb" className="w-16 h-16 rounded-lg object-cover bg-neutral-100 border border-neutral-200" />
+                            )}
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Badge className={n.notice_type === 'block' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}>
+                                  {n.notice_type === 'block' ? 'BLOQUEIO TOTAL' : 'AVISO'}
+                                </Badge>
+                                <Badge variant="outline" className="text-[10px] uppercase">{n.content_type}</Badge>
+                                {!n.is_active && <Badge variant="secondary" className="opacity-50">INATIVO</Badge>}
+                              </div>
+                              <div className="text-sm font-medium text-neutral-800 line-clamp-2">
+                                {n.content_type === 'button' ? JSON.parse(n.content).text : n.content}
+                              </div>
+                              <div className="text-[10px] text-neutral-400">{n.created_at ? new Date(n.created_at).toLocaleString() : ''}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch 
+                              checked={!!n.is_active} 
+                              onCheckedChange={(val) => toggleNoticeMutation.mutate({ id: n.id, active: val })}
+                            />
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                              onClick={() => { if(confirm("Remover aviso?")) deleteNoticeMutation.mutate(n.id) }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="add_notice" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Tipo de Aviso</Label>
+                    <Select value={newNotice.notice_type} onValueChange={(v: any) => setNewNotice({...newNotice, notice_type: v})}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="info">Informativo (Pode ser fechado)</SelectItem>
+                        <SelectItem value="block">Bloqueio Total (Não pode fechar)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Conteúdo</Label>
+                    <Select value={newNotice.content_type} onValueChange={(v: any) => setNewNotice({...newNotice, content_type: v, content: ''})}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="text">Apenas Texto</SelectItem>
+                        <SelectItem value="video">Vídeo (YouTube/MP4 Link)</SelectItem>
+                        <SelectItem value="image">Imagem</SelectItem>
+                        <SelectItem value="button">Botão com Link</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Thumbnail (Opcional)</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="URL ou suba arquivo" 
+                        value={newNotice.image_thumb_url} 
+                        onChange={(e) => setNewNotice({...newNotice, image_thumb_url: e.target.value})}
+                      />
+                      <Button variant="outline" size="icon" className="shrink-0" onClick={() => document.getElementById('thumb-upload')?.click()}>
+                        <ImageIcon className="w-4 h-4" />
+                      </Button>
+                      <input type="file" id="thumb-upload" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'notice_thumb')} />
+                    </div>
+                  </div>
+                  
+                  {newNotice.content_type === 'text' && (
+                    <div className="space-y-2">
+                      <Label>Mensagem do Aviso</Label>
+                      <Textarea 
+                        placeholder="Digite o aviso..." 
+                        value={newNotice.content} 
+                        onChange={(e) => setNewNotice({...newNotice, content: e.target.value})}
+                      />
+                    </div>
+                  )}
+
+                  {newNotice.content_type === 'image' && (
+                    <div className="space-y-2">
+                      <Label>URL da Imagem (Pode dar Ctrl+V aqui)</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder="Cole a URL ou a imagem aqui..." 
+                          value={newNotice.content} 
+                          onPaste={handlePaste}
+                          onChange={(e) => setNewNotice({...newNotice, content: e.target.value})}
+                        />
+                        <Button variant="outline" size="icon" onClick={() => document.getElementById('image-upload')?.click()}>
+                          <ImageIcon className="w-4 h-4" />
+                        </Button>
+                        <input type="file" id="image-upload" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'notice_image')} />
+                      </div>
+                    </div>
+                  )}
+
+                  {newNotice.content_type === 'video' && (
+                    <div className="space-y-2">
+                      <Label>URL do Vídeo</Label>
+                      <Input 
+                        placeholder="https://youtube.com/..." 
+                        value={newNotice.content} 
+                        onChange={(e) => setNewNotice({...newNotice, content: e.target.value})}
+                      />
+                    </div>
+                  )}
+
+                  {newNotice.content_type === 'button' && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Texto Botão</Label>
+                        <Input 
+                          placeholder="Comprar Agora" 
+                          onChange={(e) => {
+                            const prev = newNotice.content ? JSON.parse(newNotice.content) : { text: '', url: '' };
+                            setNewNotice({...newNotice, content: JSON.stringify({ ...prev, text: e.target.value })});
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">URL Destino</Label>
+                        <Input 
+                          placeholder="https://..." 
+                          onChange={(e) => {
+                            const prev = newNotice.content ? JSON.parse(newNotice.content) : { text: '', url: '' };
+                            setNewNotice({...newNotice, content: JSON.stringify({ ...prev, url: e.target.value })});
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t flex justify-end">
+                <Button 
+                  className="bg-[#1A1B1A] text-white rounded-xl px-8"
+                  disabled={!newNotice.content || addNoticeMutation.isPending}
+                  onClick={() => addNoticeMutation.mutate(newNotice)}
+                >
+                  {addNoticeMutation.isPending ? "Criando..." : "Criar Aviso para Extensão"}
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="docs_list" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold flex items-center gap-2"><FileText className="w-5 h-5" /> Documentação da {extId}</h3>
+                <Button variant="outline" size="sm" className="gap-2"><Plus className="w-4 h-4" /> Nova Seção</Button>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-4">
+                {docs?.map((doc) => (
+                  <Card key={doc.id}>
+                    <CardHeader className="p-4 flex flex-row items-center justify-between">
+                      <CardTitle className="text-sm">{doc.title}</CardTitle>
+                      <Button variant="ghost" size="icon"><Settings className="w-4 h-4" /></Button>
+                    </CardHeader>
+                  </Card>
+                ))}
+                {(!docs || docs.length === 0) && (
+                  <div className="text-center py-8 bg-neutral-50 rounded-xl border border-dashed text-neutral-400 text-sm">
+                    Nenhuma documentação específica cadastrada ainda.
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 interface LangTagProps {
+
   lang?: string | null;
   withCurrency?: boolean;
 }
