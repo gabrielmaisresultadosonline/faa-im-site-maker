@@ -911,11 +911,13 @@ function NoticesAndDocsManager() {
   };
 
   const handlePaste = async (e: React.ClipboardEvent) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
+    const clipboardData = e.clipboardData;
+    if (!clipboardData || !clipboardData.items) return;
+    const items = clipboardData.items;
     for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf("image") !== -1) {
-        const file = items[i].getAsFile();
+      const item = items[i];
+      if (item.type.indexOf("image") !== -1) {
+        const file = item.getAsFile();
         if (file) {
           await handleFileUpload(file, 'notice_image');
         }
