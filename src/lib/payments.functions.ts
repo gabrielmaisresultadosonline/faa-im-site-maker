@@ -106,6 +106,7 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       ],
     };
 
+    // Tenta primeiro o endpoint que parece estar documentado para Checkout
     const response = await fetch("https://api.infinitepay.io/v1/checkout/links", {
       method: "POST",
       headers: { 
@@ -120,6 +121,41 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       console.error("InfinitePay Error Payload:", JSON.stringify(payload, null, 2));
       console.error("InfinitePay Response Status:", response.status);
       console.error("InfinitePay Response Body:", errorText);
+      
+      // Se deu 404 no endpoint de checkout, tentamos o endpoint genérico de links
+      if (response.status === 404) {
+        console.log("Endpoint /checkout/links deu 404, tentando /v1/links...");
+        const altResponse = await fetch("https://api.infinitepay.io/v1/links", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (altResponse.ok) {
+          const altResult = (await altResponse.json()) as { url?: string };
+          if (altResult.url) {
+            await supabaseAdmin.from("infinitepay_transactions").insert({
+              user_id: userId,
+              order_nsu: orderNsu,
+              amount: priceCents,
+              plan_name: planName,
+              plan_duration_days: planDurationDays,
+              payment_link: altResult.url,
+              status: "pending",
+              currency: "BRL",
+              provider: "infinitepay",
+            });
+            return { url: altResult.url };
+          }
+        }
+        
+        // Se ambos falharem, reporta o erro original do 404 com detalhe
+        throw new Error(`InfinitePay API Error 404: O endpoint de pagamentos não foi encontrado. Isso geralmente ocorre quando o "handle" (${payload.handle}) não existe ou o token de API (se necessário) não está configurado. Verifique seu painel InfinitePay.`);
+      }
+
       throw new Error(`InfinitePay API Error ${response.status}: ${errorText.substring(0, 200)}`);
     }
 
