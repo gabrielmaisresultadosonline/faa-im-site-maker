@@ -127,7 +127,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             const isExpired = !sub || sub.status !== "active" || new Date(sub.expires_at).getTime() <= Date.now();
 
             return json(withMemberAreaUrl({
-              success: false,
+              success: true,
               user: {
                 name: profile.full_name ?? "",
                 email: profile.email,
