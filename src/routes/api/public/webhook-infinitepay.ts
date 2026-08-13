@@ -12,19 +12,41 @@ async function verifyPaymentWithInfinitePay(params: {
   slug?: string | undefined;
 }): Promise<boolean> {
   try {
-    const url = new URL(
+    // Tenta primeiro o endpoint documentado via POST (payment_check)
+    const postUrl = "https://api.checkout.infinitepay.io/payment_check";
+    const postRes = await fetch(postUrl, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        handle: INFINITEPAY_HANDLE,
+        order_nsu: params.orderNsu,
+        transaction_nsu: params.transactionNsu,
+        slug: params.slug
+      })
+    });
+
+    if (postRes.ok) {
+      const body = (await postRes.json()) as { success?: boolean; paid?: boolean };
+      if (body?.success === true && body?.paid === true) return true;
+    }
+
+    // Fallback para o endpoint público via GET se o POST falhar
+    const getUrl = new URL(
       `https://api.infinitepay.io/invoices/public/checkout/payment_check/${INFINITEPAY_HANDLE}`
     );
-    url.searchParams.set('external_order_nsu', params.orderNsu);
-    if (params.transactionNsu) url.searchParams.set('transaction_nsu', params.transactionNsu);
-    if (params.slug) url.searchParams.set('slug', params.slug);
+    getUrl.searchParams.set('external_order_nsu', params.orderNsu);
+    if (params.transactionNsu) getUrl.searchParams.set('transaction_nsu', params.transactionNsu);
+    if (params.slug) getUrl.searchParams.set('slug', params.slug);
 
-    const res = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
-    if (!res.ok) return false;
-    const body = (await res.json()) as { success?: boolean; paid?: boolean };
-    return body?.success === true && body?.paid === true;
+    const getRes = await fetch(getUrl.toString(), { headers: { Accept: 'application/json' } });
+    if (!getRes.ok) return false;
+    const getBody = (await getRes.json()) as { success?: boolean; paid?: boolean };
+    return getBody?.success === true && getBody?.paid === true;
   } catch (err) {
-    console.error('InfinitePay verification failed');
+    console.error('InfinitePay verification failed:', err);
     return false;
   }
 }
