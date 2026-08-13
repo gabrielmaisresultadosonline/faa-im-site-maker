@@ -68,7 +68,9 @@ function Dashboard() {
     queryKey: ['subscription', user?.id],
     queryFn: () => getSubscriptionStatus(user!.id),
     enabled: !!user,
-    refetchInterval: 5000 
+    // O refetchInterval só deve ser agressivo se estivermos esperando pagamento,
+    // caso contrário o padrão de 5s ou manual é suficiente.
+    refetchInterval: isWaitingPayment ? 5000 : 30000 
   });
 
   const { data: settings } = useQuery({
@@ -159,17 +161,28 @@ function Dashboard() {
   const trialNeverUsed = sub === null;
   const accessPassword = (profile as any)?.access_password as string | undefined;
 
+  // Verificação inicial: se o usuário já é ativo ao carregar, garante que não fique preso no modal
+  useEffect(() => {
+    if (isActive && isWaitingPayment) {
+      setIsWaitingPayment(false);
+    }
+  }, [isActive, isWaitingPayment]);
+
   // Polling para verificar se o pagamento foi confirmado via webhook
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     
+    // Só inicia o polling se REALMENTE estivermos esperando (não ativado ainda)
     if (isWaitingPayment && !isActive) {
       interval = setInterval(() => {
+        console.log("Polling payment status for user:", user?.id);
         queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] });
       }, 5000);
     }
     
+    // Se ativou durante o polling, redireciona
     if (isWaitingPayment && isActive) {
+      console.log("Payment confirmed! Redirecting...");
       setIsWaitingPayment(false);
       navigate({ to: '/thanks', replace: true });
     }
