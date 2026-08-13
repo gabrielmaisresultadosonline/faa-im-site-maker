@@ -30,7 +30,12 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 bun install
 bun run build
 
-# 4. Reiniciar o processo no PM2
+# 4. Forçar cópia de assets estáticos (Garante que logos apareçam)
+echo "Sincronizando imagens e logos..."
+cp -r public/* .output/public/ 2>/dev/null || true
+
+# 5. Reiniciar o processo no PM2
+
 echo "Reiniciando aplicação..."
 pm2 restart $PM2_NAME --update-env
 
