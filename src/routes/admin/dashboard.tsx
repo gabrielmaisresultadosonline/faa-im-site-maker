@@ -872,7 +872,8 @@ function NoticesAndDocsManager() {
       const { data, error } = await supabase
         .from('extension_docs')
         .select('*')
-        .eq('extension_id', extId);
+        .eq('extension_id', extId)
+        .order('created_at', { ascending: true });
       if (error) throw error;
       return data;
     }
@@ -887,6 +888,40 @@ function NoticesAndDocsManager() {
       queryClient.invalidateQueries({ queryKey: ['admin-notices'] });
       toast.success("Aviso adicionado!");
       setNewNotice({ notice_type: 'info', content_type: 'text', content: '', image_thumb_url: '' });
+    }
+  });
+
+  const saveDocMutation = useMutation({
+    mutationFn: async (payload: { id?: string; title: string; content: string }) => {
+      if (payload.id) {
+        const { error } = await supabase
+          .from('extension_docs')
+          .update({ title: payload.title, content: payload.content })
+          .eq('id', payload.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('extension_docs')
+          .insert([{ ...payload, extension_id: extId }]);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-docs'] });
+      toast.success("Documentação salva!");
+      setNewDoc({ title: '', content: '' });
+      setEditingDocId(null);
+    }
+  });
+
+  const deleteDocMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('extension_docs').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-docs'] });
+      toast.success("Documentação removida!");
     }
   });
 
