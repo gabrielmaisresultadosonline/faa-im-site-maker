@@ -214,6 +214,7 @@ function AdminDashboard() {
                         <TableHead>Status</TableHead>
                         <TableHead>Expira</TableHead>
                         <TableHead>Último acesso</TableHead>
+                        <TableHead>Online</TableHead>
                         <TableHead>Bloqueio</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
@@ -242,6 +243,20 @@ function AdminDashboard() {
                           </TableCell>
                           <TableCell className="text-xs">
                             {u.last_login_at ? new Date(u.last_login_at).toLocaleString() : 'Nunca acessou'}
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const isOnline = u.last_heartbeat_at && 
+                                (new Date().getTime() - new Date(u.last_heartbeat_at).getTime() < 5 * 60 * 1000);
+                              return (
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-neutral-300'}`} />
+                                  <span className="text-[10px] uppercase font-bold text-neutral-500">
+                                    {isOnline ? 'ON' : 'OFF'}
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell>
                             <Switch
