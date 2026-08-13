@@ -91,21 +91,21 @@ export const createPaymentLink = createServerFn({ method: "POST" })
     }
 
     // BRL -> InfinitePay
-    // Formatação rigorosa do telefone para evitar Erro 422 da InfinitePay
-    let formattedPhone = data.customerPhone || "";
-    if (formattedPhone) {
-      // Remove tudo que não for dígito
-      formattedPhone = formattedPhone.replace(/\D/g, "");
-      // Garante o prefixo +55 se for um número brasileiro (10 ou 11 dígitos sem DDI)
-      if (formattedPhone.length >= 10 && formattedPhone.length <= 11) {
-        formattedPhone = `+55${formattedPhone}`;
-      } else if (!formattedPhone.startsWith("+")) {
-        // Se não tem o +, assume que precisa de um
-        formattedPhone = `+${formattedPhone}`;
+    // Omitimos phone_number completamente se não for válido para evitar erro 422
+    let formattedPhone: string | undefined = undefined;
+    if (data.customerPhone) {
+      const digits = data.customerPhone.replace(/\D/g, "");
+      // InfinitePay espera formato E.164 (+5511999999999)
+      if (digits.length >= 10 && digits.length <= 11) {
+        formattedPhone = `+55${digits}`;
+      } else if (digits.length > 11 && digits.length <= 15) {
+        formattedPhone = `+${digits}`;
       }
+      // Se não cair em nenhum padrão válido, formattedPhone permanece undefined
+      // e o campo será removido do payload abaixo.
     }
 
-    const payload = {
+    const payload: any = {
       handle: "paguemro",
       order_nsu: orderNsu,
       redirect_url: data.redirectUrl,
@@ -113,12 +113,15 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       customer: {
         name: data.customerName,
         email: data.customerEmail,
-        phone_number: formattedPhone || undefined,
       },
       items: [
         { quantity: 1, price: priceCents, description: `LOVABLACK - ${planName}` },
       ],
     };
+
+    if (formattedPhone) {
+      payload.customer.phone_number = formattedPhone;
+    }
 
     // Endpoint Checkout Integrado (POST https://api.checkout.infinitepay.io/links)
     const response = await fetch("https://api.checkout.infinitepay.io/links", {
