@@ -105,9 +105,12 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       ],
     };
 
-    const response = await fetch("https://api.checkout.infinitepay.io/links", {
+    const response = await fetch("https://api.checkout.infinitepay.io/v1/links", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
       body: JSON.stringify(payload),
     });
 
