@@ -155,13 +155,14 @@ function Dashboard() {
 
   if (!user) return null;
 
-  const isActive = sub && sub.status === 'active' && !sub.isExpired;
-  // Nunca gerou o teste: nao existe nenhuma assinatura registrada para a conta.
+  const isActive = !!(sub && sub.status === 'active' && !sub.isExpired);
   const trialNeverUsed = sub === null;
   const accessPassword = (profile as any)?.access_password as string | undefined;
+
   // Polling para verificar se o pagamento foi confirmado via webhook
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: NodeJS.Timeout | null = null;
+    
     if (isWaitingPayment && !isActive) {
       interval = setInterval(() => {
         queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] });
@@ -398,8 +399,8 @@ function Dashboard() {
               </DialogTitle>
               <DialogDescription className="text-lg pt-4">
                 {isEn 
-                  ? `We are confirming your ${selectedPlan?.name} plan payment...` 
-                  : `Estamos confirmando o pagamento do seu plano ${selectedPlan?.name}...`}
+                  ? `We are confirming your ${selectedPlan?.name || ''} plan payment...` 
+                  : `Estamos confirmando o pagamento do seu plano ${selectedPlan?.name || ''}...`}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 pt-4">

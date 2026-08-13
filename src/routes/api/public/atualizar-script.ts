@@ -6,7 +6,7 @@ export const Route = createFileRoute('/api/public/atualizar-script')({
       GET: async () => {
         const script = `#!/bin/bash
 # ==============================================================================
-# LOVBLACK MASTER UPDATER V9 - DATA SAFE & GIT SYNC
+# LOVBLACK MASTER UPDATER V10 - HYDRATION FIX & CACHE CLEAN
 # ==============================================================================
 set -e
 
@@ -65,8 +65,8 @@ fi
 bun install
 
 # 4. Build de Produção
-echo "🏗️ Criando Build..."
-rm -rf .output
+echo "🏗️ Criando Build (Limpando caches para evitar erro React #310)..."
+rm -rf .output .vite .nitro node_modules/.cache
 bun run build
 
 # 5. Sincronização de Imagens/Assets

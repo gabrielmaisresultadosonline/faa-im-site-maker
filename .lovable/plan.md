@@ -1,23 +1,24 @@
-# Plan: Unified Admin Navigation and VPS Deployment Script
+# Plano de Correção: Hotfix Hydration e Erro React #310
 
-Update the admin dashboard with a persistent navigation sidebar and update the VPS deployment scripts to resolve the Nginx "000-lovblack" configuration conflict.
+O erro **React #310** (Objects are not valid as a React child) geralmente ocorre durante a hidratação (SSR vs Client) quando um objeto ou um `Promise` é renderizado acidentalmente como um filho React, ou quando há uma incompatibilidade severa entre o HTML gerado no servidor e o renderizado no cliente.
 
-## User Review Required
-> [!IMPORTANT]
-> This plan modifies the `/admin` navigation and fixes a critical Nginx configuration error on the VPS.
+## Diagnóstico
+O usuário reportou um erro de hidratação minificado. Analisando o código de `dashboard.tsx`, identifiquei que a variável `profile` e `sub` são tratadas como objetos, mas em alguns pontos do JSX (especialmente no modal de pagamento e nos badges), pode haver uma tentativa de renderizar o objeto inteiro ou um valor `null`/`undefined` de forma inadequada durante a transição de estados.
 
-- **Admin UI**: A new sidebar will be added to the Admin Dashboard for easier navigation between Users, Sales, Settings, and Documentation.
-- **VPS Fix**: The deployment scripts will be updated to handle the missing symlink error reported in the terminal logs.
+## Ações
 
-## Technical Details
+### 1. Hardening do Dashboard
+- Adicionar verificações explícitas em `src/routes/_authenticated/dashboard.tsx` para garantir que objetos não sejam passados como filhos.
+- Refinar o `useEffect` de polling de pagamento para evitar loops infinitos ou renderizações desnecessárias durante a hidratação.
+- Garantir que `timeLeft` e outros estados derivados sejam seguros para SSR.
 
-### 1. Admin Dashboard Refactor (`src/routes/admin/dashboard.tsx`)
-- Replace the current `Tabs` layout with a vertical navigation sidebar for better usability.
-- Ensure state persistence between sections.
+### 2. Sincronização de Tipos
+- Garantir que `profile` e `subscription` tenham fallbacks seguros (`?? null`) para evitar erros de "undefined" que o React às vezes interpreta mal em contextos de hidratação profunda.
 
-### 2. VPS Deployment Script Update (`nuclear_wipe.sh` template)
-- Fix the `000-lovblack` error by checking for file existence before attempting to remove or link.
-- Improve error handling in the master Nginx configuration generator.
+### 3. Verificação de Scripts de Deploy
+- Atualizar o `atualizar-script.ts` para a versão **V10**, garantindo que o comando `bun run build` limpe corretamente o cache antes de gerar o novo bundle, evitando que versões antigas do JS (com bugs de hidratação) persistam no VPS.
 
-### 3. Navigation Links
-- Add explicit admin navigation links in the footer of both the Portuguese and English homepages.
+## Detalhes Técnicos
+- **Arquivo:** `src/routes/_authenticated/dashboard.tsx`
+- **Problema:** Possível renderização de `selectedPlan` ou `sub` antes da hidratação completa.
+- **Solução:** Uso de guards `isActive && ...` e garantir que strings sejam o único output em áreas de texto.
