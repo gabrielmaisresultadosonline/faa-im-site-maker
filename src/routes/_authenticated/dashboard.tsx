@@ -182,6 +182,7 @@ function Dashboard() {
     let interval: any = null;
     
     // Só inicia o polling se REALMENTE estivermos esperando (não ativado ainda)
+    // E se houver um user.id válido.
     if (isWaitingPayment && !isActive && user?.id) {
       interval = setInterval(() => {
         console.log("Polling payment status for user:", user.id);
@@ -193,7 +194,11 @@ function Dashboard() {
     if (isWaitingPayment && isActive) {
       console.log("Payment confirmed! Redirecting...");
       setIsWaitingPayment(false);
-      navigate({ to: '/thanks', replace: true });
+      // Usamos um pequeno atraso para garantir que o estado do React Query
+      // se estabilize antes da navegação, evitando o erro #310 de re-renderização infinita
+      setTimeout(() => {
+        navigate({ to: '/thanks', replace: true });
+      }, 100);
     }
 
     return () => {
