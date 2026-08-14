@@ -619,10 +619,10 @@ function AdminDashboard() {
                       </div>
                     </div>
                   ))}
-                  <Button variant="outline" className="w-full" onClick={() => {
+                  <Button variant="outline" className="w-full gap-2" onClick={() => {
                     const newTuts = [...(settings?.['tutorials'] || []), { title: 'Novo Vídeo', url: '', thumbnail: '' }];
                     updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
-                  }}>+ Adicionar Vídeo</Button>
+                  }}><Plus className="w-4 h-4" /> Adicionar Vídeo</Button>
                 </CardContent>
               </Card>
 
