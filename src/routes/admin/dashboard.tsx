@@ -1031,7 +1031,7 @@ function NoticesAndDocsManager() {
   const handleFileUpload = async (file: File, type: 'notice_image' | 'notice_thumb') => {
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+      const fileName = `${Math.random()}-${file.name.replace(/\s+/g, '_')}`;
       const filePath = `notices/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
