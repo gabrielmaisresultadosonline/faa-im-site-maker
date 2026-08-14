@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { getSignedVideoUrl } from "@/lib/video.functions";
 // Import images directly to avoid relative path issues in SSR/Nitro
 import logoHeart from "/logo-heart.png?url";
 import logoFull from "/logo-full.png?url";
@@ -85,6 +88,20 @@ function Index() {
     }
   ];
 
+  const fetchSignedUrl = useServerFn(getSignedVideoUrl);
+  const [heroVideoUrl, setHeroVideoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadHeroVideo = async () => {
+      try {
+        const { url } = await fetchSignedUrl({ data: { path: "video-0.02649446612669404.mp4" } });
+        setHeroVideoUrl(url);
+      } catch (err) {
+        console.error("Failed to load hero video:", err);
+      }
+    };
+    loadHeroVideo();
+  }, []);
 
   return (
     <div className="min-h-screen font-sans selection:bg-primary/20" style={{ backgroundColor: "#F7F1EB" }}>
@@ -123,12 +140,20 @@ function Index() {
         </div>
 
         <div className="relative max-w-5xl mx-auto rounded-3xl overflow-hidden border-[12px] border-white shadow-2xl bg-neutral-900 aspect-video flex items-center justify-center group shadow-[#D8D0C8]">
-          <iframe
-            src="https://zjvmfmdyuxmyanuuralq.supabase.co/storage/v1/object/public/assets/video-0.02649446612669404.mp4"
-            className="w-full h-full absolute inset-0 z-0"
-            allow="autoplay; encrypted-media"
-            title="Demonstração Lovablack"
-          />
+          {heroVideoUrl ? (
+            <video
+              src={heroVideoUrl}
+              className="w-full h-full absolute inset-0 z-0 object-cover"
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+          ) : (
+            <div className="w-full h-full bg-neutral-900 flex items-center justify-center">
+              <Zap className="w-12 h-12 text-white/20 animate-pulse" />
+            </div>
+          )}
           
           <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-md p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between border border-white/20 shadow-xl z-10 gap-4 md:gap-0">
              <div className="flex items-center gap-3">
