@@ -459,7 +459,8 @@ function AdminDashboard() {
                             .from('assets')
                             .upload(fileName, file, {
                               cacheControl: '3600',
-                              upsert: true
+                              upsert: true,
+                              contentType: file.type
                             });
                           if (error) throw error;
                           
