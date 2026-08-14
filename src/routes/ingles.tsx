@@ -119,24 +119,23 @@ function Index() {
           </div>
         </div>
 
-        <div className="relative max-w-5xl mx-auto rounded-3xl overflow-hidden border-[12px] border-white shadow-2xl bg-gradient-to-br from-[#080808] via-[#1A1B1A] to-[#DC0D0D] aspect-video flex items-center justify-center group shadow-[#D8D0C8]">
-          <div className="absolute inset-0 bg-neutral-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10 pointer-events-none">
-             <Button variant="secondary" className="rounded-full h-20 w-20 p-0 shadow-lg border-white/20 bg-white text-neutral-900">
-                <Zap className="fill-neutral-900 w-8 h-8" />
-             </Button>
-          </div>
+        <div className="relative max-w-5xl mx-auto rounded-3xl overflow-hidden border-[12px] border-white shadow-2xl bg-neutral-900 aspect-video flex items-center justify-center group shadow-[#D8D0C8]">
+          <iframe
+            src="https://zjvmfmdyuxmyanuuralq.supabase.co/storage/v1/object/public/assets/video-0.02649446612669404.mp4"
+            className="w-full h-full absolute inset-0 z-0"
+            allow="autoplay; encrypted-media"
+            title="Lovablack Demonstration"
+          />
           
-          {/* Heart Glow Effect */}
-          <div className="absolute w-64 h-64 bg-[#FF0000]/20 blur-[80px] rounded-full animate-pulse"></div>
-          
-          <img src={logoHeart} alt="LOVABLACK Icon" className="w-40 h-40 md:w-60 md:h-60 object-contain animate-pulse relative z-10 drop-shadow-[0_0_30px_rgba(220,13,13,0.5)]" />
-          
-          <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-md p-5 rounded-2xl flex items-center justify-between border border-white/20 shadow-xl">
+          <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-md p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between border border-white/20 shadow-xl z-10 gap-4 md:gap-0">
              <div className="flex items-center gap-3">
                <div className="w-3 h-3 rounded-full bg-[#DC0D0D] animate-ping"></div>
-                <p className="text-sm md:text-base font-black text-[#1A1B1A] tracking-tight">🚀 THIS SITE WAS MADE ENTIRELY BY THIS EXTENSION</p>
+               <p className="text-sm md:text-base font-black text-[#1A1B1A] tracking-tight">🚀 SEE THE TOOL IN ACTION!</p>
              </div>
-             <Badge className="bg-[#DC0D0D] text-white border-0 px-4 py-1 font-bold">100% FREE</Badge>
+             <div className="flex items-center gap-3">
+               <Badge className="bg-[#DC0D0D] text-white border-0 px-4 py-1 font-bold">UPDATED AUGUST 2026</Badge>
+               <Badge className="bg-[#1A1B1A] text-white border-0 px-4 py-1 font-bold hidden sm:block">100% WORKING</Badge>
+             </div>
           </div>
         </div>
       </header>
