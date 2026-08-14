@@ -454,8 +454,7 @@ function AdminDashboard() {
                         }
                         const toastId = toast.loading("Subindo extensão...");
                         try {
-                          const fileExt = file.name.split('.').pop();
-                          const fileName = `extension-${Math.random()}.${fileExt}`;
+                          const fileName = file.name;
                           const { data, error } = await supabase.storage
                             .from('assets')
                             .upload(fileName, file, {
