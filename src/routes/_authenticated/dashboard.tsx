@@ -280,13 +280,13 @@ function Dashboard() {
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-4 bg-[#F7F1EB] rounded-2xl">
-                  <p className="text-xs font-bold uppercase text-neutral-500">{isEn ? 'User' : 'Usuário'}</p>
+                  <p className="text-xs font-bold uppercase text-neutral-500">{isEn ? 'User' : 'E-mail'}</p>
                   <p className="font-mono font-bold text-[#1A1B1A] break-all">{user.email}</p>
                 </div>
                 <div className="p-4 bg-[#F7F1EB] rounded-2xl">
                   <p className="text-xs font-bold uppercase text-neutral-500">{isEn ? 'Password' : 'Senha'}</p>
                   <p className="font-mono font-bold text-[#1A1B1A] break-all">
-                    {accessPassword || (isEn ? 'Use your signup password' : 'Use a senha do seu cadastro')}
+                    {accessPassword || (isEn ? 'Use your signup password' : 'Use a sua senha de cadastro')}
                   </p>
                 </div>
                 <div className="p-4 bg-[#F7F1EB] rounded-2xl">
