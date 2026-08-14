@@ -12,7 +12,7 @@ import { createPaymentLink } from '@/lib/payments.functions';
 import { startTrial } from '@/lib/trial.functions';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Maximize2 } from "lucide-react";
+import { Loader2, Maximize2, X } from "lucide-react";
 import { getSignedVideoUrl } from "@/lib/video.functions";
 
 
