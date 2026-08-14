@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { supabase } from "@/integrations/supabase/client";
 
 export const getSignedVideoUrl = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ path: z.string() }).parse(data))
