@@ -159,6 +159,7 @@ function Index() {
                 controls
                 autoPlay={false}
                 playsInline
+                preload="metadata"
               />
             ) : (
               <div className="w-full h-full bg-neutral-900 flex items-center justify-center">
