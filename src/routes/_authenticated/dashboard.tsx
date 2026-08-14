@@ -328,7 +328,7 @@ function Dashboard() {
                       try {
                         // Tenta baixar via signed URL se o link público falhar ou for privado
                         const url = new URL(settings['download_link']);
-                        const path = url.pathname.split('/').pop(); // Pega o nome do arquivo
+                        const path = url.pathname.substring(url.pathname.lastIndexOf('/') + 1); // Pega o caminho completo do arquivo no bucket
                         
                         if (path) {
                           const { data, error } = await supabase.storage
