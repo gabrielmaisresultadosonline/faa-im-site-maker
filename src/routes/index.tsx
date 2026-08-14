@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { getSignedVideoUrl } from "@/lib/video.functions";
 // Import images directly to avoid relative path issues in SSR/Nitro
 import logoHeart from "/logo-heart.png?url";
 import logoFull from "/logo-full.png?url";
