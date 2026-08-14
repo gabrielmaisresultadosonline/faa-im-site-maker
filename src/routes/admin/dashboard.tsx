@@ -598,7 +598,7 @@ function AdminDashboard() {
                             }
                             const toastId = toast.loading("Subindo vídeo...");
                             try {
-                              const fileName = `video-${Math.random()}.mp4`;
+                              const fileName = `video-${Math.random()}-${file.name.replace(/\s+/g, '_')}`;
                               const { data, error } = await supabase.storage
                                 .from('assets')
                                 .upload(fileName, file, { upsert: true });
