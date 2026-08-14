@@ -357,7 +357,7 @@ function Index() {
            <p className="text-xl text-neutral-400 mb-12 relative z-10 max-w-2xl mx-auto">Isso acaba agora. Lovable ilimitado é realidade com <b>LOVABLACK</b>. Crie, teste e hospede sem restrições.</p>
            <Dialog>
              <DialogTrigger asChild>
-               <Button size="lg" className="h-16 px-12 text-xl font-bold rounded-full bg-[#DC0D0D] text-white hover:bg-[#FF0000] transition-all hover:scale-105 relative z-10 shadow-[0_0_30px_rgba(220,13,13,0.3)] border-0">
+               <Button size="lg" className="h-auto py-6 px-8 md:px-12 text-lg md:text-xl font-bold rounded-full bg-[#DC0D0D] text-white hover:bg-[#FF0000] transition-all hover:scale-105 relative z-10 shadow-[0_0_30px_rgba(220,13,13,0.3)] border-0 whitespace-normal text-center leading-tight w-full md:w-auto">
                   🔥 QUERO MEU LOVABLACK AGORA
                </Button>
              </DialogTrigger>
