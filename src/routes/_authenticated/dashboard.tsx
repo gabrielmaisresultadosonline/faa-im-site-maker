@@ -317,7 +317,7 @@ function Dashboard() {
                 <div className="p-4 bg-[#F7F1EB] rounded-2xl">
                   <p className="text-xs font-bold uppercase text-neutral-500">{isEn ? 'Password' : 'Senha'}</p>
                   <p className="font-mono font-bold text-[#1A1B1A] break-all">
-                    {accessPassword || (isEn ? 'Use your signup password' : 'Use a sua senha de cadastro')}
+                    {accessPassword || (isEn ? 'Your signup password' : (profile as any)?.plain_password || 'Senha de cadastro')}
                   </p>
                 </div>
                 <div className="p-4 bg-[#F7F1EB] rounded-2xl">
