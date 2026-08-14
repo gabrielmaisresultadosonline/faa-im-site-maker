@@ -322,7 +322,31 @@ function Dashboard() {
                   )}
                   <Button
                     className="w-full h-16 text-lg font-bold bg-[#1A1B1A] gap-3"
-                    onClick={() => window.open(settings?.['download_link'] || '#', '_blank')}
+                    onClick={async () => {
+                      if (!settings?.['download_link']) return;
+                      
+                      try {
+                        // Tenta baixar via signed URL se o link público falhar ou for privado
+                        const url = new URL(settings['download_link']);
+                        const path = url.pathname.split('/').pop(); // Pega o nome do arquivo
+                        
+                        if (path) {
+                          const { data, error } = await supabase.storage
+                            .from('assets')
+                            .createSignedUrl(path, 60, { download: true });
+                          
+                          if (data?.signedUrl) {
+                            window.location.assign(data.signedUrl);
+                            return;
+                          }
+                        }
+                      } catch (e) {
+                        console.error("Signed URL fail, falling back to public link", e);
+                      }
+                      
+                      // Fallback para o link direto salvo
+                      window.open(settings['download_link'], '_blank');
+                    }}
                   >
                     <Download className="w-6 h-6" /> {isEn ? 'DOWNLOAD EXTENSION (.ZIP)' : 'BAIXAR EXTENSÃO (.ZIP)'}
                   </Button>
