@@ -13,13 +13,10 @@ export function LanguageSelectorModal() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Sempre pergunta ao acessar a homepage diretamente.
-    setIsOpen(true);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
+    // Modal desativado temporariamente por solicitação do usuário.
+    // Agora o site abre diretamente em Português (BR).
+    setIsOpen(false);
+    setStoredLanguage("pt");
   }, []);
 
   const selectLanguage = (lang: AppLanguage) => {
