@@ -517,6 +517,7 @@ function AdminDashboard() {
                             placeholder="Thumbnail URL"
                             defaultValue={tut.thumbnail}
                             className="w-[150px]"
+                            id={`tut-thumb-input-${index}`}
                             onBlur={(e) => {
                               if (!settings) return;
                               const newTuts = [...(settings['tutorials'] || [])];
