@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getSubscriptionStatus, getProfile, getAppSettings } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Download, PlayCircle, Clock, AlertTriangle, CreditCard, Check, Gift, KeyRound } from 'lucide-react';
+import { Download, PlayCircle, Clock, AlertTriangle, CreditCard, Check, Gift, KeyRound, Image as ImageIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useEffect, useState } from 'react';
 import { getStoredLanguage } from "@/lib/language";
@@ -12,7 +12,8 @@ import { createPaymentLink } from '@/lib/payments.functions';
 import { startTrial } from '@/lib/trial.functions';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
+import { Loader2, Maximize2 } from "lucide-react";
+import { getSignedVideoUrl } from "@/lib/video.functions";
 
 
 export const Route = createFileRoute('/_authenticated/dashboard')({
@@ -25,6 +26,9 @@ function Dashboard() {
   const queryClient = useQueryClient();
   const [isWaitingPayment, setIsWaitingPayment] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [playingVideo, setPlayingVideo] = useState<{ title: string; url: string; isMp4: boolean } | null>(null);
+  const [signedVideoUrl, setSignedVideoUrl] = useState<string | null>(null);
+  const [loadingVideo, setLoadingVideo] = useState(false);
 
 
   // Auto-login logic for extension redirection
@@ -227,6 +231,28 @@ function Dashboard() {
   };
 
 
+  const handleVideoClick = async (tut: any) => {
+    const isMp4 = tut.url && tut.url.includes('.mp4');
+    setPlayingVideo({ title: tut.title, url: tut.url, isMp4 });
+    
+    if (isMp4) {
+      setLoadingVideo(true);
+      try {
+        const url = new URL(tut.url);
+        const path = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
+        const { url: signedUrl } = await getSignedVideoUrl({ data: { path } });
+        setSignedVideoUrl(signedUrl);
+      } catch (err) {
+        console.error("Error loading video:", err);
+        toast.error(isEn ? "Error loading video player" : "Erro ao carregar o player de vídeo");
+      } finally {
+        setLoadingVideo(false);
+      }
+    } else {
+      setSignedVideoUrl(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F7F1EB] p-4 md:p-8 pb-20">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -361,38 +387,80 @@ function Dashboard() {
                   <CardTitle className="text-2xl font-bold">{isEn ? 'Video Tutorials' : 'Vídeos Tutoriais'}</CardTitle>
                   <CardDescription>{isEn ? 'Follow the step-by-step video' : 'Siga o passo a passo em vídeo'}</CardDescription>
                 </CardHeader>
-                <CardContent className="p-0 space-y-4">
-                  {(settings?.['tutorials'] || []).map((tut: any, index: number) => (
-                    <div key={index} className="space-y-2 p-4">
-                      <h3 className="font-bold flex items-center gap-2"><PlayCircle className="w-4 h-4" /> {tut.title}</h3>
-                      <div className="aspect-video bg-neutral-900 flex items-center justify-center rounded-xl overflow-hidden border relative group">
-                        {tut.url ? (
-                          <>
-                            {tut.thumbnail && (
-                              <img 
-                                src={tut.thumbnail} 
-                                alt={tut.title} 
-                                className="absolute inset-0 w-full h-full object-cover z-0 group-hover:opacity-0 transition-opacity duration-300"
-                              />
-                            )}
-                            <iframe
-                              src={tut.url.includes('youtube.com') || tut.url.includes('youtu.be') 
-                                ? tut.url.replace('watch?v=', 'embed/').split('&')[0] 
-                                : tut.url}
-                              className="w-full h-full relative z-10"
-                              allowFullScreen
-                              title={tut.title}
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {(settings?.['tutorials'] || []).map((tut: any, index: number) => (
+                      <div 
+                        key={index} 
+                        className="group cursor-pointer space-y-2"
+                        onClick={() => handleVideoClick(tut)}
+                      >
+                        <div className="aspect-video bg-neutral-900 flex items-center justify-center rounded-xl overflow-hidden border relative">
+                          {tut.thumbnail ? (
+                            <img 
+                              src={tut.thumbnail} 
+                              alt={tut.title} 
+                              className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105 duration-300"
                             />
-                          </>
-                        ) : (
-                          <PlayCircle className="w-16 h-16 text-white/20" />
-                        )}
+                          ) : (
+                            <div className="absolute inset-0 bg-neutral-100 flex items-center justify-center text-neutral-400">
+                              <ImageIcon className="w-8 h-8 opacity-20" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <PlayCircle className="w-12 h-12 text-white" />
+                          </div>
+                          <div className="absolute bottom-2 right-2 bg-black/60 p-1 rounded-md">
+                            <Maximize2 className="w-4 h-4 text-white opacity-80" />
+                          </div>
+                        </div>
+                        <h3 className="font-bold text-sm truncate flex items-center gap-2">
+                          <PlayCircle className="w-3 h-3 text-[#DC0D0D]" /> 
+                          {tut.title}
+                        </h3>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </div>
+
+            <Dialog open={!!playingVideo} onOpenChange={(open) => !open && setPlayingVideo(null)}>
+              <DialogContent className="max-w-5xl w-[95vw] p-0 bg-black overflow-hidden border-none shadow-2xl">
+                <DialogHeader className="p-4 bg-white/5 backdrop-blur-md absolute top-0 w-full z-20 opacity-0 hover:opacity-100 transition-opacity">
+                  <DialogTitle className="text-white text-lg font-bold">{playingVideo?.title}</DialogTitle>
+                </DialogHeader>
+                <div className="aspect-video w-full flex items-center justify-center bg-black">
+                  {loadingVideo ? (
+                    <Loader2 className="w-12 h-12 text-white animate-spin" />
+                  ) : playingVideo?.url ? (
+                    playingVideo.isMp4 ? (
+                      <video 
+                        src={signedVideoUrl || playingVideo.url} 
+                        className="w-full h-full" 
+                        controls 
+                        autoPlay
+                      />
+                    ) : (
+                      <iframe
+                        src={playingVideo.url.includes('youtube.com') || playingVideo.url.includes('youtu.be') 
+                          ? playingVideo.url.replace('watch?v=', 'embed/').split('&')[0] 
+                          : playingVideo.url}
+                        className="w-full h-full"
+                        allowFullScreen
+                        allow="autoplay; encrypted-media"
+                        title={playingVideo.title}
+                      />
+                    )
+                  ) : (
+                    <div className="text-white flex flex-col items-center gap-4">
+                      <AlertTriangle className="w-12 h-12 text-yellow-500" />
+                      <p>{isEn ? "Video link missing" : "Link do vídeo não encontrado"}</p>
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         ) : (
           // O aviso de expirado so aparece depois que o teste de 20 min foi usado.
