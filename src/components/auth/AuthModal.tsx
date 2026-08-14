@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useNavigate } from '@tanstack/react-router';
 import { setStoredLanguage } from '@/lib/language';
+import { trackLeadEvent } from '@/lib/facebook-pixel.functions';
+import { useServerFn } from '@tanstack/react-start';
 
 interface AuthModalProps {
   initialMode?: 'login' | 'signup';
@@ -27,6 +29,7 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
   const [fullName, setFullName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const navigate = useNavigate();
+  const trackLead = useServerFn(trackLeadEvent);
 
   // Guarda o idioma da pagina de origem para o dashboard ja abrir no idioma certo
   // (e o pagamento sair na moeda certa) mesmo antes do perfil carregar.
@@ -106,6 +109,23 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
         }
       });
       if (error) throw error;
+      
+      // Track Lead event on Facebook
+      try {
+        await trackLead({
+          data: {
+            email,
+            ip: '', // Server-side will ideally handle this or we can try to pass it
+            userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : ''
+          }
+        });
+        // Also trigger client-side pixel lead event
+        if (typeof (window as any).fbq === 'function') {
+          (window as any).fbq('track', 'Lead');
+        }
+      } catch (trackError) {
+        console.error("Facebook tracking failed:", trackError);
+      }
       
       if (data?.session) {
         toast.success(lang === 'pt' ? 'Cadastro realizado com sucesso!' : 'Registration successful!');
