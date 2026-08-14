@@ -7,7 +7,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { data: signedData, error } = await supabaseAdmin.storage
       .from('assets')
-      .createSignedUrl(data.path, 3600); // 1 hour
+      .createSignedUrl(data.path, 86400); // 24 hours to help with caching/persistence
 
     if (error) {
       console.error("Error creating signed URL:", error);

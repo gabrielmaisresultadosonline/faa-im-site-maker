@@ -517,6 +517,7 @@ function AdminDashboard() {
                             placeholder="Thumbnail URL"
                             defaultValue={tut.thumbnail}
                             className="w-[150px]"
+                            id={`tut-thumb-input-${index}`}
                             onBlur={(e) => {
                               if (!settings) return;
                               const newTuts = [...(settings['tutorials'] || [])];
@@ -531,7 +532,7 @@ function AdminDashboard() {
                                   if (!file) continue;
                                   const toastId = toast.loading("Subindo thumb colada...");
                                   try {
-                                    const fileName = `thumb-paste-${Math.random()}.png`;
+                                    const fileName = `thumb-paste-${Math.random()}-${file.name.replace(/\s+/g, '_')}`;
                                     const { data, error } = await supabase.storage.from('assets').upload(fileName, file, { upsert: true });
                                     if (error) throw error;
                                     const { data: { publicUrl } } = supabase.storage.from('assets').getPublicUrl(data.path);
@@ -561,7 +562,7 @@ function AdminDashboard() {
                               if (!file) return;
                               const toastId = toast.loading("Subindo thumbnail...");
                               try {
-                                const fileName = `thumb-${Math.random()}.png`;
+                                const fileName = `thumb-${Math.random()}-${file.name.replace(/\s+/g, '_')}`;
                                 const { data, error } = await supabase.storage.from('assets').upload(fileName, file, { upsert: true });
                                 if (error) throw error;
                                 const { data: { publicUrl } } = supabase.storage.from('assets').getPublicUrl(data.path);
@@ -598,7 +599,7 @@ function AdminDashboard() {
                             }
                             const toastId = toast.loading("Subindo vídeo...");
                             try {
-                              const fileName = `video-${Math.random()}.mp4`;
+                              const fileName = `video-${Math.random()}-${file.name.replace(/\s+/g, '_')}`;
                               const { data, error } = await supabase.storage
                                 .from('assets')
                                 .upload(fileName, file, { upsert: true });
@@ -1030,7 +1031,7 @@ function NoticesAndDocsManager() {
   const handleFileUpload = async (file: File, type: 'notice_image' | 'notice_thumb') => {
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+      const fileName = `${Math.random()}-${file.name.replace(/\s+/g, '_')}`;
       const filePath = `notices/${fileName}`;
 
       const { error: uploadError } = await supabase.storage

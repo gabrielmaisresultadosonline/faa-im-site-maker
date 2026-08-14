@@ -12,7 +12,7 @@ import { createPaymentLink } from '@/lib/payments.functions';
 import { startTrial } from '@/lib/trial.functions';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Maximize2 } from "lucide-react";
+import { Loader2, Maximize2, X } from "lucide-react";
 import { getSignedVideoUrl } from "@/lib/video.functions";
 
 
@@ -426,11 +426,18 @@ function Dashboard() {
             </div>
 
             <Dialog open={!!playingVideo} onOpenChange={(open) => !open && setPlayingVideo(null)}>
-              <DialogContent className="max-w-5xl w-[95vw] p-0 bg-black overflow-hidden border-none shadow-2xl">
-                <DialogHeader className="p-4 bg-white/5 backdrop-blur-md absolute top-0 w-full z-20 opacity-0 hover:opacity-100 transition-opacity">
-                  <DialogTitle className="text-white text-lg font-bold">{playingVideo?.title}</DialogTitle>
-                </DialogHeader>
-                <div className="aspect-video w-full flex items-center justify-center bg-black">
+              <DialogContent className="max-w-5xl w-[95vw] p-0 bg-transparent overflow-visible border-none shadow-none">
+                <div className="relative group">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute -top-12 -right-4 md:-right-12 z-50 w-10 h-10 rounded-full bg-[#DC0D0D] text-white hover:bg-black hover:scale-110 transition-all shadow-lg"
+                    onClick={() => setPlayingVideo(null)}
+                  >
+                    <X className="w-6 h-6 stroke-[3px]" />
+                  </Button>
+                  
+                  <div className="aspect-video w-full flex items-center justify-center bg-black rounded-2xl overflow-hidden ring-4 ring-white/10 shadow-2xl">
                   {loadingVideo ? (
                     <Loader2 className="w-12 h-12 text-white animate-spin" />
                   ) : playingVideo?.url ? (
@@ -459,6 +466,7 @@ function Dashboard() {
                       <p>{isEn ? "Video link missing" : "Link do vídeo não encontrado"}</p>
                     </div>
                   )}
+                  </div>
                 </div>
               </DialogContent>
             </Dialog>
