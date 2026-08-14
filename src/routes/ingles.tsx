@@ -136,23 +136,8 @@ function Index() {
           </div>
         </div>
 
-        <div className="relative max-w-5xl mx-auto rounded-3xl overflow-hidden border-[12px] border-white shadow-2xl bg-neutral-900 aspect-video flex items-center justify-center group shadow-[#D8D0C8]">
-          {heroVideoUrl ? (
-            <video
-              src={heroVideoUrl}
-              className="w-full h-full absolute inset-0 z-0 object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-            />
-          ) : (
-            <div className="w-full h-full bg-neutral-900 flex items-center justify-center">
-              <Zap className="w-12 h-12 text-white/20 animate-pulse" />
-            </div>
-          )}
-          
-          <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-md p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between border border-white/20 shadow-xl z-10 gap-4 md:gap-0">
+        <div className="max-w-5xl mx-auto space-y-6 text-left">
+          <div className="bg-white/95 backdrop-blur-md p-5 rounded-3xl flex flex-col md:flex-row items-center justify-between border border-[#D8D0C8] shadow-xl gap-4 md:gap-0">
              <div className="flex items-center gap-3">
                <div className="w-3 h-3 rounded-full bg-[#DC0D0D] animate-ping"></div>
                <p className="text-sm md:text-base font-black text-[#1A1B1A] tracking-tight">🚀 SEE THE TOOL IN ACTION!</p>
@@ -161,6 +146,22 @@ function Index() {
                <Badge className="bg-[#DC0D0D] text-white border-0 px-4 py-1 font-bold">UPDATED AUGUST 2026</Badge>
                <Badge className="bg-[#1A1B1A] text-white border-0 px-4 py-1 font-bold hidden sm:block">100% WORKING</Badge>
              </div>
+          </div>
+
+          <div className="relative rounded-3xl overflow-hidden border-[12px] border-white shadow-2xl bg-neutral-900 aspect-video flex items-center justify-center group shadow-[#D8D0C8]">
+            {heroVideoUrl ? (
+              <video
+                src={heroVideoUrl}
+                className="w-full h-full absolute inset-0 z-0 object-cover"
+                controls
+                autoPlay={false}
+                playsInline
+              />
+            ) : (
+              <div className="w-full h-full bg-neutral-900 flex items-center justify-center">
+                <Zap className="w-12 h-12 text-white/20 animate-pulse" />
+              </div>
+            )}
           </div>
         </div>
       </header>
