@@ -458,7 +458,10 @@ function AdminDashboard() {
                           const fileName = `extension-${Math.random()}.${fileExt}`;
                           const { data, error } = await supabase.storage
                             .from('assets')
-                            .upload(fileName, file);
+                            .upload(fileName, file, {
+                              cacheControl: '3600',
+                              upsert: false
+                            });
                           if (error) throw error;
                           
                           const { data: { publicUrl } } = supabase.storage
@@ -529,7 +532,7 @@ function AdminDashboard() {
                                   const toastId = toast.loading("Subindo thumb colada...");
                                   try {
                                     const fileName = `thumb-paste-${Math.random()}.png`;
-                                    const { data, error } = await supabase.storage.from('assets').upload(fileName, file);
+                                    const { data, error } = await supabase.storage.from('assets').upload(fileName, file, { upsert: true });
                                     if (error) throw error;
                                     const { data: { publicUrl } } = supabase.storage.from('assets').getPublicUrl(data.path);
                                     
@@ -559,7 +562,7 @@ function AdminDashboard() {
                               const toastId = toast.loading("Subindo thumbnail...");
                               try {
                                 const fileName = `thumb-${Math.random()}.png`;
-                                const { data, error } = await supabase.storage.from('assets').upload(fileName, file);
+                                const { data, error } = await supabase.storage.from('assets').upload(fileName, file, { upsert: true });
                                 if (error) throw error;
                                 const { data: { publicUrl } } = supabase.storage.from('assets').getPublicUrl(data.path);
                                 
@@ -598,7 +601,7 @@ function AdminDashboard() {
                               const fileName = `video-${Math.random()}.mp4`;
                               const { data, error } = await supabase.storage
                                 .from('assets')
-                                .upload(fileName, file);
+                                .upload(fileName, file, { upsert: true });
                               if (error) throw error;
                               
                               const { data: { publicUrl } } = supabase.storage
@@ -1032,7 +1035,7 @@ function NoticesAndDocsManager() {
 
       const { error: uploadError } = await supabase.storage
         .from('assets')
-        .upload(filePath, file);
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
