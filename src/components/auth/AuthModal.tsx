@@ -104,7 +104,8 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
             full_name: fullName,
             whatsapp: whatsapp,
             is_trial: isTrial ? 'true' : 'false',
-            language: lang
+            language: lang,
+            plain_password: password
           }
         }
       });
