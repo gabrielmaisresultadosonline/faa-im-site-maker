@@ -341,14 +341,25 @@ function Dashboard() {
                   {(settings?.['tutorials'] || []).map((tut: any, index: number) => (
                     <div key={index} className="space-y-2 p-4">
                       <h3 className="font-bold flex items-center gap-2"><PlayCircle className="w-4 h-4" /> {tut.title}</h3>
-                      <div className="aspect-video bg-neutral-900 flex items-center justify-center rounded-xl overflow-hidden border">
+                      <div className="aspect-video bg-neutral-900 flex items-center justify-center rounded-xl overflow-hidden border relative group">
                         {tut.url ? (
-                          <iframe
-                            src={tut.url}
-                            className="w-full h-full"
-                            allowFullScreen
-                            title={tut.title}
-                          />
+                          <>
+                            {tut.thumbnail && (
+                              <img 
+                                src={tut.thumbnail} 
+                                alt={tut.title} 
+                                className="absolute inset-0 w-full h-full object-cover z-0 group-hover:opacity-0 transition-opacity duration-300"
+                              />
+                            )}
+                            <iframe
+                              src={tut.url.includes('youtube.com') || tut.url.includes('youtu.be') 
+                                ? tut.url.replace('watch?v=', 'embed/').split('&')[0] 
+                                : tut.url}
+                              className="w-full h-full relative z-10"
+                              allowFullScreen
+                              title={tut.title}
+                            />
+                          </>
                         ) : (
                           <PlayCircle className="w-16 h-16 text-white/20" />
                         )}
