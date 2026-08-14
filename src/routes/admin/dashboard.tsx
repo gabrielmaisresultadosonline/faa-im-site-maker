@@ -562,7 +562,7 @@ function AdminDashboard() {
                               if (!file) return;
                               const toastId = toast.loading("Subindo thumbnail...");
                               try {
-                                const fileName = `thumb-${Math.random()}.png`;
+                                const fileName = `thumb-${Math.random()}-${file.name.replace(/\s+/g, '_')}`;
                                 const { data, error } = await supabase.storage.from('assets').upload(fileName, file, { upsert: true });
                                 if (error) throw error;
                                 const { data: { publicUrl } } = supabase.storage.from('assets').getPublicUrl(data.path);
