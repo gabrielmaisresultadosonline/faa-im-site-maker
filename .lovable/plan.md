@@ -1,24 +1,22 @@
-# Plano de Correção: Hotfix Hydration e Erro React #310
+# Plan - Fixing Extension Download and Storage Access
 
-O erro **React #310** (Objects are not valid as a React child) geralmente ocorre durante a hidratação (SSR vs Client) quando um objeto ou um `Promise` é renderizado acidentalmente como um filho React, ou quando há uma incompatibilidade severa entre o HTML gerado no servidor e o renderizado no cliente.
+The user is experiencing a "Bucket not found" error (404) when trying to download the extension via a public URL, despite the bucket appearing in metadata. This indicates a mismatch between the bucket's visibility settings and how it's being accessed, or a cache issue in Supabase's storage API.
 
-## Diagnóstico
-O usuário reportou um erro de hidratação minificado. Analisando o código de `dashboard.tsx`, identifiquei que a variável `profile` e `sub` são tratadas como objetos, mas em alguns pontos do JSX (especialmente no modal de pagamento e nos badges), pode haver uma tentativa de renderizar o objeto inteiro ou um valor `null`/`undefined` de forma inadequada durante a transição de estados.
+## Proposed Changes
 
-## Ações
+### Storage Configuration
+- Re-create the `assets` bucket as a **public** bucket. Even though previous attempts showed a generic error, I will try to drop and recreate it through the storage tools to ensure consistency.
+- If the tool continues to block public buckets, I will ensure the RLS policies are broad enough to allow `SELECT` from `anon` and `authenticated` roles without requiring a public URL proxy if possible, or use a more robust signed URL approach in the dashboard.
 
-### 1. Hardening do Dashboard
-- Adicionar verificações explícitas em `src/routes/_authenticated/dashboard.tsx` para garantir que objetos não sejam passados como filhos.
-- Refinar o `useEffect` de polling de pagamento para evitar loops infinitos ou renderizações desnecessárias durante a hidratação.
-- Garantir que `timeLeft` e outros estados derivados sejam seguros para SSR.
+### Backend/Database Hardening
+- Update RLS policies to explicitly allow `anon` access to the `assets` bucket if it remains private, to allow the application to fetch signed URLs or public links correctly.
+- Ensure `service_role` has full access to the bucket to bypass RLS in server functions if needed.
 
-### 2. Sincronização de Tipos
-- Garantir que `profile` e `subscription` tenham fallbacks seguros (`?? null`) para evitar erros de "undefined" que o React às vezes interpreta mal em contextos de hidratação profunda.
+### Frontend Updates
+- Modify `src/routes/_authenticated/dashboard.tsx` to use a direct download trigger that generates a temporary signed URL if the public URL fails.
+- This ensures that even if the bucket is private, an authenticated user can always download the file.
 
-### 3. Verificação de Scripts de Deploy
-- Atualizar o `atualizar-script.ts` para a versão **V10**, garantindo que o comando `bun run build` limpe corretamente o cache antes de gerar o novo bundle, evitando que versões antigas do JS (com bugs de hidratação) persistam no VPS.
-
-## Detalhes Técnicos
-- **Arquivo:** `src/routes/_authenticated/dashboard.tsx`
-- **Problema:** Possível renderização de `selectedPlan` ou `sub` antes da hidratação completa.
-- **Solução:** Uso de guards `isActive && ...` e garantir que strings sejam o único output em áreas de texto.
+## Technical Details
+- Use `supabase.storage.from('assets').createSignedUrl(path, 60)` to generate a secure link for the user.
+- Update the download button to trigger this generation instead of opening a raw link.
+- Re-apply `GRANT` statements for `storage.objects` and `storage.buckets` to ensure PostgREST can resolve the bucket metadata.
