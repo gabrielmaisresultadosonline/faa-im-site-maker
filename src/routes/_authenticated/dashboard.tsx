@@ -466,6 +466,7 @@ function Dashboard() {
                       <p>{isEn ? "Video link missing" : "Link do vídeo não encontrado"}</p>
                     </div>
                   )}
+                  </div>
                 </div>
               </DialogContent>
             </Dialog>
