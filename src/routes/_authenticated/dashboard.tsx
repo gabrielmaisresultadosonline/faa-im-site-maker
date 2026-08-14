@@ -239,7 +239,7 @@ function Dashboard() {
       setLoadingVideo(true);
       try {
         const url = new URL(tut.url);
-        const path = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
+        const path = url.pathname.split('/').pop() || ''; // Extrai apenas o nome do arquivo
         const { url: signedUrl } = await getSignedVideoUrl({ data: { path } });
         setSignedVideoUrl(signedUrl);
       } catch (err) {
@@ -354,7 +354,7 @@ function Dashboard() {
                       try {
                         // Tenta baixar via signed URL se o link público falhar ou for privado
                         const url = new URL(settings['download_link']);
-                        const path = url.pathname.substring(url.pathname.lastIndexOf('/') + 1); // Pega o caminho completo do arquivo no bucket
+                        const path = url.pathname.split('/').pop() || ''; // Extrai apenas o nome do arquivo
                         
                         if (path) {
                           const { data, error } = await supabase.storage
