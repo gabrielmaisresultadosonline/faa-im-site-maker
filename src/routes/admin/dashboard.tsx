@@ -482,7 +482,7 @@ function AdminDashboard() {
                   <CardTitle className="flex items-center gap-2">
                     <Video className="w-5 h-5" /> Vídeos Tutoriais (.mp4 ou YouTube)
                   </CardTitle>
-                  <CardDescription>Upload de arquivos MP4 (até 300MB) ou links externos</CardDescription>
+                  <CardDescription>Upload de arquivos MP4 (até 300MB), links externos ou thumbs de vídeos</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {(settings?.['tutorials'] || []).map((tut: any, index: number) => (
