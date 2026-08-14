@@ -440,6 +440,7 @@ function Dashboard() {
                         className="w-full h-full" 
                         controls 
                         autoPlay
+                        preload="metadata"
                       />
                     ) : (
                       <iframe
