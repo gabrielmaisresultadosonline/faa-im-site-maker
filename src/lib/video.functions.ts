@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const getSignedVideoUrl = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ path: z.string() }).parse(data))
   .handler(async ({ data }) => {
-    const { data: signedData, error } = await supabaseAdmin.storage
+    const { data: signedData, error } = await supabase.storage
       .from('assets')
       .createSignedUrl(data.path, 86400); // 24 hours to help with caching/persistence
 
