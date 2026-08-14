@@ -509,6 +509,71 @@ function AdminDashboard() {
                             updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
                           }}
                         />
+                        <div className="flex gap-1 shrink-0">
+                          <Input
+                            placeholder="Thumbnail URL"
+                            defaultValue={tut.thumbnail}
+                            className="w-[150px]"
+                            onBlur={(e) => {
+                              if (!settings) return;
+                              const newTuts = [...(settings['tutorials'] || [])];
+                              newTuts[index].thumbnail = e.target.value;
+                              updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
+                            }}
+                            onPaste={async (e) => {
+                              const items = e.clipboardData.items;
+                              for (const item of Array.from(items)) {
+                                if (item.type.indexOf("image") !== -1) {
+                                  const file = item.getAsFile();
+                                  if (!file) continue;
+                                  const toastId = toast.loading("Subindo thumb colada...");
+                                  try {
+                                    const fileName = `thumb-paste-${Math.random()}.png`;
+                                    const { data, error } = await supabase.storage.from('assets').upload(fileName, file);
+                                    if (error) throw error;
+                                    const { data: { publicUrl } } = supabase.storage.from('assets').getPublicUrl(data.path);
+                                    
+                                    if (!settings) return;
+                                    const newTuts = [...(settings['tutorials'] || [])];
+                                    newTuts[index].thumbnail = publicUrl;
+                                    updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
+                                    toast.success("Thumbnail atualizada!", { id: toastId });
+                                  } catch (err: any) {
+                                    toast.error(err.message, { id: toastId });
+                                  }
+                                }
+                              }
+                            }}
+                          />
+                          <Button variant="outline" size="icon" title="Subir Thumbnail" onClick={() => document.getElementById(`tut-thumb-upload-${index}`)?.click()}>
+                            <ImageIcon className="w-4 h-4" />
+                          </Button>
+                          <input 
+                            type="file" 
+                            id={`tut-thumb-upload-${index}`} 
+                            className="hidden" 
+                            accept="image/*" 
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const toastId = toast.loading("Subindo thumbnail...");
+                              try {
+                                const fileName = `thumb-${Math.random()}.png`;
+                                const { data, error } = await supabase.storage.from('assets').upload(fileName, file);
+                                if (error) throw error;
+                                const { data: { publicUrl } } = supabase.storage.from('assets').getPublicUrl(data.path);
+                                
+                                if (!settings) return;
+                                const newTuts = [...(settings['tutorials'] || [])];
+                                newTuts[index].thumbnail = publicUrl;
+                                updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
+                                toast.success("Thumbnail atualizada!", { id: toastId });
+                              } catch (err: any) {
+                                toast.error(err.message, { id: toastId });
+                              }
+                            }} 
+                          />
+                        </div>
                         <Button variant="destructive" size="icon" onClick={() => {
                           if (!settings) return;
                           const newTuts = settings['tutorials'].filter((_: any, i: number) => i !== index);
