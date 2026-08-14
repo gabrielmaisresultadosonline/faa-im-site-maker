@@ -618,7 +618,7 @@ function AdminDashboard() {
                     </div>
                   ))}
                   <Button variant="outline" className="w-full" onClick={() => {
-                    const newTuts = [...(settings?.['tutorials'] || []), { title: 'Novo Vídeo', url: '' }];
+                    const newTuts = [...(settings?.['tutorials'] || []), { title: 'Novo Vídeo', url: '', thumbnail: '' }];
                     updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
                   }}>+ Adicionar Vídeo</Button>
                 </CardContent>
