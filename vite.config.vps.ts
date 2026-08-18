@@ -1,23 +1,32 @@
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { TanStackRouterVite } from "@tanstack/router-plugin";
+import { tanstackStartVite } from "@tanstack/react-start/config";
+import tsconfigPaths from "vite-tsconfig-paths";
+import tailwindcss from "@tailwindcss/vite";
 import { resolve } from "path";
 
+// Esta config NÃO usa @lovable.dev/vite-tanstack-config para ser compatível com ambientes externos (VPS)
 export default defineConfig({
+  plugins: [
+    tanstackStartVite({
+      server: {
+        entry: "server",
+      },
+      prerender: {
+        routes: ["/"],
+      },
+    }),
+    TanStackRouterVite(),
+    react(),
+    tailwindcss(),
+    tsconfigPaths(),
+  ],
   nitro: {
     preset: "node-server",
   },
-  tanstackStart: {
-    server: {
-      entry: "server",
-    },
-    // Desabilitar prerender para evitar falhas durante o build se o ambiente de rede for instável
-    prerender: {
-      routes: ["/"],
-    },
-  },
   vite: {
     ssr: {
-      // Usamos noExternal: true para garantir que todas as dependências sejam buildadas no bundle.
-      // Isso evita erros de "module not found" no Node no VPS da Hostinger.
       noExternal: true,
     },
     resolve: {
@@ -27,13 +36,7 @@ export default defineConfig({
     },
     build: {
       chunkSizeWarningLimit: 2000,
-      // Desabilitar CSS code splitting para evitar links quebrados em rotas dinâmicas
       cssCodeSplit: false,
-      rollupOptions: {
-        output: {
-          manualChunks: undefined,
-        },
-      },
     },
   },
 });

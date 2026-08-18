@@ -29,14 +29,22 @@ function isLoginResult(value: unknown): value is LoginResult {
   return typeof value === "object" && value !== null && "success" in value;
 }
 
-/** Chaves novas (sb_publishable_/sb_secret_) sao opacas: nao podem ir como Bearer. */
-function supabaseFetch(key: string): typeof fetch {
+function isNewSupabaseApiKey(value: string): boolean {
+  return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
+}
+
+function supabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
-    const headers = new Headers(init?.headers);
-    if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) {
-      headers.delete("Authorization");
+    const headers = new Headers(
+      typeof Request !== 'undefined' && input instanceof Request ? input.headers : undefined,
+    );
+    if (init?.headers) {
+      new Headers(init.headers).forEach((value, key) => headers.set(key, value));
     }
-    headers.set("apikey", key);
+    if (isNewSupabaseApiKey(supabaseKey) && headers.get('Authorization') === `Bearer ${supabaseKey}`) {
+      headers.delete('Authorization');
+    }
+    headers.set('apikey', supabaseKey);
     return fetch(input, { ...init, headers });
   };
 }
@@ -83,12 +91,16 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
 
           if (!url || !anonKey) {
-            console.error(`[API-${rid}] Config ausente. URL:${!!url} KEY:${!!anonKey}`);
+            console.error(`[API-${rid}] Config ausente no ambiente. URL:${!!url} KEY:${!!anonKey}`);
             return json(
-              { success: false, error: "Servidor em manutencao: configuracao ausente." },
+              { success: false, error: "Servidor em manutencao: configuracao de rede ausente." },
               503,
             );
           }
+
+          // Debug parcial das chaves (apenas prefixo e sufixo para seguranca)
+          const mask = (s: string) => `${s.slice(0, 6)}...${s.slice(-4)}`;
+          console.log(`[API-${rid}] Usando URL: ${url} | Key: ${mask(anonKey)}`);
 
           const { createClient } = await import("@supabase/supabase-js");
           const publicClient = createClient(url, anonKey, {
@@ -110,13 +122,15 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           }
 
           // 2) Login padrao com email/senha.
+          console.log(`[API-${rid}] Tentando login padrao Supabase para ${email}...`);
           let auth = await publicClient.auth.signInWithPassword({ email, password });
           if (auth.error && rawPassword !== password) {
+            console.log(`[API-${rid}] Falhou login inicial, tentando senha sem trim para ${email}...`);
             auth = await publicClient.auth.signInWithPassword({ email, password: rawPassword });
           }
 
           if (auth.error || !auth.data.user || !auth.data.session) {
-            console.warn(`[API-${rid}] Login falhou: ${auth.error?.message ?? "sem sessao"}`);
+            console.warn(`[API-${rid}] Login falhou definitivamente para ${email}: ${auth.error?.message ?? "sem sessao"}`);
             return json(
               { success: false, error: "Credenciais invalidas ou conta nao encontrada." },
               401,

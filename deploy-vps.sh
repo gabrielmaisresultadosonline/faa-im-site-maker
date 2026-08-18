@@ -26,15 +26,21 @@ rm -rf .output .vinxi node_modules/.vite .nitro
 
 
 echo "========== BUILD =========="
-npx vite build
+# Usamos a config otimizada para VPS para evitar erros de build e dependências ausentes
+npx vite build --config vite.config.vps.ts
 
 
 echo "========== TESTE DO SSR =========="
+# Tentamos rodar o index.mjs para garantir que o bundle está íntegro
 node --input-type=module -e "
 import('./.output/server/index.mjs')
-  .then(() => console.log('SSR OK'))
+  .then(() => {
+    console.log('SSR OK');
+    process.exit(0);
+  })
   .catch(err => {
-    console.error(err?.stack || err);
+    console.error('ERRO CRITICO NO SSR:');
+    console.error(err);
     process.exit(1);
   })
 "
@@ -43,12 +49,15 @@ import('./.output/server/index.mjs')
 echo "========== PM2 (INJETANDO VARIAVEIS) =========="
 pm2 delete "$PM2_NAME" >/dev/null 2>&1 || true
 
-# Carrega o .env do projeto (gerado pelo Lovable) sem expor valores no log.
+# Carrega o .env de forma segura, removendo possíveis quebras de linha ou espaços extras
 if [ -f .env ]; then
-  set -a
-  # shellcheck disable=SC1091
-  . ./.env
-  set +a
+  while IFS='=' read -r key value || [ -n "$key" ]; do
+    [[ $key =~ ^#.* ]] && continue
+    [[ -z $key ]] && continue
+    # Remove quotes se houver
+    value=$(echo "$value" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
+    export "$key=$value"
+  done < .env
 fi
 
 SUPABASE_URL="${SUPABASE_URL:-${VITE_SUPABASE_URL:-}}"
