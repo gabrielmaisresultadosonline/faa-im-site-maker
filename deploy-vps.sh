@@ -21,13 +21,12 @@ npm ci || npm install
 
 echo "========== 3. CONFIGURANDO VPS (Vite/Nitro) =========="
 # Criando arquivo de config robusto para VPS
-cat <<EOF > vite.config.vps.ts
+cat <<'EOF' > vite.config.vps.ts
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 export default defineConfig({
   nitro: {
     preset: "node-server",
     inlineDynamicImports: true,
-  },
   },
   tanstackStart: {
     server: {
