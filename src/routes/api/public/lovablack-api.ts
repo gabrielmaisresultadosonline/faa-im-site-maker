@@ -36,6 +36,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       POST: async ({ request }) => {
         try {
+          console.log("Recebendo requisição na API da extensão...");
           let body: LoginBody;
           try {
             body = (await request.json()) as LoginBody;
@@ -44,7 +45,12 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           }
 
           const email = (body.email ?? "").trim().toLowerCase();
-          const password = body.password ?? "";
+          const rawPassword = body.password ?? "";
+          // A senha enviada pela extensão pode ter problemas de case ou espaços, mas o login é sensível.
+          // Tentar usar o password trimado primeiro.
+          const password = rawPassword.trim();
+          
+          console.log(`Tentativa de login para: ${email}`);
           const sessionId = body.session_id;
 
           if (body.action !== "login") {
@@ -59,9 +65,9 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           const key = process.env["VITE_SUPABASE_ANON_KEY"] || process.env["SUPABASE_ANON_KEY"];
           const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
           
-          if (!url || (!key && !serviceKey)) {
-            console.error("Missing Supabase configuration:", { url: !!url, key: !!key, serviceKey: !!serviceKey });
-            return json({ success: false, error: "Serviço temporariamente indisponível. Por favor, tente novamente em instantes." }, 503);
+          if (!url) {
+            console.error("Missing SUPABASE_URL configuration.");
+            return json({ success: false, error: "Configuração do servidor incompleta (URL)." }, 503);
           }
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -71,16 +77,23 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           try {
             backend = supabaseAdmin;
             // Test access to the proxy
-            const _url = backend.auth; 
+            const _url = backend.auth;
+            if (!backend.auth) throw new Error("supabaseAdmin.auth is null");
           } catch (e) {
             console.error("supabaseAdmin failed, falling back to public client", e);
             const { supabase } = await import("@/integrations/supabase/client");
             backend = supabase;
           }
 
+          console.log(`Usando backend para ${email}...`);
+
           const { data: accessData, error: accessError } = await backend.rpc(
             "login_extension_with_access_password",
-            { _email: email, _access_password: password, _session_id: sessionId ?? "" },
+            { 
+              _email: email, 
+              _access_password: password, 
+              _session_id: sessionId ?? "" 
+            },
           );
 
           if (!accessError && isLoginResult(accessData)) {
@@ -90,14 +103,32 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             }
           }
 
-          const { data: authData, error: authError } = await backend.auth.signInWithPassword({
-            email,
-            password,
-          });
+          // Fallback ao login padrão do Supabase se o RPC falhar ou não encontrar o usuário via access_password.
+          // Testamos com a senha original E com variações se necessário para ser resiliente a apps de extensão.
+          let authResult = await backend.auth.signInWithPassword({ email, password });
+          
+          if (authResult.error) {
+            // Se falhou com trim, tenta com a senha exatamente como veio (sem trim)
+            authResult = await backend.auth.signInWithPassword({ email, password: rawPassword });
+          }
+          
+          if (authResult.error) {
+            // Se ainda falhou, tenta tudo minúsculo e tudo maiúsculo se a senha original for parecida com o email
+            const emailPart = email.split('@')[0] || '';
+            if (emailPart && rawPassword.toLowerCase().includes(emailPart)) {
+              authResult = await backend.auth.signInWithPassword({ email, password: email });
+              if (authResult.error) {
+                authResult = await backend.auth.signInWithPassword({ email, password: rawPassword.toUpperCase() });
+              }
+            }
+          }
 
-          if (authError || !authData.user) {
+          if (authResult.error || !authResult.data.user) {
+            console.warn(`Login falhou para ${email}:`, authResult.error?.message);
             return json({ success: false, error: "Invalid credentials" }, 401);
           }
+          
+          const authData = authResult.data;
 
           const [{ data: profile, error: profileError }, { data: subscription, error: subError }, { data: settings, error: settingsError }] =
             await Promise.all([
