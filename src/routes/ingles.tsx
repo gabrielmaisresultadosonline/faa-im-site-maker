@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { supabase } from '@/integrations/supabase/client';
 import { Check, Shield, Zap, MessageSquare, FileText, Mic, Sparkles, PlusCircle, Eraser, Globe, Star, Clock, Heart, Users, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -105,6 +106,17 @@ function Index() {
     };
     loadHeroVideo();
   }, [fetchSignedUrl]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
+        window.location.replace(isAdminEmail ? '/admin/dashboard' : '/dashboard');
+      }
+    };
+    checkAuth();
+  }, []);
 
   return (
     <div className="min-h-screen font-sans selection:bg-primary/20" style={{ backgroundColor: "#F7F1EB" }}>

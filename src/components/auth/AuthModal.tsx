@@ -51,18 +51,18 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
         // Redirecionamento inteligente: Admin vai para /admin, usuário para /dashboard
         const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
         
-        // Pequeno delay para garantir que o estado do TanStack Router/Supabase sincronize
+        // Pequeno delay para garantir que o estado do Supabase sincronize no localStorage
         setTimeout(() => {
           if (isAdminEmail) {
-            window.location.assign('/admin/dashboard');
+            window.location.replace('/admin/dashboard');
           } else {
-            window.location.assign('/dashboard');
+            window.location.replace('/dashboard');
           }
-        }, 500);
+        }, 300);
       }
     });
     return () => subscription.unsubscribe();
-  }, [navigate, onSuccessRedirect]);
+  }, [onSuccessRedirect]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
