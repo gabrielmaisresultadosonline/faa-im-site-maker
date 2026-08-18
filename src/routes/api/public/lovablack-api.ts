@@ -224,7 +224,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           return json({ 
             success: false, 
             error: "Erro interno no servidor ao processar login da extensão.",
-            details: process.env.NODE_ENV === 'development' ? errMsg : undefined
+            details: process.env['NODE_ENV'] === 'development' ? errMsg : undefined
           }, 500);
         }
       },
