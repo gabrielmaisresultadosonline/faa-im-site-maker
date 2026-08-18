@@ -129,17 +129,17 @@ export function renderErrorPage(stack?: string): string {
         <div class="project-id">zjvmfmdyuxmyanuuralq</div>
       </div>
 
-      <p><strong>Configuração Necessária:</strong></p>
+      <p><strong>Configuração Automática via Deploy:</strong></p>
       <ol>
-        <li>Acesse as configurações do seu projeto <strong>zjvmfmdyuxmyanuuralq</strong> no painel administrativo.</li>
-        <li>Recupere a <code>SUPABASE_SERVICE_ROLE_KEY</code> na aba de chaves API.</li>
-        <li>Configure-a no arquivo <code>.env</code> do seu servidor VPS.</li>
-        <li>Execute o comando de deploy atualizado para aplicar as mudanças:
+        <li>O script <code>deploy-vps.sh</code> foi atualizado para injetar as chaves automaticamente.</li>
+        <li>Se você não tem a chave, eu já configurei o Project ID <code>zjvmfmdyuxmyanuuralq</code> como padrão.</li>
+        <li>No terminal do VPS, execute o comando abaixo apenas uma vez para definir sua chave:
+          <div class="code-block">export SUPABASE_SERVICE_ROLE_KEY=sua_chave_aqui</div>
+        </li>
+        <li>Depois, rode o deploy normalmente:
           <div class="code-block">./deploy-vps.sh</div>
         </li>
-        <li>Reinicie o PM2 garantindo a leitura das novas variáveis:
-          <div class="code-block">pm2 restart lovblack-online --update-env</div>
-        </li>
+        <li>O PM2 agora receberá a chave via <code>--update-env</code> automaticamente durante o processo.</li>
       </ol>
 
       <div class="actions">
