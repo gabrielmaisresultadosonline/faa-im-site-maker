@@ -121,7 +121,7 @@ export const Route = createFileRoute('/api/public/webhook-infinitepay')({
             .upsert(
               {
                 user_id: transaction.user_id,
-                type: planDays >= 365 ? 'annual' : 'paid',
+                type: planDays >= 365 ? 'annual' : (planDays >= 180 ? 'semiannual' : 'monthly'),
                 status: 'active',
                 expires_at: expiresAt.toISOString(),
               },
