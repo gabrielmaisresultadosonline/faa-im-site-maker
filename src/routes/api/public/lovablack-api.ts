@@ -88,11 +88,12 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           // Priorizamos process.env (injetado pelo PM2) sobre import.meta.env
           const url = process.env["SUPABASE_URL"] || 
                       process.env["VITE_SUPABASE_URL"] || 
-                      import.meta.env.VITE_SUPABASE_URL;
+                      import.meta.env["VITE_SUPABASE_URL"];
                       
           const anonKey = process.env["SUPABASE_PUBLISHABLE_KEY"] || 
                           process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || 
-                          import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+                          import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+
 
           if (!url || !anonKey) {
             console.error(`[API-${rid}] Config ausente no ambiente. URL:${!!url} KEY:${!!anonKey}`);
