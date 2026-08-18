@@ -165,6 +165,7 @@ export type Database = {
           last_heartbeat_at: string | null
           last_login_at: string | null
           plain_password: string | null
+          registration_ip: string | null
           session_id: string | null
           whatsapp: string | null
         }
@@ -180,6 +181,7 @@ export type Database = {
           last_heartbeat_at?: string | null
           last_login_at?: string | null
           plain_password?: string | null
+          registration_ip?: string | null
           session_id?: string | null
           whatsapp?: string | null
         }
@@ -195,6 +197,7 @@ export type Database = {
           last_heartbeat_at?: string | null
           last_login_at?: string | null
           plain_password?: string | null
+          registration_ip?: string | null
           session_id?: string | null
           whatsapp?: string | null
         }

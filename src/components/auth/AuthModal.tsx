@@ -10,6 +10,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { setStoredLanguage } from '@/lib/language';
 import { trackLeadEvent } from '@/lib/facebook-pixel.functions';
 import { useServerFn } from '@tanstack/react-start';
+import { checkRegistrationIP } from '@/lib/auth-ip.functions';
 
 interface AuthModalProps {
   initialMode?: 'login' | 'signup';
@@ -30,6 +31,7 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
   const [whatsapp, setWhatsapp] = useState('');
   const navigate = useNavigate();
   const trackLead = useServerFn(trackLeadEvent);
+  const checkIP = useServerFn(checkRegistrationIP);
 
   // Guarda o idioma da pagina de origem para o dashboard ja abrir no idioma certo
   // (e o pagamento sair na moeda certa) mesmo antes do perfil carregar.
@@ -96,6 +98,16 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
     e.preventDefault();
     setLoading(true);
     try {
+      // 1. IP Block Check
+      const ipStatus = await checkIP();
+      if (ipStatus.blocked) {
+        toast.error(ipStatus.message || (lang === 'pt' ? 'Acesso bloqueado por múltiplas contas.' : 'Access blocked for multiple accounts.'), {
+          duration: 6000
+        });
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -105,7 +117,8 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
             whatsapp: whatsapp,
             is_trial: isTrial ? 'true' : 'false',
             language: lang,
-            plain_password: password
+            plain_password: password,
+            registration_ip: ipStatus.ip
           }
         }
       });
