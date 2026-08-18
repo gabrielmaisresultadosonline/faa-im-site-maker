@@ -3,7 +3,10 @@ import { z } from "zod";
 
 export const getSignedVideoUrl = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ path: z.string() }).parse(data))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, request }) => {
+    const host = request.headers.get('host') || '';
+    console.log(`[Video] Sign request for ${data.path} from host: ${host}`);
+
     const baseUrl =
       process.env['SUPABASE_URL'] ||
       process.env['VITE_SUPABASE_URL'] ||
@@ -22,8 +25,11 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
     }
 
     try {
+      const signEndpoint = `${baseUrl}/storage/v1/object/sign/assets/${pathClean}`;
+      console.log(`[Video] Calling Supabase Sign: ${signEndpoint}`);
+
       const res = await fetch(
-        `${baseUrl}/storage/v1/object/sign/assets/${pathClean}`,
+        signEndpoint,
         {
           method: "POST",
           headers: {
@@ -48,6 +54,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
         ? json.signedURL 
         : `${baseUrl}/storage/v1${json.signedURL}`;
 
+      console.log(`[Video] Success! Final URL: ${finalUrl}`);
       return { url: finalUrl };
     } catch (error) {
       console.error("Signed URL failed, falling back to public URL:", error);
