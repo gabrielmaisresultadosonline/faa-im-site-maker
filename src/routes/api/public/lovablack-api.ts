@@ -111,6 +111,8 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           if (!serviceKeyFound) {
             console.warn(`[API-${rid}] Aviso: Rodando sem SERVICE_ROLE_KEY. Algumas funções administrativas (reset HWID, bypass RLS) estarão indisponíveis.`);
           }
+
+          const { createClient } = await import("@supabase/supabase-js");
           const publicClient = createClient(url, anonKey, {
             auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
             global: { fetch: supabaseFetch(anonKey) },
