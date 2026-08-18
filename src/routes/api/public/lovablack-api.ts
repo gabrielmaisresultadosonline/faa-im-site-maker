@@ -60,6 +60,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
 
       POST: async ({ request }) => {
         const rid = Math.random().toString(36).slice(2, 8);
+        console.log(`[API-${rid}] Requisição POST recebida.`);
         try {
           const raw = await request.text();
           if (!raw) return json({ success: false, error: "Empty request body" }, 400);
@@ -244,9 +245,14 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           });
         } catch (error) {
           const msg = error instanceof Error ? error.message : "Unknown error";
-          console.error(`[API-${rid}] Falha inesperada:`, msg);
+          const stack = error instanceof Error ? error.stack : "";
+          console.error(`[API-${rid}] Falha inesperada:`, msg, stack);
           return json(
-            { success: false, error: "Erro interno no servidor ao processar login." },
+            { 
+              success: false, 
+              error: "Erro interno no servidor ao processar login.",
+              debug: msg
+            },
             500,
           );
         }
