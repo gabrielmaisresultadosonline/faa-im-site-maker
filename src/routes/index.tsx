@@ -114,18 +114,20 @@ function Index() {
     let isMounted = true;
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!isMounted || !session) return;
+        // Usamos getUser para garantir que a sessão é válida no servidor
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!isMounted || !user) return;
 
-        const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
+        const isAdminEmail = user.email?.toLowerCase() === 'mro@gmail.com';
         const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
         
-        if (window.location.pathname !== '/') return;
-
-        console.log("Usuário já logado, redirecionando para:", target);
-        window.location.replace(target);
+        // Só redirecionamos se estivermos EXATAMENTE na home e não em uma sub-rota
+        if (window.location.pathname === '/') {
+          console.log("Usuário autenticado detectado, movendo para:", target);
+          window.location.replace(target);
+        }
       } catch (err) {
-        console.error("Erro ao verificar autenticação:", err);
+        console.error("Erro silencioso na verificação inicial:", err);
       }
     };
     
