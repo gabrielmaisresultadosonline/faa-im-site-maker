@@ -16,18 +16,22 @@ export default defineConfig({
     cssMinify: true,
     rollupOptions: {
       external: [
-        "@tanstack/react-start/config",
-        "lucide-react",
-        "@radix-ui/react-dialog",
-        "@radix-ui/react-label",
-        "@radix-ui/react-tabs",
-        "@radix-ui/react-slot",
-        "clsx",
-        "tailwind-merge"
+        "@tanstack/react-start/config"
       ],
     }
   },
   ssr: {
-    noExternal: true,
+    noExternal: [
+      "@tanstack/react-router",
+      "@tanstack/react-start",
+      "lucide-react",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-label",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-slot",
+      "clsx",
+      "tailwind-merge",
+      "sonner"
+    ],
   }
 });
