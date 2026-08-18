@@ -54,8 +54,8 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
-      const port = process.env.PORT || process.env.NITROPACK_PORT || "unknown";
-      const host = process.env.HOST || "0.0.0.0";
+      const port = process.env['PORT'] || process.env['NITROPACK_PORT'] || "unknown";
+      const host = process.env['HOST'] || "0.0.0.0";
       console.log(`[SSR] Incoming request: ${request.method} ${request.url} (Server Port: ${port}, Host: ${host})`);
       
       const handler = await getServerEntry();
