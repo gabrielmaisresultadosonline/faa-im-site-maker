@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script de deploy seguro e isolado para lovblack.online no VPS Hostinger
-# Versão: 18/08/2026 - Correção DEFINITIVA 502/Porta/Environment/Host/Isolation
+# Versão: 18/08/2026 - Correção DEFINITIVA 502/Porta/Environment/Host/Isolation/SSR-EntryFix-v2
 
 set -e
 
@@ -29,7 +29,7 @@ export default defineConfig({
   },
   tanstackStart: {
     server: {
-      entry: "server",
+      entry: "src/server.ts",
     },
   },
   vite: {
@@ -80,7 +80,7 @@ sleep 5
 pm2 status $PM2_NAME
 
 # Teste local na porta correta (127.0.0.1 ou 0.0.0.0)
-RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$PORT/ || echo "Failed")
+RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$PORT/ --max-time 15 || echo "Failed")
 
 if [ "$RESPONSE" == "200" ] || [ "$RESPONSE" == "302" ] || [ "$RESPONSE" == "404" ]; then
     echo "✅ Deploy concluído com sucesso! Site respondendo na porta $PORT."
@@ -88,7 +88,7 @@ else
     echo "⚠️ Erro: O servidor não está respondendo corretamente na porta $PORT (Status: $RESPONSE)."
     echo "Dica: Se o status for 500, verifique se a chave SUPABASE_SERVICE_ROLE_KEY está no seu arquivo .env no VPS."
     echo "Logs recentes:"
-    pm2 logs $PM2_NAME --lines 20 --no-colors
+    pm2 logs $PM2_NAME --lines 20
 fi
 
 echo "🚀 Deploy isolado finalizado para $DOMAIN."
