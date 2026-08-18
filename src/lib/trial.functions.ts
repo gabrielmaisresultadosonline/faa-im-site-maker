@@ -16,7 +16,7 @@ export const startTrial = createServerFn({ method: "POST" })
 
     const { data: existing, error: existingError } = await supabase
       .from("subscriptions")
-      .select("id")
+      .select("id, status, expires_at")
       .eq("user_id", userId)
       .limit(1);
 
@@ -26,6 +26,14 @@ export const startTrial = createServerFn({ method: "POST" })
     }
 
     if (existing && existing.length > 0) {
+      const sub = existing[0];
+      // Se a assinatura existente for um teste que já expirou, ou for uma assinatura paga, bloqueia.
+      // Permitimos "reativar" apenas se por algum erro bizarro ele tenha uma linha mas não esteja ativa (raro).
+      if (sub.status === 'active' && new Date(sub.expires_at) > new Date()) {
+        throw new Error("TRIAL_ALREADY_USED");
+      }
+      
+      // Se já existe um registro, mas não está ativo ou expirou, consideramos usado.
       throw new Error("TRIAL_ALREADY_USED");
     }
 

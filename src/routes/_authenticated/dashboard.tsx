@@ -42,7 +42,6 @@ function Dashboard() {
     if (email && token) {
       const performAutoLogin = async () => {
         try {
-          // Limpa params da URL imediatamente para evitar re-tentativas em loop se falhar
           const url = new URL(window.location.href);
           url.searchParams.delete('email');
           url.searchParams.delete('token');
@@ -51,7 +50,6 @@ function Dashboard() {
           const { data, error } = await supabase.auth.signInWithPassword({ email, password: token });
           if (!error && data.session) {
             toast.success("Acesso automático realizado!");
-            // Força um reload para garantir que o AuthGuard veja a nova sessão
             window.location.reload();
           } else {
             console.error("Auto-login failed:", error?.message);
@@ -78,7 +76,6 @@ function Dashboard() {
     enabled: !!user
   });
 
-  // Idioma vem do perfil (definido no cadastro). Enquanto carrega, usa a escolha salva no navegador.
   const lang: 'pt' | 'en' = ((profile as any)?.language as 'pt' | 'en' | undefined) ?? getStoredLanguage() ?? 'pt';
   const isEn = lang === 'en';
 
@@ -86,8 +83,6 @@ function Dashboard() {
     queryKey: ['subscription', user?.id],
     queryFn: () => getSubscriptionStatus(user!.id),
     enabled: !!user,
-    // O refetchInterval só deve ser agressivo se estivermos esperando pagamento,
-    // caso contrário o padrão de 5s ou manual é suficiente.
     refetchInterval: isWaitingPayment ? 5000 : 30000 
   });
 
@@ -96,12 +91,14 @@ function Dashboard() {
     queryFn: getAppSettings
   });
 
-  // Ativa o teste de 20 minutos (uma unica vez por conta) e revela as credenciais.
+  const [showTrialSuccess, setShowTrialSuccess] = useState(false);
+
   const trialMutation = useMutation({
     mutationFn: () => startTrial({ data: undefined }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
+      setShowTrialSuccess(true);
       toast.success(isEn ? 'Trial activated! You have 20 minutes.' : 'Teste ativado! Você tem 20 minutos.');
     },
     onError: (error: any) => {
@@ -260,7 +257,31 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F1EB] p-4 md:p-8 pb-20">
+    <div className="min-h-screen bg-[#F7F1EB] p-4 md:p-8 pb-20 relative overflow-x-hidden">
+      {showTrialSuccess && (
+        <div 
+          className="fixed top-0 left-0 right-0 z-[100] bg-[#DC0D0D] text-white py-6 px-4 text-center animate-in slide-in-from-top duration-500 shadow-2xl cursor-pointer"
+          onClick={() => setShowTrialSuccess(false)}
+        >
+          <div className="max-w-4xl mx-auto flex items-center justify-center gap-4">
+            <Gift className="w-8 h-8 animate-bounce" />
+            <h2 className="text-2xl md:text-4xl font-black tracking-tighter uppercase">
+              {isEn ? 'FREE TRIAL ACTIVATED!' : 'TESTE GRÁTIS ATIVADO!'}
+            </h2>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-white hover:bg-white/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowTrialSuccess(false);
+              }}
+            >
+              <X className="w-6 h-6" />
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="max-w-6xl mx-auto space-y-8">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
