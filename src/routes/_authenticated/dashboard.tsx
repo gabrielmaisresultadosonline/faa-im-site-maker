@@ -197,7 +197,7 @@ function Dashboard() {
     if (isWaitingPayment && isActive) {
       setIsWaitingPayment(false);
       setTimeout(() => {
-        navigate({ to: '/thanks', replace: true });
+        window.location.assign('/thanks');
       }, 100);
     }
 
