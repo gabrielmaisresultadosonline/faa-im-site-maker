@@ -49,12 +49,15 @@ import('./.output/server/index.mjs')
 echo "========== PM2 (INJETANDO VARIAVEIS) =========="
 pm2 delete "$PM2_NAME" >/dev/null 2>&1 || true
 
-# Carrega o .env do projeto (gerado pelo Lovable) sem expor valores no log.
+# Carrega o .env de forma segura, removendo possíveis quebras de linha ou espaços extras
 if [ -f .env ]; then
-  set -a
-  # shellcheck disable=SC1091
-  . ./.env
-  set +a
+  while IFS='=' read -r key value || [ -n "$key" ]; do
+    [[ $key =~ ^#.* ]] && continue
+    [[ -z $key ]] && continue
+    # Remove quotes se houver
+    value=$(echo "$value" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
+    export "$key=$value"
+  done < .env
 fi
 
 SUPABASE_URL="${SUPABASE_URL:-${VITE_SUPABASE_URL:-}}"
