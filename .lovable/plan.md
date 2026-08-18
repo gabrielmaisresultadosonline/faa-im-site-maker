@@ -1,33 +1,30 @@
-# Plano de Correção: Botões do Hero e Modal de Autenticação
+# Plano de Estabilização de Autenticação (Extensão e Dashboard)
 
-Os botões "TESTE GRÁTIS" e "JÁ SOU MEMBRO" no Hero da página inicial não estão abrindo o popup (Dialog). Isso geralmente ocorre devido a conflitos de estado do Dialog ou problemas na renderização condicional.
+Corrigir as falhas de login na extensão ("Credenciais inválidas") e garantir a estabilidade do build e conexão com o banco de dados no VPS Hostinger.
 
-## 🛠️ Alterações Técnicas
+## Problemas Identificados
+1. **Erro de Login na Extensão**: A API estava usando o `publicClient` para executar a função `login_extension_with_access_password`, o que causava erros de permissão no schema `auth_internal` ou falha ao ler senhas de acesso.
+2. **Dependências de Build no VPS**: O uso de pacotes internos `@lovable.dev` pode quebrar o build em ambientes fora do sandbox.
+3. **Segurança de Schema**: O schema `auth_internal` precisa de permissões explícitas para ser acessado por funções `SECURITY DEFINER`.
 
-### 1. Ajuste no `src/routes/index.tsx` e `src/routes/ingles.tsx`
-- Revisar a estrutura do `Dialog` e `DialogTrigger`.
-- Garantir que o `AuthModal` não esteja causando crash ao ser montado dentro do `DialogContent`.
-- Simplificar a lógica de redirecionamento automático para não interferir na abertura do modal caso o usuário clique nos botões (embora a lógica atual já redirecione antes de carregar o componente se a sessão existir).
+## Ações Realizadas / Planejadas
 
-### 2. Verificação no `src/components/auth/AuthModal.tsx`
-- Adicionar `ErrorBoundary` simples ou verificações de nulo para evitar que falhas em hooks de terceiros (como Facebook Pixel ou verificação de IP) impeçam a renderização do modal.
-- Garantir que o `useEffect` de idioma não cause loops infinitos de re-render.
+### 1. Hardening da API de Login (`lovablack-api.ts`)
+- Mudar a execução da RPC de login para usar o `supabaseAdmin`.
+- Melhorar as mensagens de erro para o usuário final, incluindo dicas sobre a configuração da chave no VPS.
+- Adicionar logs detalhados (mascarados) para facilitar o debug no PM2.
 
-### 3. Limpeza de Cache e Build
-- Como o usuário relatou erros 500 anteriormente, garantir que os componentes estejam limpos e sem efeitos colaterais pesados no nível do módulo.
+### 2. Estabilização do Client Server (`client.server.ts`)
+- Refatorar o `supabaseAdmin` para ser resiliente a ambientes onde as variáveis de ambiente possam ser injetadas tardiamente (PM2).
+- Adicionar validações de presença da `SUPABASE_SERVICE_ROLE_KEY`.
 
-## 📝 User Interface
-- Nenhuma mudança visual drástica, apenas restauração da funcionalidade de clique.
+### 3. Ajuste de Permissões no Banco de Dados
+- Criar migração para garantir `GRANT USAGE` e `GRANT ALL` no schema `auth_internal` para os roles necessários, evitando o erro "permission denied for schema auth_internal".
 
----
+### 4. Interface do Usuário (`index.tsx` e `ingles.tsx`)
+- Sincronizar os textos de erro conforme solicitado pelo usuário.
 
-### 📊 Relatório de Execução (Prévio)
-
-**Sub-agentes ativados:**
-- 🎨 **UI Architect** — ✅ Executado
-- 🗄️ **Supabase Engineer** — ➖ Não necessário
-- 🔍 **Code Auditor** — ✅ Executado
-- 🧪 **Testing Agent** — ➖ Não necessário
-- 📈 **SEO Optimizer** — ➖ Não necessário
-- 🚀 **Deploy Ops** — ➖ Não necessário
-- 🔌 **API Integrator** — ➖ Não necessário
+## Detalhes Técnicos
+- **Endpoint**: `POST /api/public/lovablack-api`
+- **RPC**: `public.login_extension_with_access_password`
+- **Variáveis Críticas**: `SUPABASE_SERVICE_ROLE_KEY` deve estar correta no `.env` do VPS.
