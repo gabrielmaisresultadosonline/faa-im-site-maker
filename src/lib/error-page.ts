@@ -18,11 +18,11 @@ export function renderErrorPage(stack?: string): string {
   </head>
   <body>
     <div class="card">
-       <h1>Próximo passo seguro</h1>
-      <p>Precisamos recuperar a Service Role Key do projeto Supabase correto:</p>
+       <h1>Configuração do Servidor Requerida</h1>
+      <p>O ambiente do servidor precisa ser atualizado com as chaves de acesso corretas para funcionar no VPS.</p>
       <div style="text-align: left; background: #eee; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
-        <strong>Project ID:</strong><br/>
-        <code style="font-family: monospace; word-break: break-all;">zjvmfmdyuxmyanuuralq</code>
+        <strong>Instrução:</strong><br/>
+        <p style="font-size: 0.85rem; margin: 0.5rem 0;">Adicione a <code>SUPABASE_SERVICE_ROLE_KEY</code> no seu arquivo <code>.env</code> ou variáveis do PM2 para o Project ID: <code>zjvmfmdyuxmyanuuralq</code></p>
       </div>
       <div class="actions">
         <button class="primary" onclick="location.reload()">Tentar Novamente</button>
