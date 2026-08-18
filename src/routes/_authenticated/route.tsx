@@ -9,16 +9,21 @@ export const Route = createFileRoute('/_authenticated')({
     if (error || !session) {
       console.warn("Sem sessão ativa no dashboard. Tentando recuperar usuário...");
       
+      // Fallback: se getSession falhar, tenta getUser que faz uma chamada ao servidor
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       if (userError || !user) {
         console.error("Nenhuma sessão ou usuário encontrado. Redirecionando para home.", userError?.message);
-        throw redirect({
-          to: '/',
-          search: {
-            redirect: location.href,
-          },
-        });
+        
+        // Evita loop se já estivermos tentando redirecionar para '/'
+        if (location.pathname !== '/') {
+          throw redirect({
+            to: '/',
+            search: {
+              redirect: location.href,
+            },
+          });
+        }
       }
     }
   },
