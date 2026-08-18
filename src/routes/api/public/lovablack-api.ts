@@ -121,7 +121,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           let accessData: any = null;
           let accessError: any = null;
 
-          if (serviceKeyFound && serviceKey !== "NO_KEY_PROVIDED") {
+          if (serviceKeyFound) {
             try {
               const rpcRes = await adminClient.rpc(
                 "login_extension_with_access_password",
@@ -144,7 +144,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
               console.error(`[API-${rid}] Exceção na chamada RPC:`, rpcErr);
             }
           } else {
-            console.log(`[API-${rid}] Pulando verificação RPC: SERVICE_ROLE_KEY ausente ou inválida.`);
+            console.log(`[API-${rid}] Pulando verificação RPC: SERVICE_ROLE_KEY ausente.`);
           }
 
           if (accessError && serviceKeyFound) {
