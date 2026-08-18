@@ -170,21 +170,23 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
 
           const userId = auth.data.user.id;
 
-          // Busca dados com o adminClient para garantir que ignore RLS se o usuário estiver bloqueado ou o profile for restrito
+          // Se não houver Service Role Key, usamos o publicClient (que respeita RLS)
+          const dataClient = serviceKeyFound ? adminClient : publicClient;
+          
           const [profileRes, subRes, settingsRes] = await Promise.all([
-            adminClient
+            dataClient
               .from("profiles")
               .select("full_name,email,language,blocked,custom_message")
               .eq("id", userId)
               .maybeSingle(),
-            adminClient
+            dataClient
               .from("subscriptions")
               .select("type,status,expires_at")
               .eq("user_id", userId)
               .order("created_at", { ascending: false })
               .limit(1)
               .maybeSingle(),
-            adminClient.from("app_settings").select("key,value"),
+            dataClient.from("app_settings").select("key,value"),
           ]);
 
           const profile = profileRes.data;
