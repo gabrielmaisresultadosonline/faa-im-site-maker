@@ -61,7 +61,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           
           if (!url || !key) {
             console.error("Missing Supabase configuration:", { url: !!url, key: !!key });
-            return json({ success: false, error: "Server configuration unavailable. Please contact support." }, 503);
+            return json({ success: false, error: "Serviço temporariamente indisponível. Por favor, tente novamente em instantes." }, 503);
           }
 
           const backend = createClient<Database>(url, key, {
