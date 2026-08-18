@@ -130,8 +130,34 @@ function Index() {
     checkAuth();
   }, []);
 
+  const [isMaintenance, setIsMaintenance] = useState(true);
+
   return (
     <div className="min-h-screen font-sans selection:bg-primary/20" style={{ backgroundColor: "#F7F1EB" }}>
+      {isMaintenance && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 overflow-hidden touch-none">
+          <Card className="w-full max-w-xl border-white/10 bg-[#1A1B1A] text-white shadow-2xl animate-in zoom-in-95 duration-300">
+            <CardHeader className="text-center pt-12">
+              <div className="mx-auto w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-8 ring-8 ring-white/5">
+                <Clock className="w-12 h-12 text-[#DC0D0D] animate-pulse" />
+              </div>
+              <CardTitle className="text-4xl md:text-5xl font-black tracking-tighter mb-4">
+                ESTAMOS EM ATUALIZAÇÃO
+              </CardTitle>
+              <CardDescription className="text-xl text-neutral-400 font-medium leading-relaxed">
+                Estamos passando por uma atualização importante.
+                <br />
+                Voltamos daqui algumas horas com novidades incríveis.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-12 text-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm font-bold text-neutral-500 uppercase tracking-widest">
+                <Zap className="w-4 h-4 text-[#DC0D0D]" /> Manutenção Programada
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       <LanguageSelectorModal />
       {/* Hero Section */}
       <header className="container mx-auto px-4 pt-20 pb-16 text-center relative z-20">
