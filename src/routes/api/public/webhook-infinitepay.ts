@@ -101,7 +101,9 @@ export const Route = createFileRoute('/api/public/webhook-infinitepay')({
           // usamos o supabase (anon). Certifique-se que as políticas de RLS permitem
           // ou que os GRANTS estão configurados.
           
-          await supabase
+          const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+          
+          await supabaseAdmin
             .from('infinitepay_transactions')
             .update({
               status: 'paid',
@@ -114,7 +116,7 @@ export const Route = createFileRoute('/api/public/webhook-infinitepay')({
           const expiresAt = new Date();
           expiresAt.setDate(expiresAt.getDate() + planDays);
 
-          const { error: subError } = await supabase
+          const { error: subError } = await supabaseAdmin
             .from('subscriptions')
             .upsert(
               {
@@ -129,7 +131,7 @@ export const Route = createFileRoute('/api/public/webhook-infinitepay')({
           // Track Purchase event on Facebook Conversion API
           try {
             // Get user email for better matching
-            const { data: userData } = await supabase.auth.admin.getUserById(transaction.user_id);
+            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(transaction.user_id);
             
             await trackPurchaseEvent({
               data: {
@@ -151,7 +153,7 @@ export const Route = createFileRoute('/api/public/webhook-infinitepay')({
           // Track Purchase event on Facebook Conversion API
           try {
             // Get user email for better matching
-            const { data: userData } = await supabase.auth.admin.getUserById(transaction.user_id);
+            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(transaction.user_id);
             
             await trackPurchaseEvent({
               data: {
