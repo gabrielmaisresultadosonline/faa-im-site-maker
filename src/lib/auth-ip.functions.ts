@@ -8,7 +8,7 @@ export const checkRegistrationIP = createServerFn({ method: "GET" })
     if (!request) return { blocked: false, ip: "unknown" };
 
     const forwarded = request.headers.get("x-forwarded-for");
-    const ip = forwarded ? forwarded.split(',')[0].trim() : "unknown";
+    const ip = forwarded ? (forwarded.split(',')[0]?.trim() || "unknown") : "unknown";
     
     if (ip === "unknown" || ip === "127.0.0.1") {
       return { blocked: false, ip: "unknown" };
