@@ -29,7 +29,7 @@ export default defineConfig({
   },
   tanstackStart: {
     server: {
-      entry: "src/server.tsx",
+      entry: "src/server.ts",
     },
   },
   vite: {
