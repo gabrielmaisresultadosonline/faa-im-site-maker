@@ -4,7 +4,7 @@
 set -Eeuo pipefail
 
 
-APP_DIR="/var/www/lovablack_final"
+APP_DIR="$(pwd)"
 PORT="8098"
 PM2_NAME="lovblack_master"
 # A Service Role Key deve ser passada como variável de ambiente ao rodar o script ou estar definida aqui
