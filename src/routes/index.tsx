@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { supabase } from '@/integrations/supabase/client';
-// Versão do Site: 18/08/2026 - Build Estável v2.1.12 (Extension 500 Fix)
+// Versão do Site: 18/08/2026 - Build Estável v2.1.13 (Loop Fix)
 import { Check, Shield, Zap, MessageSquare, FileText, Mic, Sparkles, PlusCircle, Eraser, Globe, Star, Clock, Heart, Users, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,22 +111,26 @@ function Index() {
 
 
   useEffect(() => {
+    let isMounted = true;
     const checkAuth = async () => {
-      // Check for current session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted || !session) return;
 
-      const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
-      const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
-      
-      if (window.location.pathname !== '/') return;
+        const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
+        const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
+        
+        if (window.location.pathname !== '/') return;
 
-      console.log("Usuário já logado, redirecionando para:", target);
-      // Use replace em vez de assign para não sujar o histórico
-      window.location.replace(target);
+        console.log("Usuário já logado, redirecionando para:", target);
+        window.location.replace(target);
+      } catch (err) {
+        console.error("Erro ao verificar autenticação:", err);
+      }
     };
     
     checkAuth();
+    return () => { isMounted = false; };
   }, []);
 
   const [isMaintenance, setIsMaintenance] = useState(false);
