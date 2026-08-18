@@ -26,7 +26,7 @@ rm -rf .output .vinxi node_modules/.vite .nitro
 
 
 echo "========== BUILD =========="
-npx vite build
+npx vite build --config vite.config.vps.ts
 
 
 echo "========== TESTE DO SSR =========="
