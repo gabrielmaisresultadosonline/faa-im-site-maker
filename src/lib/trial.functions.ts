@@ -10,6 +10,7 @@ import { z } from "zod";
  * - A senha de acesso da extensao e gerada no servidor e salva no perfil.
  */
 export const startTrial = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .validator((data: unknown) => data) // Mantém compatibilidade com a chamada sem data
   .handler(async ({ request }) => {
     // IMPORTANTE: Como o requireSupabaseAuth pode falhar no VPS por questões de header/token,
