@@ -49,7 +49,7 @@ async function approveOrder() {
     .from('subscriptions')
     .upsert({
       user_id: transaction.user_id,
-      type: transaction.plan_duration_days >= 365 ? 'annual' : 'paid',
+      type: transaction.plan_name === 'Mensal' ? 'monthly' : (transaction.plan_name === 'Semestral' ? 'semiannual' : 'annual'),
       status: 'active',
       expires_at: expiresAt.toISOString(),
       updated_at: new Date().toISOString()
