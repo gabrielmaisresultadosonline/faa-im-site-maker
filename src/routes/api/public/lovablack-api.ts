@@ -96,21 +96,21 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
 
           const { getSupabaseAdmin } = await import("@/integrations/supabase/client.server");
           const adminClient = getSupabaseAdmin();
-          const serviceKeyFound = !!(process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["VITE_SUPABASE_SERVICE_ROLE_KEY"]);
+          const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["VITE_SUPABASE_SERVICE_ROLE_KEY"];
+          const serviceKeyFound = !!serviceKey;
 
-          if (!url || !anonKey || !serviceKeyFound) {
-            console.error(`[API-${rid}] Erro: Ambiente incompleto. URL:${!!url} ANON:${!!anonKey} SERV:${serviceKeyFound}`);
-            return json(
-              { 
-                success: false, 
-                error: "Servidor em manutenção técnica (Erro de Configuração).",
-                debug: { url: !!url, key: !!anonKey, service: serviceKeyFound }
-              },
-              503,
-            );
+          if (!url || !anonKey) {
+            console.error(`[API-${rid}] Erro: URL ou AnonKey não encontrados.`);
+            return json({ success: false, error: "Servidor em configuração." }, 503);
           }
 
           const { createClient } = await import("@supabase/supabase-js");
+
+          // Se não houver Service Role Key, tentamos operar apenas com a Anon Key
+          // Note: O login via RPC adminClient falhará se serviceKeyFound for false.
+          if (!serviceKeyFound) {
+            console.warn(`[API-${rid}] Aviso: Rodando sem SERVICE_ROLE_KEY. Algumas funções administrativas (reset HWID, bypass RLS) estarão indisponíveis.`);
+          }
           const publicClient = createClient(url, anonKey, {
             auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
             global: { fetch: supabaseFetch(anonKey) },
@@ -118,20 +118,29 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
 
           // 1) Tenta login via função RPC (Segurança Definer) usando privilégios administrativos
           // Isso ignora RLS e permite verificar campos restritos como access_password e session_id
-          const { data: accessData, error: accessError } = await adminClient.rpc(
-            "login_extension_with_access_password",
-            { _email: email, _access_password: password, _session_id: sessionId },
-          );
+          let accessData: any = null;
+          let accessError: any = null;
 
-          if (!accessError && isLoginResult(accessData)) {
-            if (accessData.success) {
-              console.log(`[API-${rid}] Login via access_password bem-sucedido para ${email}`);
-              return json(accessData);
+          if (serviceKeyFound) {
+            const rpcRes = await adminClient.rpc(
+              "login_extension_with_access_password",
+              { _email: email, _access_password: password, _session_id: sessionId },
+            );
+            accessData = rpcRes.data;
+            accessError = rpcRes.error;
+
+            if (!accessError && isLoginResult(accessData)) {
+              if (accessData.success) {
+                console.log(`[API-${rid}] Login via access_password bem-sucedido para ${email}`);
+                return json(accessData);
+              }
+              if (accessData.code === "MULTI_LOGIN" || accessData.code === "BLOCKED") {
+                console.warn(`[API-${rid}] Login bloqueado pela função RPC para ${email}: ${accessData.code}`);
+                return json(accessData, 403);
+              }
             }
-            if (accessData.code === "MULTI_LOGIN" || accessData.code === "BLOCKED") {
-              console.warn(`[API-${rid}] Login bloqueado pela função RPC para ${email}: ${accessData.code}`);
-              return json(accessData, 403);
-            }
+          } else {
+            console.log(`[API-${rid}] Pulando verificação RPC: SERVICE_ROLE_KEY ausente.`);
           }
 
           if (accessError) {
@@ -161,21 +170,23 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
 
           const userId = auth.data.user.id;
 
-          // Busca dados com o adminClient para garantir que ignore RLS se o usuário estiver bloqueado ou o profile for restrito
+          // Se não houver Service Role Key, usamos o publicClient (que respeita RLS)
+          const dataClient = serviceKeyFound ? adminClient : publicClient;
+          
           const [profileRes, subRes, settingsRes] = await Promise.all([
-            adminClient
+            dataClient
               .from("profiles")
               .select("full_name,email,language,blocked,custom_message")
               .eq("id", userId)
               .maybeSingle(),
-            adminClient
+            dataClient
               .from("subscriptions")
               .select("type,status,expires_at")
               .eq("user_id", userId)
               .order("created_at", { ascending: false })
               .limit(1)
               .maybeSingle(),
-            adminClient.from("app_settings").select("key,value"),
+            dataClient.from("app_settings").select("key,value"),
           ]);
 
           const profile = profileRes.data;
