@@ -58,15 +58,15 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
           window.history.replaceState({}, '', url.toString());
         }
 
+        const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
+
         // Pequeno delay para garantir que o estado do Supabase sincronize no localStorage
+        // e evitar loops com a home
         setTimeout(() => {
-          if (isAdminEmail) {
-            window.location.assign('/admin/dashboard');
-          } else {
-            // Usa window.location.assign para forçar um reload completo e limpar estados de roteamento antigos
-            window.location.assign('/dashboard');
+          if (window.location.pathname === '/' || window.location.pathname === '/ingles') {
+             window.location.replace(target);
           }
-        }, 500);
+        }, 300);
       }
     });
     return () => subscription.unsubscribe();
