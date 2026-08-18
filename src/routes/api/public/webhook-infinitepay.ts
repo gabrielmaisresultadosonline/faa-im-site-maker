@@ -101,7 +101,9 @@ export const Route = createFileRoute('/api/public/webhook-infinitepay')({
           // usamos o supabase (anon). Certifique-se que as políticas de RLS permitem
           // ou que os GRANTS estão configurados.
           
-          await supabase
+          const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+          
+          await supabaseAdmin
             .from('infinitepay_transactions')
             .update({
               status: 'paid',
@@ -114,34 +116,17 @@ export const Route = createFileRoute('/api/public/webhook-infinitepay')({
           const expiresAt = new Date();
           expiresAt.setDate(expiresAt.getDate() + planDays);
 
-          const { error: subError } = await supabase
+          const { error: subError } = await supabaseAdmin
             .from('subscriptions')
             .upsert(
               {
                 user_id: transaction.user_id,
-                type: planDays >= 365 ? 'annual' : 'paid',
+                type: planDays >= 365 ? 'annual' : (planDays >= 180 ? 'semiannual' : 'monthly'),
                 status: 'active',
                 expires_at: expiresAt.toISOString(),
               },
               { onConflict: 'user_id' }
             );
-
-          // Track Purchase event on Facebook Conversion API
-          try {
-            // Get user email for better matching
-            const { data: userData } = await supabase.auth.admin.getUserById(transaction.user_id);
-            
-            await trackPurchaseEvent({
-              data: {
-                email: userData?.user?.email,
-                value: transaction.amount / 100, // Assuming amount is in cents
-                currency: 'BRL',
-                userAgent: request.headers.get('user-agent') || ''
-              }
-            });
-          } catch (trackError) {
-            console.error('FB Purchase tracking failed:', trackError);
-          }
 
           if (subError) {
             console.error('Error updating subscription', subError);
@@ -151,7 +136,7 @@ export const Route = createFileRoute('/api/public/webhook-infinitepay')({
           // Track Purchase event on Facebook Conversion API
           try {
             // Get user email for better matching
-            const { data: userData } = await supabase.auth.admin.getUserById(transaction.user_id);
+            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(transaction.user_id);
             
             await trackPurchaseEvent({
               data: {
