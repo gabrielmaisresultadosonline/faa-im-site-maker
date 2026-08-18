@@ -138,12 +138,6 @@ export function renderErrorPage(stack?: string): string {
       <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; border-radius: 9999px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 0.875rem; font-weight: 700; color: #737373; text-transform: uppercase; letter-spacing: 0.1em;">
         <span style="color: #DC0D0D;">⚡</span> Manutenção Programada
       </div>
-
-      ${stack ? `
-        <div style="margin-top: 2rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 0.5rem; text-align: left; font-family: monospace; font-size: 0.75rem; color: #444; overflow: hidden; max-height: 100px;">
-          DEBUG_INFO: ${stack.split('\n')[0]}
-        </div>
-      ` : ''}
     </div>
   </body>
 </html>`;
