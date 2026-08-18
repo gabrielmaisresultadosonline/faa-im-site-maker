@@ -160,11 +160,17 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             },
           });
         } catch (error) {
-          console.error(
-            "Lovablack API request failed",
-            error instanceof Error ? error.message : "Unknown error",
-          );
-          return json({ success: false, error: "Internal server error" }, 500);
+          const errMsg = error instanceof Error ? error.message : "Unknown error";
+          console.error("Lovablack API request failed:", errMsg);
+          
+          if (errMsg.includes("Missing Supabase environment variable")) {
+             return json({ 
+               success: false, 
+               error: "Erro de configuração no servidor. Verifique as variáveis VITE_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no VPS." 
+             }, 500);
+          }
+          
+          return json({ success: false, error: "Erro interno no servidor." }, 500);
         }
       },
     },
