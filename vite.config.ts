@@ -15,4 +15,15 @@ export default defineConfig({
       entry: "server",
     },
   },
+  vite: {
+    ssr: {
+      // Força o bundling de todas as dependências no servidor para evitar erros de importação na VPS
+      noExternal: true,
+    },
+    build: {
+      rollupOptions: {
+        external: ["@tanstack/react-start/config"],
+      }
+    }
+  }
 });
