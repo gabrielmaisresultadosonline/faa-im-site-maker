@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { supabase } from '@/integrations/supabase/client';
-// Versão do Site: 18/08/2026 - Build Estável v2.1.4 (VPS Optimized)
+// Versão do Site: 18/08/2026 - Build Estável v2.1.5 (Auth Hardened)
 import { Check, Shield, Zap, MessageSquare, FileText, Mic, Sparkles, PlusCircle, Eraser, Globe, Star, Clock, Heart, Users, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
