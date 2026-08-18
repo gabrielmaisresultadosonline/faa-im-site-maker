@@ -112,21 +112,21 @@ function Index() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Pequeno delay para evitar conflitos com AuthModal redirect
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      // Check for current session
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
-        const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
-        
-        // Se já estiver logado e estiver na home, redireciona
-        if (window.location.pathname === '/') {
-          console.log("Usuário já logado, redirecionando para:", target);
-          window.location.assign(target);
-        }
-      }
+      if (!session) return;
+
+      const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
+      const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
+      
+      // If we are already on target or not on root, don't redirect
+      if (window.location.pathname !== '/') return;
+
+      // Small delay to ensure state is settled
+      console.log("Usuário já logado, redirecionando para:", target);
+      window.location.replace(target);
     };
+    
     checkAuth();
   }, []);
 
