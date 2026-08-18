@@ -126,17 +126,30 @@ function Index() {
           Utilize Lovablack Extensao e tenha créditos infinitos.
         </p>
         
-        <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-12">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button size="lg" className="h-14 px-8 text-lg font-bold rounded-full bg-[#1A1B1A] text-white hover:bg-[#080808] transition-all hover:scale-105 shadow-lg shadow-[#D8D0C8]">
-                🚀 TESTE GRÁTIS 20 MIN
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none">
-              <AuthModal initialMode="signup" isTrial={true} />
-            </DialogContent>
-          </Dialog>
+        <div className="flex flex-col items-center justify-center gap-6 mb-12">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size="lg" className="h-14 px-8 text-lg font-bold rounded-full bg-[#1A1B1A] text-white hover:bg-[#080808] transition-all hover:scale-105 shadow-lg shadow-[#D8D0C8]">
+                  🚀 TESTE GRÁTIS 20 MIN
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none">
+                <AuthModal initialMode="signup" isTrial={true} />
+              </DialogContent>
+            </Dialog>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size="lg" variant="outline" className="h-14 px-8 text-lg font-bold rounded-full border-2 border-[#1A1B1A] text-[#1A1B1A] hover:bg-[#1A1B1A] hover:text-white transition-all hover:scale-105 shadow-lg shadow-[#D8D0C8]">
+                  JÁ SOU MEMBRO (LOGAR)
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none">
+                <AuthModal initialMode="login" />
+              </DialogContent>
+            </Dialog>
+          </div>
           
           <div className="flex items-center gap-6 text-sm text-neutral-500 font-medium">
             <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-primary" /> Ativação instantânea</span>
