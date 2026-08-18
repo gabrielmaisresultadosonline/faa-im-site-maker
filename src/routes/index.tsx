@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { supabase } from '@/integrations/supabase/client';
-// Versão do Site: 18/08/2026 - Build Estável v2.1.15 (VPS Resource Fix)
+// Versão do Site: 18/08/2026 - Build Estável v2.1.16 (SSR Full Bundle)
 import { Check, Shield, Zap, MessageSquare, FileText, Mic, Sparkles, PlusCircle, Eraser, Globe, Star, Clock, Heart, Users, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,14 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Dialog, DialogContent, DialogTrigger, DialogPortal } from "@/components/ui/dialog";
 import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getSignedVideoUrl } from "@/lib/video.functions";
 // Import images directly to avoid relative path issues in SSR/Nitro
 import logoHeart from "/logo-heart.png?url";
 import logoFull from "/logo-full.png?url";
-
-
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -30,14 +28,14 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const benefits = [
+  const benefits = useMemo(() => [
     { title: "Lovable Unlimited", desc: "Use o Lovable ilimitado e de graça. Crie quantos projetos quiser, sem limite de créditos.", icon: Heart },
     { title: "Velocidade Máxima", desc: "Sem filas, sem espera. Suas requisições são processadas com prioridade total.", icon: Zap },
     { title: "Hospedagem Inclusa", desc: "Publique e hospede seus projetos gratuitamente. Lovable com hospedagem sem custo extra.", icon: Globe },
     { title: "Grátis Pra Sempre", desc: "Lovable grátis pra sempre com plano acessível. Sem surpresas, sem limites.", icon: Star },
-  ];
+  ], []);
 
-  const features = [
+  const features = useMemo(() => [
     { title: "Bloqueio do Chat", desc: "Bloqueie o chat da Lovable e evite que seus créditos sejam consumidos.", icon: MessageSquare },
     { title: "Envio de Arquivos", desc: "Envie qualquer tipo de arquivo diretamente no chat para usar nos seus projetos.", icon: FileText },
     { title: "Envio de Áudio", desc: "Grave e envie áudios para descrever o que precisa — sem digitar.", icon: Mic },
@@ -45,9 +43,9 @@ function Index() {
     { title: "Novo Projeto Grátis", desc: "Crie novos projetos sem gastar nenhum crédito.", icon: PlusCircle },
     { title: "Tirar Marca d'Água", desc: "Remova a marca d'água da Lovable para um visual profissional.", icon: Eraser },
     { title: "Hospedagem Grátis", desc: "Publique e hospede seu projeto gratuitamente.", icon: Globe },
-  ];
+  ], []);
 
-  const plans = [
+  const plans = useMemo(() => [
     { 
       name: "Teste Grátis", 
       price: "R$ 0", 
@@ -88,26 +86,30 @@ function Index() {
       key: "annual",
       days: 365
     }
-  ];
+  ], []);
 
   const fetchSignedUrl = useServerFn(getSignedVideoUrl);
   const [heroVideoUrl, setHeroVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     const PATH = "video-0.02649446612669404.mp4";
     const PUBLIC_URL = `https://zjvmfmdyuxmyanuuralq.supabase.co/storage/v1/object/public/assets/${PATH}`;
+    
     const loadHeroVideo = async () => {
       try {
         const { url } = await fetchSignedUrl({ data: { path: PATH } });
-        setHeroVideoUrl(url || PUBLIC_URL);
+        if (isMounted) setHeroVideoUrl(url || PUBLIC_URL);
       } catch (err) {
-        // Qualquer falha (500/stale bundle/env ausente) cai no link público
         console.warn("Signed video URL failed, using public URL:", err);
-        setHeroVideoUrl(PUBLIC_URL);
+        if (isMounted) setHeroVideoUrl(PUBLIC_URL);
       }
     };
+    
     loadHeroVideo();
+    return () => { isMounted = false; };
   }, [fetchSignedUrl]);
+
 
 
   useEffect(() => {

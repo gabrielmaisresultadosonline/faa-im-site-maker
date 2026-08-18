@@ -21,17 +21,6 @@ export default defineConfig({
     }
   },
   ssr: {
-    noExternal: [
-      "@tanstack/react-router",
-      "@tanstack/react-start",
-      "lucide-react",
-      "@radix-ui/react-dialog",
-      "@radix-ui/react-label",
-      "@radix-ui/react-tabs",
-      "@radix-ui/react-slot",
-      "clsx",
-      "tailwind-merge",
-      "sonner"
-    ],
+    noExternal: true,
   }
 });
