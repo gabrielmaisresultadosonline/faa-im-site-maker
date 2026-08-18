@@ -55,11 +55,13 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             return json({ success: false, error: "Missing credentials" }, 400);
           }
 
-          const url = process.env["VITE_SUPABASE_URL"];
-          const key = process.env["VITE_SUPABASE_ANON_KEY"];
+          // Use VITE_ variables which are more reliable across environments (Lovable Cloud/VPS)
+          const url = process.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"];
+          const key = process.env["VITE_SUPABASE_ANON_KEY"] || process.env["SUPABASE_ANON_KEY"];
+          
           if (!url || !key) {
-            console.error("Missing Supabase VITE environment variables:", { url: !!url, key: !!key });
-            return json({ success: false, error: "Server configuration unavailable" }, 503);
+            console.error("Missing Supabase configuration:", { url: !!url, key: !!key });
+            return json({ success: false, error: "Server configuration unavailable. Please contact support." }, 503);
           }
 
           const backend = createClient<Database>(url, key, {
