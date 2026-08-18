@@ -352,7 +352,7 @@ function Dashboard() {
                   <p className="text-2xl font-black text-[#DC0D0D]">
                     {sub?.type === 'trial'
                       ? (timeLeft || '20m 00s')
-                      : new Date(sub!.expires_at).toLocaleDateString()}
+                      : (isEn ? 'Unlimited' : 'Ilimitado')}
                   </p>
                 </div>
               </CardContent>

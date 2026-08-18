@@ -27,10 +27,17 @@ export const startTrial = createServerFn({ method: "POST" })
 
     if (existing && existing.length > 0) {
       const sub = existing[0];
-      if (sub && sub.status === 'active' && sub.expires_at && new Date(sub.expires_at) > new Date()) {
+      const isExpired = sub.expires_at ? new Date(sub.expires_at) < new Date() : true;
+      
+      // Se a assinatura ativa (trial ou paga) ainda é válida, não permite outro trial
+      if (sub.status === 'active' && !isExpired) {
         throw new Error("TRIAL_ALREADY_USED");
       }
-      throw new Error("TRIAL_ALREADY_USED");
+      
+      // Se já teve um trial no passado (mesmo expirado), bloqueia para evitar abusos
+      if (sub.type === 'trial') {
+        throw new Error("TRIAL_ALREADY_USED");
+      }
     }
 
     const { data: profile } = await supabase
