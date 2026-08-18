@@ -21,12 +21,12 @@ echo "========== DEPENDÊNCIAS =========="
 npm install --prefer-offline
 
 
-echo "========== LIMPEZA =========="
-rm -rf .output .vinxi node_modules/.vite .nitro dist
+echo "========== LIMPEZA PROFUNDA =========="
+rm -rf .output .vinxi node_modules/.vite .nitro dist .vinxi-cache
 npm cache clean --force
 
-echo "========== BUILD =========="
-npm run build
+echo "========== BUILD COMPLETO =========="
+# Executamos o build do VPS que agora está configurado para bundling total
 npx vite build --config vite.config.vps.ts
 
 

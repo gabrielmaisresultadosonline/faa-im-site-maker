@@ -9,11 +9,15 @@ export default defineConfig({
     server: {
       entry: "server",
     },
+    // Desabilitar prerender para evitar falhas durante o build se o ambiente de rede for instável
+    prerender: {
+      routes: ["/"],
+    },
   },
   vite: {
     ssr: {
-      // Usamos noExternal: true para garantir que tudo seja empacotado no bundle SSR.
-      // Isso é vital para evitar erros de "module not found" no Node no VPS.
+      // Usamos noExternal: true para garantir que todas as dependências sejam buildadas no bundle.
+      // Isso evita erros de "module not found" no Node no VPS da Hostinger.
       noExternal: true,
     },
     resolve: {
@@ -23,6 +27,8 @@ export default defineConfig({
     },
     build: {
       chunkSizeWarningLimit: 2000,
+      // Desabilitar CSS code splitting para evitar links quebrados em rotas dinâmicas
+      cssCodeSplit: false,
       rollupOptions: {
         output: {
           manualChunks: undefined,
