@@ -33,10 +33,8 @@ function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env['VITE_SUPABASE_URL'] || process.env['SUPABASE_URL'];
   const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'];
 
-  // No VPS Hostinger, se a service role key faltar, retornamos null em vez de lançar erro
-  // Isso evita que o build SSR quebre ou que a página inicial retorne 500 se o admin client for acessado via Proxy
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    console.warn(`[Supabase] Missing environment variables for admin client. Admin features will be disabled.`);
+    console.warn(`[Supabase Admin] Configuração incompleta no VPS. Algumas funcionalidades administrativas podem falhar.`);
     return null;
   }
 
@@ -59,9 +57,13 @@ let _supabaseAdmin: any | undefined;
 export const supabaseAdmin = new Proxy({} as any, {
   get(_, prop, receiver) {
     if (_supabaseAdmin === undefined) _supabaseAdmin = createSupabaseAdminClient();
+    
+    // Se o cliente for nulo (falta de config), lançamos erro apenas no acesso a propriedades
+    // Isso evita que o import quebre o SSR/Build, mas sinaliza o erro na execução runtime.
     if (_supabaseAdmin === null) {
-      throw new Error("Supabase admin client is not configured. Please check SUPABASE_SERVICE_ROLE_KEY.");
+      throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable. Make sure to source .env before starting the app.");
     }
+    
     return Reflect.get(_supabaseAdmin, prop, receiver);
   },
 });
