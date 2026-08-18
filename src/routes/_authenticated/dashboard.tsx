@@ -241,13 +241,23 @@ function Dashboard() {
     if (isMp4) {
       setLoadingVideo(true);
       try {
-        const url = new URL(tut.url);
-        const path = url.pathname.split('/').pop() || ''; 
-        const { url: signedUrl } = await getSignedVideoUrl({ data: { path } });
-        setSignedVideoUrl(signedUrl);
+        // Limpa a URL para extrair apenas o caminho relativo do bucket
+        const urlObj = new URL(tut.url);
+        // O caminho no bucket assets deve ser apenas o nome do arquivo
+        const fileName = urlObj.pathname.split('/').pop() || '';
+        
+        console.log(`[Dashboard] Solicitando assinatura para arquivo: ${fileName}`);
+        
+        const { url: signedUrl } = await getSignedVideoUrl({ data: { path: fileName } });
+        
+        if (signedUrl) {
+          console.log(`[Dashboard] URL assinada recebida: ${signedUrl}`);
+          setSignedVideoUrl(signedUrl);
+        } else {
+          setSignedVideoUrl(tut.url);
+        }
       } catch (err) {
-        // Qualquer falha na assinatura: usa a URL original (pública)
-        console.warn("Signed video URL failed, using original URL:", err);
+        console.warn("[Dashboard] Erro ao assinar vídeo, usando URL original:", err);
         setSignedVideoUrl(tut.url);
       } finally {
         setLoadingVideo(false);
