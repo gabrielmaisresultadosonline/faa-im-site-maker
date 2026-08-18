@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { supabase } from '@/integrations/supabase/client';
-// Versão do Site: 18/08/2026 - Build Estável v2.1.7 (External Config Resilience)
+// Versão do Site: 18/08/2026 - Build Estável v2.1.8 (Final Clean Install Resilience)
 import { Check, Shield, Zap, MessageSquare, FileText, Mic, Sparkles, PlusCircle, Eraser, Globe, Star, Clock, Heart, Users, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -130,7 +130,7 @@ function Index() {
     checkAuth();
   }, []);
 
-  const [isMaintenance, setIsMaintenance] = useState(true);
+  const [isMaintenance, setIsMaintenance] = useState(false);
 
   return (
     <div className="min-h-screen font-sans selection:bg-primary/20" style={{ backgroundColor: "#F7F1EB" }}>

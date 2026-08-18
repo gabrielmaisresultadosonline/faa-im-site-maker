@@ -84,35 +84,31 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             return json({ success: false, error: "Missing credentials" }, 400);
           }
 
-          // Chave publica basta: login e leituras sao feitos como o proprio usuario (RLS).
-          // Priorizamos process.env (injetado pelo PM2) sobre import.meta.env
+          // Coleta configurações do backend de forma resiliente
           const url = process.env["SUPABASE_URL"] || 
                       process.env["VITE_SUPABASE_URL"] || 
                       import.meta.env["VITE_SUPABASE_URL"] ||
-                      "https://zjvmfmdyuxmyanuuralq.supabase.co"; // Fallback fixo para o projeto
+                      "https://zjvmfmdyuxmyanuuralq.supabase.co";
                       
           const anonKey = process.env["SUPABASE_PUBLISHABLE_KEY"] || 
                           process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || 
                           import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
 
-          const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"] || 
-                             process.env["VITE_SUPABASE_SERVICE_ROLE_KEY"];
+          const { getSupabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const adminClient = getSupabaseAdmin();
+          const serviceKeyFound = !!(process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["VITE_SUPABASE_SERVICE_ROLE_KEY"]);
 
-          if (!url || !anonKey) {
-            console.error(`[API-${rid}] Config insuficiente. URL:${!!url} ANON:${!!anonKey}`);
+          if (!url || !anonKey || !serviceKeyFound) {
+            console.error(`[API-${rid}] Erro: Ambiente incompleto. URL:${!!url} ANON:${!!anonKey} SERV:${serviceKeyFound}`);
             return json(
               { 
                 success: false, 
-                error: "Configuração do servidor incompleta. Execute ./deploy-vps.sh no terminal para injetar as chaves.",
-                debug: { url: !!url, key: !!anonKey }
+                error: "Servidor em manutenção técnica (Erro de Configuração).",
+                debug: { url: !!url, key: !!anonKey, service: serviceKeyFound }
               },
               503,
             );
           }
-
-          // Debug parcial das chaves (apenas prefixo e sufixo para seguranca)
-          const mask = (s: string) => `${s.slice(0, 6)}...${s.slice(-4)}`;
-          console.log(`[API-${rid}] Usando URL: ${url} | Key: ${mask(anonKey)} | Service: ${!!serviceKey}`);
 
           const { createClient } = await import("@supabase/supabase-js");
           const publicClient = createClient(url, anonKey, {
@@ -120,10 +116,8 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             global: { fetch: supabaseFetch(anonKey) },
           });
 
-          // 1) Tenta login usando a função Security Definer (acessa perfis e senhas de acesso diretamente)
-          // Usamos o supabaseAdmin para garantir privilégios de execução e leitura
-          const { supabaseAdmin: adminClient } = await import("@/integrations/supabase/client.server");
-          
+          // 1) Tenta login via função RPC (Segurança Definer) usando privilégios administrativos
+          // Isso ignora RLS e permite verificar campos restritos como access_password e session_id
           const { data: accessData, error: accessError } = await adminClient.rpc(
             "login_extension_with_access_password",
             { _email: email, _access_password: password, _session_id: sessionId },
@@ -167,20 +161,21 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
 
           const userId = auth.data.user.id;
 
+          // Busca dados com o adminClient para garantir que ignore RLS se o usuário estiver bloqueado ou o profile for restrito
           const [profileRes, subRes, settingsRes] = await Promise.all([
-            publicClient
+            adminClient
               .from("profiles")
               .select("full_name,email,language,blocked,custom_message")
               .eq("id", userId)
               .maybeSingle(),
-            publicClient
+            adminClient
               .from("subscriptions")
               .select("type,status,expires_at")
               .eq("user_id", userId)
               .order("created_at", { ascending: false })
               .limit(1)
               .maybeSingle(),
-            publicClient.from("app_settings").select("key,value"),
+            adminClient.from("app_settings").select("key,value"),
           ]);
 
           const profile = profileRes.data;

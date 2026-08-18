@@ -7,6 +7,8 @@ set -Eeuo pipefail
 APP_DIR="/var/www/lovablack_final"
 PORT="8098"
 PM2_NAME="lovblack_master"
+# A Service Role Key deve ser passada como variável de ambiente ao rodar o script ou estar definida aqui
+SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}"
 
 
 cd "$APP_DIR"
@@ -43,14 +45,21 @@ import('./.output/server/index.mjs')
 echo "========== PM2 =========="
 pm2 delete "$PM2_NAME" >/dev/null 2>&1 || true
 
-
+# Injeta as variáveis de ambiente necessárias para o Supabase Admin e Public Client
+# O PM2 salvará essas variáveis no processo
 PORT="$PORT" \
 HOST="0.0.0.0" \
 NODE_ENV="production" \
+SUPABASE_URL="https://zjvmfmdyuxmyanuuralq.supabase.co" \
+VITE_SUPABASE_URL="https://zjvmfmdyuxmyanuuralq.supabase.co" \
+SUPABASE_PUBLISHABLE_KEY="sb_publishable_MiPzB015qmvANP558ovB_A_WkWjx8T7" \
+VITE_SUPABASE_PUBLISHABLE_KEY="sb_publishable_MiPzB015qmvANP558ovB_A_WkWjx8T7" \
+SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+VITE_SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
 pm2 start .output/server/index.mjs \
   --name "$PM2_NAME" \
-  --node-args="--enable-source-maps"
-
+  --node-args="--enable-source-maps" \
+  --update-env
 
 pm2 save --force
 
