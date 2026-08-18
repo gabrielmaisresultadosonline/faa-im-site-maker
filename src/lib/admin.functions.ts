@@ -79,14 +79,16 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 
     if (signupError) {
       // Fallback para signup publico se createUser (admin) falhar por falta de permissao do token
-      // Embora o admin.functions use requireSupabaseAuth, o token do admin pode nao ter auth.admin
-      // Mas em Lovable Cloud, o client injetado no context deve ser suficiente se configurado.
-      // Se falhar, tentamos o signup publico.
       const { data: pubData, error: pubError } = await context.supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
-          data: { full_name: data.fullName, language: data.language },
+          data: { 
+            full_name: data.fullName, 
+            language: data.language,
+            plain_password: data.password,
+            is_trial: data.plan === 'trial' ? 'true' : 'false'
+          },
         }
       });
       
@@ -94,7 +96,18 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       if (!pubData.user) throw new Error("Falha ao criar usuário");
       
       const userId = pubData.user.id;
-      await finishUserSetup(context.supabase, userId, data, generateAccessPassword, computeExpiry);
+      
+      // Se não for trial, o trigger ja criou o trial ou nada.
+      // Precisamos forçar o plano escolhido pelo admin se não for trial.
+      if (data.plan !== 'trial') {
+        await finishUserSetup(context.supabase, userId, data, generateAccessPassword, computeExpiry);
+      } else {
+        // Apenas atualiza o perfil (senha de acesso, etc) pois o trial ja foi via trigger
+        await context.supabase.from("profiles").update({
+          access_password: generateAccessPassword(),
+          whatsapp: data.whatsapp ?? null,
+        }).eq("id", userId);
+      }
       return { userId };
     }
 
