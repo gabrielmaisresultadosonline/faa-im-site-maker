@@ -44,13 +44,18 @@ import('./.output/server/index.mjs')
 echo "========== PM2 =========="
 pm2 delete "$PM2_NAME" >/dev/null 2>&1 || true
 
+# Exporta variáveis do .env e garante que elas entrem no shell
+set -a
+[ -f .env ] && . .env
+set +a
 
-export $(grep -v '^#' .env | xargs)
-
+# Injeção direta no comando pm2 para evitar falhas de escopo
 PORT="$PORT" \
 NITROPACK_PORT="$PORT" \
 HOST="0.0.0.0" \
 NODE_ENV="production" \
+SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}" \
+VITE_SUPABASE_URL="${VITE_SUPABASE_URL:-}" \
 pm2 start .output/server/index.mjs \
   --name "$PM2_NAME" \
   --node-args="--enable-source-maps" \

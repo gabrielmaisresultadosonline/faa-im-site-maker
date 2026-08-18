@@ -78,28 +78,23 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           }
 
           const url = process.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"];
+          const key = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["SERVICE_ROLE_KEY"];
           
-          if (!url) {
-            console.error(`[API-${requestId}] Missing SUPABASE_URL configuration.`);
+          if (!url || !key) {
+            console.error(`[API-${requestId}] Missing Supabase configuration. URL: ${!!url}, Key: ${!!key}`);
             return json({ 
               success: false, 
-              error: "Configuração do servidor incompleta (URL). Reinicie o serviço no VPS." 
+              error: "Configuração do servidor incompleta. Reinicie o serviço no VPS com --update-env." 
             }, 503);
           }
 
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          
-          let backend;
-          try {
-            backend = supabaseAdmin;
-            if (!backend || !backend.auth) throw new Error("supabaseAdmin.auth is unavailable");
-          } catch (e) {
-            console.warn(`[API-${requestId}] supabaseAdmin failed, trying public client`, e);
-            const { supabase } = await import("@/integrations/supabase/client");
-            backend = supabase;
-          }
+          // Importação dinâmica para evitar que o client.server.ts falhe no boot se as chaves não estiverem prontas
+          const { createClient } = await import('@supabase/supabase-js');
+          const backend = createClient(url, key, {
+            auth: { persistSession: false, autoRefreshToken: false }
+          });
 
-          console.log(`[API-${requestId}] Usando backend para ${email}...`);
+          console.log(`[API-${requestId}] Usando backend direto para ${email}...`);
 
           const { data: accessData, error: accessError } = await backend.rpc(
             "login_extension_with_access_password",
