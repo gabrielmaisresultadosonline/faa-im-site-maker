@@ -65,9 +65,9 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           const key = process.env["VITE_SUPABASE_ANON_KEY"] || process.env["SUPABASE_ANON_KEY"];
           const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
           
-          if (!url || (!key && !serviceKey)) {
-            console.error("Missing Supabase configuration:", { url: !!url, key: !!key, serviceKey: !!serviceKey });
-            return json({ success: false, error: "Serviço temporariamente indisponível. Por favor, tente novamente em instantes." }, 503);
+          if (!url) {
+            console.error("Missing SUPABASE_URL configuration.");
+            return json({ success: false, error: "Configuração do servidor incompleta (URL)." }, 503);
           }
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
