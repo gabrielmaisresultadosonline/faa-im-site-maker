@@ -53,25 +53,27 @@ pm2 delete $PM2_NAME || true
 
 # Inicia o processo definindo explicitamente o HOST 0.0.0.0 e a PORTA
 # O Nitro/H3 respeita NITROPACK_PORT ou PORT, mas forçamos NITROPACK_HOST para aceitar conexões externas/Nginx
-pm2 start .output/server/index.mjs --name $PM2_NAME --node-args="--enable-source-maps" --env PORT=$PORT --env HOST=0.0.0.0 --env NITROPACK_HOST=0.0.0.0 --env NITROPACK_PORT=$PORT
-
-# Injeção agressiva de variáveis do .env no PM2
+# Inicia o processo definindo explicitamente o HOST 0.0.0.0 e a PORTA
+# O Nitro/H3 respeita NITROPACK_PORT ou PORT. Forçamos NITROPACK_HOST para aceitar conexões externas.
+# Injetamos as variáveis diretamente no comando de start para evitar falhas do 'pm2 set'
+ENV_VARS=""
 if [ -f .env ]; then
-    echo "Injetando variáveis do .env no processo PM2..."
+    echo "Preparando variáveis do .env para o PM2..."
     while read -r line || [ -n "$line" ]; do
         if [[ ! $line =~ ^# ]] && [[ $line == *"="* ]]; then
-            key=$(echo $line | cut -d '=' -f 1)
-            value=$(echo $line | cut -d '=' -f 2- | sed 's/^"//;s/"$//')
-            # Setamos no ecossistema do PM2 para o processo
-            pm2 set $PM2_NAME:$key "$value"
+            # Escapa aspas para não quebrar o comando
+            clean_line=$(echo "$line" | sed 's/"/\\"/g')
+            ENV_VARS="$ENV_VARS --env $clean_line"
         fi
     done < .env
-    
-    # Reinicia com as novas variáveis aplicadas e garante a porta e host novamente
-    pm2 restart $PM2_NAME --update-env --env PORT=$PORT --env HOST=0.0.0.0 --env NITROPACK_HOST=0.0.0.0 --env NITROPACK_PORT=$PORT
 fi
 
-pm2 save
+pm2 start .output/server/index.mjs --name $PM2_NAME \
+    --node-args="--enable-source-maps" \
+    --env PORT=$PORT --env HOST=0.0.0.0 --env NITROPACK_HOST=0.0.0.0 --env NITROPACK_PORT=$PORT \
+    $ENV_VARS
+
+pm2 save --force
 
 echo "========== 6. VERIFICANDO STATUS E SAÚDE =========="
 sleep 5

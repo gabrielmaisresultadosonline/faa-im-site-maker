@@ -57,14 +57,33 @@ export const supabaseAdmin = new Proxy({} as any, {
     if (_supabaseAdmin === undefined) _supabaseAdmin = createSupabaseAdminClient();
     
     if (_supabaseAdmin === null) {
-      // Retornamos um objeto que falha silenciosamente ou loga o erro em vez de quebrar o boot do SSR
-      // Apenas se for uma chamada de função do Supabase
-      return (...args: any[]) => {
-        console.error(`ERRO CRÍTICO: Tentativa de usar supabaseAdmin.${String(prop)} sem SUPABASE_SERVICE_ROLE_KEY configurada.`);
-        return { data: null, error: { message: "Configuração de servidor ausente (SERVICE_ROLE_KEY)." } };
+      // Se for a propriedade 'auth', 'from', etc, retornamos um proxy recursivo
+      // para evitar erros de "cannot read property 'login' of undefined"
+      const dummy = (...args: any[]) => {
+        console.error(`ERRO CRÍTICO: Tentativa de usar supabaseAdmin.${String(prop)} sem SUPABASE_SERVICE_ROLE_KEY.`);
+        return { 
+          data: null, 
+          error: { message: "Configuração de servidor ausente (SERVICE_ROLE_KEY)." },
+          select: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
+          insert: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
+          update: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
+          delete: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
+          rpc: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
+        };
       };
+      
+      // Permite encadeamento como supabaseAdmin.auth.admin.someFunc()
+      if (['auth', 'storage', 'from'].includes(prop as string)) {
+        return new Proxy(dummy, { get: () => dummy });
+      }
+      
+      return dummy;
     }
     
-    return Reflect.get(_supabaseAdmin, prop, receiver);
+    const value = Reflect.get(_supabaseAdmin, prop, receiver);
+    if (typeof value === 'function') {
+      return value.bind(_supabaseAdmin);
+    }
+    return value;
   },
 });
