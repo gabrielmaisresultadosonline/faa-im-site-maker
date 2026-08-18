@@ -1,4 +1,4 @@
-export function renderErrorPage(): string {
+export function renderErrorPage(stack?: string): string {
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -20,6 +20,7 @@ export function renderErrorPage(): string {
     <div class="card">
        <h1>Ops! Erro Interno no Servidor (502/500)</h1>
       <p>O servidor não conseguiu processar sua solicitação. Isso pode ser causado por variáveis de ambiente ausentes ou falha no boot do SSR. Verifique os logs do PM2 no VPS.</p>
+      ${stack ? `<pre style="text-align: left; background: #eee; padding: 1rem; overflow: auto; max-height: 200px; font-size: 11px;">${stack}</pre>` : ''}
       <div class="actions">
         <button class="primary" onclick="location.reload()">Tentar Novamente</button>
         <a class="secondary" href="/">Voltar ao Início</a>
