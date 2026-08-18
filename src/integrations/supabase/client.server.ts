@@ -2,32 +2,22 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
-/**
- * Retorna uma instância do Supabase Admin configurada dinamicamente.
- * Prioriza process.env (PM2 no VPS) sobre import.meta.env (Vite).
- * 
- * CRITICAL: Esta instância ignora RLS e deve ser usada apenas em ambiente de servidor seguro
- * para operações administrativas como login de extensão, webhooks e gestão de usuários.
- */
 export function getSupabaseAdmin() {
-  // Coleta URL
   const url =
     process.env["SUPABASE_URL"] ||
     process.env["VITE_SUPABASE_URL"] ||
     import.meta.env["VITE_SUPABASE_URL"] ||
-    "https://zjvmfmdyuxmyanuuralq.supabase.co"; // Fallback para o ID do projeto atual
+    "https://zjvmfmdyuxmyanuuralq.supabase.co";
 
-  // Coleta Service Role Key (várias nomenclaturas possíveis no ambiente)
   const serviceKey =
     process.env["SUPABASE_SERVICE_ROLE_KEY"] ||
     process.env["VITE_SUPABASE_SERVICE_ROLE_KEY"] ||
-    process.env["sb_secret_zjvmfmdyuxmyanuuralq"]; // Chave específica Lovable se injetada
+    process.env["sb_secret_zjvmfmdyuxmyanuuralq"];
 
-  if (!url || !serviceKey) {
-    console.error("[SupabaseAdmin] ERRO: Credenciais de administrador não encontradas no ambiente.");
-  }
+  // Se não houver serviceKey, usamos a anonKey como fallback para evitar crash no SDK
+  const finalKey = serviceKey || "sb_publishable_MiPzB015qmvANP558ovB_A_WkWjx8T7";
 
-  return createClient<Database>(url, serviceKey || "NO_KEY_PROVIDED", {
+  return createClient<Database>(url, finalKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -35,8 +25,4 @@ export function getSupabaseAdmin() {
   });
 }
 
-/**
- * Instância exportada para compatibilidade retroativa.
- * Note: Em ambientes serverless, é melhor chamar getSupabaseAdmin() dentro do handler.
- */
 export const supabaseAdmin = getSupabaseAdmin();

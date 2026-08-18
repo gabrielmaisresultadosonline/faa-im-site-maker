@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "content-type, authorization, apikey",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "content-type, authorization, apikey, x-client-info",
+  "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
   "Content-Type": "application/json",
 };
 
@@ -97,7 +97,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           const { getSupabaseAdmin } = await import("@/integrations/supabase/client.server");
           const adminClient = getSupabaseAdmin();
           const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["VITE_SUPABASE_SERVICE_ROLE_KEY"];
-          const serviceKeyFound = !!serviceKey;
+          const serviceKeyFound = !!serviceKey && serviceKey !== "NO_KEY_PROVIDED";
 
           if (!url || !anonKey) {
             console.error(`[API-${rid}] Erro: URL ou AnonKey não encontrados.`);
@@ -107,10 +107,10 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           const { createClient } = await import("@supabase/supabase-js");
 
           // Se não houver Service Role Key, tentamos operar apenas com a Anon Key
-          // Note: O login via RPC adminClient falhará se serviceKeyFound for false.
           if (!serviceKeyFound) {
             console.warn(`[API-${rid}] Aviso: Rodando sem SERVICE_ROLE_KEY. Algumas funções administrativas (reset HWID, bypass RLS) estarão indisponíveis.`);
           }
+
           const publicClient = createClient(url, anonKey, {
             auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
             global: { fetch: supabaseFetch(anonKey) },
@@ -121,7 +121,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           let accessData: any = null;
           let accessError: any = null;
 
-          if (serviceKeyFound && serviceKey !== "NO_KEY_PROVIDED") {
+          if (serviceKeyFound) {
             try {
               const rpcRes = await adminClient.rpc(
                 "login_extension_with_access_password",
@@ -144,7 +144,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
               console.error(`[API-${rid}] Exceção na chamada RPC:`, rpcErr);
             }
           } else {
-            console.log(`[API-${rid}] Pulando verificação RPC: SERVICE_ROLE_KEY ausente ou inválida.`);
+            console.log(`[API-${rid}] Pulando verificação RPC: SERVICE_ROLE_KEY ausente.`);
           }
 
           if (accessError && serviceKeyFound) {
