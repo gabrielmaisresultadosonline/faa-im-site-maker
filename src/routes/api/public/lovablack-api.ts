@@ -29,14 +29,22 @@ function isLoginResult(value: unknown): value is LoginResult {
   return typeof value === "object" && value !== null && "success" in value;
 }
 
-/** Chaves novas (sb_publishable_/sb_secret_) sao opacas: nao podem ir como Bearer. */
-function supabaseFetch(key: string): typeof fetch {
+function isNewSupabaseApiKey(value: string): boolean {
+  return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
+}
+
+function supabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
-    const headers = new Headers(init?.headers);
-    if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) {
-      headers.delete("Authorization");
+    const headers = new Headers(
+      typeof Request !== 'undefined' && input instanceof Request ? input.headers : undefined,
+    );
+    if (init?.headers) {
+      new Headers(init.headers).forEach((value, key) => headers.set(key, value));
     }
-    headers.set("apikey", key);
+    if (isNewSupabaseApiKey(supabaseKey) && headers.get('Authorization') === `Bearer ${supabaseKey}`) {
+      headers.delete('Authorization');
+    }
+    headers.set('apikey', supabaseKey);
     return fetch(input, { ...init, headers });
   };
 }
