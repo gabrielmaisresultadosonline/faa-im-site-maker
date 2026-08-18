@@ -45,7 +45,10 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           }
 
           const email = (body.email ?? "").trim().toLowerCase();
-          const password = body.password ?? "";
+          const rawPassword = body.password ?? "";
+          // A senha enviada pela extensão pode ter problemas de case, mas o signIn do Supabase é sensível.
+          // Tentar usar o password original primeiro, e se falhar, tentar o trim.
+          const password = rawPassword.trim();
           const sessionId = body.session_id;
 
           if (body.action !== "login") {
