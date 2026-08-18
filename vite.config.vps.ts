@@ -15,7 +15,16 @@ export default defineConfig({
     minify: "esbuild",
     cssMinify: true,
     rollupOptions: {
-      external: ["@tanstack/react-start/config"],
+      external: [
+        "@tanstack/react-start/config",
+        "lucide-react",
+        "@radix-ui/react-dialog",
+        "@radix-ui/react-label",
+        "@radix-ui/react-tabs",
+        "@radix-ui/react-slot",
+        "clsx",
+        "tailwind-merge"
+      ],
     }
   },
   ssr: {
