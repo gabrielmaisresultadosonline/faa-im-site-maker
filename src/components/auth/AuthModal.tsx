@@ -48,7 +48,6 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
           sessionStorage.setItem('lovablack_pending_payment', JSON.stringify(onSuccessRedirect));
         }
         
-        // Redirecionamento inteligente: Admin vai para /admin, usuário para /dashboard
         const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
         
         // Limpa qualquer parâmetro de redirecionamento pendente da URL para evitar loops
@@ -60,12 +59,11 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
 
         const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
 
-        // Redirecionamento forçado para evitar loops
-        setTimeout(() => {
-          if (window.location.pathname === '/' || window.location.pathname === '/ingles') {
-             window.location.replace(target);
-          }
-        }, 100);
+        // Redirecionamento condicional: só redireciona se estiver na home ou ingles
+        if (window.location.pathname === '/' || window.location.pathname === '/ingles') {
+           console.log("Redirecionando de AuthModal para:", target);
+           window.location.replace(target);
+        }
       }
     });
     return () => subscription.unsubscribe();
