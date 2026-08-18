@@ -31,11 +31,16 @@ npx vite build --config vite.config.vps.ts
 
 
 echo "========== TESTE DO SSR =========="
+# Tentamos rodar o index.mjs para garantir que o bundle está íntegro
 node --input-type=module -e "
 import('./.output/server/index.mjs')
-  .then(() => console.log('SSR OK'))
+  .then(() => {
+    console.log('SSR OK');
+    process.exit(0);
+  })
   .catch(err => {
-    console.error(err?.stack || err);
+    console.error('ERRO CRITICO NO SSR:');
+    console.error(err);
     process.exit(1);
   })
 "
