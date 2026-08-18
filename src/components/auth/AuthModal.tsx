@@ -116,7 +116,13 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
     setLoading(true);
     try {
       // 1. IP Block Check
-      const ipStatus = await checkIP();
+      let ipStatus = { blocked: false, ip: '', message: '' };
+      try {
+        ipStatus = await checkIP();
+      } catch (ipErr) {
+        console.error("IP Check failed, proceeding anyway:", ipErr);
+      }
+
       if (ipStatus.blocked) {
         toast.error(ipStatus.message || (lang === 'pt' ? 'Acesso bloqueado por múltiplas contas.' : 'Access blocked for multiple accounts.'), {
           duration: 6000

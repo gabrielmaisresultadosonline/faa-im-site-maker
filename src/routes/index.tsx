@@ -148,23 +148,27 @@ function Index() {
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
             <Dialog>
               <DialogTrigger asChild>
-                <Button size="lg" className="h-14 px-8 text-lg font-bold rounded-full bg-[#1A1B1A] text-white hover:bg-[#080808] transition-all hover:scale-105 shadow-lg shadow-[#D8D0C8]">
+                <Button size="lg" className="h-14 px-8 text-lg font-bold rounded-full bg-[#1A1B1A] text-white hover:bg-[#080808] transition-all hover:scale-105 shadow-lg shadow-[#D8D0C8] cursor-pointer">
                   🚀 TESTE GRÁTIS 20 MIN
                 </Button>
               </DialogTrigger>
-              <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh]">
-                <AuthModal initialMode="signup" isTrial={true} />
+              <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none">
+                <div className="relative w-full">
+                  <AuthModal initialMode="signup" isTrial={true} />
+                </div>
               </DialogContent>
             </Dialog>
 
             <Dialog>
               <DialogTrigger asChild>
-                <Button size="lg" variant="outline" className="h-14 px-8 text-lg font-bold rounded-full border-2 border-[#1A1B1A] text-[#1A1B1A] hover:bg-[#1A1B1A] hover:text-white transition-all hover:scale-105 shadow-lg shadow-[#D8D0C8]">
+                <Button size="lg" variant="outline" className="h-14 px-8 text-lg font-bold rounded-full border-2 border-[#1A1B1A] text-[#1A1B1A] hover:bg-[#1A1B1A] hover:text-white transition-all hover:scale-105 shadow-lg shadow-[#D8D0C8] cursor-pointer">
                   JÁ SOU MEMBRO (LOGAR)
                 </Button>
               </DialogTrigger>
-              <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh]">
-                <AuthModal initialMode="login" />
+              <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none">
+                <div className="relative w-full">
+                  <AuthModal initialMode="login" />
+                </div>
               </DialogContent>
             </Dialog>
           </div>
