@@ -56,6 +56,10 @@ if [ -z "$SERVICE_KEY" ]; then
     fi
 fi
 
+SUPABASE_URL="${VITE_SUPABASE_URL:-https://zjvmfmdyuxmyanuuralq.supabase.co}"
+# Chave fornecida: 2342342342342342343
+SERVICE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-2342342342342342343}"
+
 PORT="$PORT" \
 HOST="0.0.0.0" \
 NODE_ENV="production" \
