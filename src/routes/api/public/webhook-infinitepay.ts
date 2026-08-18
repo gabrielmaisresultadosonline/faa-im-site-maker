@@ -128,23 +128,6 @@ export const Route = createFileRoute('/api/public/webhook-infinitepay')({
               { onConflict: 'user_id' }
             );
 
-          // Track Purchase event on Facebook Conversion API
-          try {
-            // Get user email for better matching
-            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(transaction.user_id);
-            
-            await trackPurchaseEvent({
-              data: {
-                email: userData?.user?.email,
-                value: transaction.amount / 100, // Assuming amount is in cents
-                currency: 'BRL',
-                userAgent: request.headers.get('user-agent') || ''
-              }
-            });
-          } catch (trackError) {
-            console.error('FB Purchase tracking failed:', trackError);
-          }
-
           if (subError) {
             console.error('Error updating subscription', subError);
             return new Response('Subscription update failed', { status: 500 });
