@@ -18,8 +18,8 @@ export function renderErrorPage(): string {
   </head>
   <body>
     <div class="card">
-      <h1>Ops! O site está em manutenção rápida</h1>
-      <p>Estamos finalizando a configuração do servidor. Por favor, clique no botão abaixo para tentar novamente em alguns segundos.</p>
+       <h1>Ops! Erro Interno no Servidor (502/500)</h1>
+      <p>O servidor não conseguiu processar sua solicitação. Isso pode ser causado por variáveis de ambiente ausentes ou falha no boot do SSR. Verifique os logs do PM2 no VPS.</p>
       <div class="actions">
         <button class="primary" onclick="location.reload()">Tentar Novamente</button>
         <a class="secondary" href="/">Voltar ao Início</a>
