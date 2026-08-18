@@ -57,9 +57,10 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           // Use VITE_ variables which are more reliable across environments (Lovable Cloud/VPS)
           const url = process.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"];
           const key = process.env["VITE_SUPABASE_ANON_KEY"] || process.env["SUPABASE_ANON_KEY"];
+          const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
           
-          if (!url || !key) {
-            console.error("Missing Supabase configuration:", { url: !!url, key: !!key });
+          if (!url || (!key && !serviceKey)) {
+            console.error("Missing Supabase configuration:", { url: !!url, key: !!key, serviceKey: !!serviceKey });
             return json({ success: false, error: "Serviço temporariamente indisponível. Por favor, tente novamente em instantes." }, 503);
           }
 
