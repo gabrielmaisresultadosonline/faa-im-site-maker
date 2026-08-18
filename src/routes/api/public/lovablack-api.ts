@@ -39,12 +39,13 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           headers: {
             ...CORS,
             "Access-Control-Max-Age": "86400",
+            "Vary": "Origin",
           }
         });
       },
       POST: async ({ request }) => {
-        try {
-          console.log("Recebendo requisição na API da extensão...");
+        const requestId = Math.random().toString(36).substring(7);
+        console.log(`[API-${requestId}] Recebendo requisição na API da extensão...`);
           let body: LoginBody;
           try {
             const rawBody = await request.text();
@@ -211,7 +212,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           });
         } catch (error) {
           const errMsg = error instanceof Error ? error.message : "Unknown error";
-          console.error("Lovablack API request failed:", errMsg);
+          console.error(`[API-${requestId}] Lovablack API request failed:`, errMsg, error);
           
           if (errMsg.includes("Missing Supabase environment variable")) {
              return json({ 
@@ -220,7 +221,11 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
              }, 500);
           }
           
-          return json({ success: false, error: "Erro interno no servidor." }, 500);
+          return json({ 
+            success: false, 
+            error: "Erro interno no servidor ao processar login da extensão.",
+            details: process.env.NODE_ENV === 'development' ? errMsg : undefined
+          }, 500);
         }
       },
     },
