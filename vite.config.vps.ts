@@ -15,8 +15,7 @@ export default defineConfig({
     minify: "esbuild",
     cssMinify: true,
     rollupOptions: {
-      // Evita o erro de specifier no @tanstack/react-start/config
-      external: ["@tanstack/react-start/config"]
+      external: ["@tanstack/react-start/config"],
     }
   },
   ssr: {
