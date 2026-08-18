@@ -28,7 +28,6 @@ export default defineConfig({
   vite: {
     ssr: {
       noExternal: true,
-      external: ["@tanstack/react-start/config"],
     },
     resolve: {
       alias: {
