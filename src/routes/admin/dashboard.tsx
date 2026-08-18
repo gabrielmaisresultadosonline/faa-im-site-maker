@@ -213,7 +213,7 @@ function AdminDashboard() {
                 className="w-full justify-start gap-3 rounded-xl border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700"
                 onClick={async () => {
                   await supabase.auth.signOut();
-                  window.location.assign('/');
+                  window.location.replace('/');
                 }}
               >
                 <Ban className="w-5 h-5" />
