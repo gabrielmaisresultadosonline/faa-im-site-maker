@@ -36,6 +36,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
       POST: async ({ request }) => {
         try {
+          console.log("Recebendo requisição na API da extensão...");
           let body: LoginBody;
           try {
             body = (await request.json()) as LoginBody;
