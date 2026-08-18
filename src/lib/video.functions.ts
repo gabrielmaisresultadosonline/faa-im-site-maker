@@ -11,7 +11,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       // O proxy do supabaseAdmin vai lançar erro se acessado sem a key configurada
       // mas o import em si é seguro.
-      if (process.env['SUPABASE_SERVICE_ROLE_KEY']) {
+      if (process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['VITE_SUPABASE_URL']) {
         client = supabaseAdmin;
       }
     } catch (e) {
