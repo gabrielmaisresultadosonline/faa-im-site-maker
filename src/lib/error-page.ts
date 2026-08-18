@@ -18,11 +18,16 @@ export function renderErrorPage(stack?: string): string {
   </head>
   <body>
     <div class="card">
-       <h1>Configuração do Servidor Requerida</h1>
-      <p>O ambiente do servidor precisa ser atualizado com as chaves de acesso corretas para funcionar no VPS.</p>
+       <h1>Recuperação de Acesso Necessária</h1>
+      <p>Você precisa obter a <b>Service Role Key</b> para que o site funcione corretamente no seu VPS.</p>
       <div style="text-align: left; background: #eee; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
-        <strong>Instrução:</strong><br/>
-        <p style="font-size: 0.85rem; margin: 0.5rem 0;">Adicione a <code>SUPABASE_SERVICE_ROLE_KEY</code> no seu arquivo <code>.env</code> ou variáveis do PM2 para o Project ID: <code>zjvmfmdyuxmyanuuralq</code></p>
+        <strong>Como obter a chave:</strong><br/>
+        <ol style="font-size: 0.85rem; margin: 0.5rem 0; padding-left: 1.2rem;">
+          <li>Acesse o painel do projeto <b>zjvmfmdyuxmyanuuralq</b> no Lovable Cloud.</li>
+          <li>Vá em <b>Configurações > API</b>.</li>
+          <li>Copie a chave <code>service_role</code> (secreta).</li>
+          <li>No VPS, edite o arquivo <code>.env</code> e adicione: <br/><code>SUPABASE_SERVICE_ROLE_KEY=sua_chave_aqui</code></li>
+        </ol>
       </div>
       <div class="actions">
         <button class="primary" onclick="location.reload()">Tentar Novamente</button>
