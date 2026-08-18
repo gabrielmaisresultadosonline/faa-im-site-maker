@@ -14,8 +14,8 @@ async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     console.log("[SERVER_BOOT] Loading server entry...");
     
-    // NUNCA tente importar caminhos que não existem no build time (como ./server-entry.mjs)
-    // O Vite resolverá o path abaixo para o bundle correto durante o build SSR.
+    // O import dinâmico do TanStack Start deve ser resolvido pelo Vite durante o build SSR.
+    // Usamos o alias para garantir que o bundle gerado pelo Nitro encontre o entrypoint.
     serverEntryPromise = import(/* @vite-ignore */ "@tanstack/react-start/server-entry")
       .then((m) => {
         console.log("[SERVER_BOOT] Server entry loaded successfully.");
@@ -23,7 +23,10 @@ async function getServerEntry(): Promise<ServerEntry> {
       })
       .catch((err) => {
         console.error("[SERVER_BOOT] CRITICAL: FAILED TO LOAD SERVER ENTRY.", err);
-        throw err;
+        // Fallback secundário para quando o bundling total falha em resolver o nome do pacote
+        console.log("[SERVER_BOOT] Attempting secondary resolution...");
+        // @ts-ignore
+        return import("./server-entry.mjs").then(m => m.default ?? m);
       });
   }
   return serverEntryPromise;
