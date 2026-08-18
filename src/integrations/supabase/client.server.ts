@@ -27,7 +27,7 @@ export function getSupabaseAdmin() {
     console.error("[SupabaseAdmin] ERRO: Credenciais de administrador não encontradas no ambiente.");
   }
 
-  return createClient<Database>(url, serviceKey || "", {
+  return createClient<Database>(url, serviceKey || "NO_KEY_PROVIDED", {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
