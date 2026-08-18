@@ -84,7 +84,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             console.error(`[API-${requestId}] Missing Supabase configuration. URL: ${!!url}, Key: ${!!key}`);
             return json({ 
               success: false, 
-              error: "Configuração do servidor incompleta. Reinicie o serviço no VPS com --update-env." 
+              error: "nao consigo abrir a extensao ainda.. veja Configuração do servidor incompleta. Reinicie o serviço no VPS com --update-env." 
             }, 503);
           }
 
