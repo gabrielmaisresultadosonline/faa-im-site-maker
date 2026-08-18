@@ -1,9 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { getWebRequest } from "@tanstack/react-start/server";
 
 export const checkRegistrationIP = createServerFn({ method: "GET" })
-  .handler(async ({ request }) => {
-    // Get IP from headers
+  .handler(async () => {
+    const request = getWebRequest();
+    if (!request) return { blocked: false, ip: "unknown" };
+
     const forwarded = request.headers.get("x-forwarded-for");
     const ip = forwarded ? forwarded.split(',')[0].trim() : "unknown";
     
@@ -11,10 +14,6 @@ export const checkRegistrationIP = createServerFn({ method: "GET" })
       return { blocked: false, ip: "unknown" };
     }
 
-    // Check if user is admin - admins bypass IP check
-    // However, we don't have a session here since this is BEFORE signup.
-    
-    // Count profiles with this IP
     const { count, error } = await supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true })
@@ -25,8 +24,7 @@ export const checkRegistrationIP = createServerFn({ method: "GET" })
       return { blocked: false, ip };
     }
 
-    // Limit is 3 (so if 3 already exist, block the 4th)
-    const MAX_ACCOUNTS_PER_IP = 2; // User said 2 a 3, so I'll allow 2, block 3rd.
+    const MAX_ACCOUNTS_PER_IP = 2;
     
     if (count && count >= MAX_ACCOUNTS_PER_IP) {
       return { 
@@ -38,3 +36,4 @@ export const checkRegistrationIP = createServerFn({ method: "GET" })
 
     return { blocked: false, ip };
   });
+
