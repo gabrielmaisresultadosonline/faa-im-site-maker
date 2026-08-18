@@ -52,6 +52,7 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 
 export default {
   async fetch(request: Request, env: any, ctx: any) {
+    const url = new URL(request.url);
     try {
       // Injeta environment vars do runtime (PM2/Nitro)
       if (env && typeof env === 'object') {
@@ -65,9 +66,13 @@ export default {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       
+      if (response.status >= 500) {
+        console.error(`[SSR_ERROR] ${response.status} on ${url.pathname}`);
+      }
+      
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
-      console.error("CATASTROPHIC SSR ERROR:", error);
+      console.error(`[CATASTROPHIC_ERROR] ${url.pathname}:`, error);
       const trace = error instanceof Error ? error.stack : String(error);
       return new Response(renderErrorPage(trace), {
         status: 500,
