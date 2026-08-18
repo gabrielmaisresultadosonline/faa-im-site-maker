@@ -69,10 +69,10 @@ export const Route = createFileRoute('/api/public/webhook-infinitepay')({
             return new Response('Missing order_nsu', { status: 400 });
           }
 
-          // Usamos o client público (anon) para operações de leitura/escrita permitidas por RLS ou service_role se disponível
-          const { supabase } = await import('@/integrations/supabase/client');
+          // Usamos o client admin para garantir bypass de RLS no webhook público
+          const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
 
-          const { data: transaction, error: txError } = await supabase
+          const { data: transaction, error: txError } = await supabaseAdmin
             .from('infinitepay_transactions')
             .select('*')
             .eq('order_nsu', orderNsu)
@@ -101,7 +101,7 @@ export const Route = createFileRoute('/api/public/webhook-infinitepay')({
           // usamos o supabase (anon). Certifique-se que as políticas de RLS permitem
           // ou que os GRANTS estão configurados.
           
-          const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+          // O supabaseAdmin ja foi importado acima
           
           await supabaseAdmin
             .from('infinitepay_transactions')
