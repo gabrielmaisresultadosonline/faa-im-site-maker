@@ -154,9 +154,7 @@ function Index() {
               </DialogTrigger>
               <DialogPortal>
                 <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 [&>button]:hidden">
-                  <div className="relative w-full z-[100]">
-                    <AuthModal initialMode="signup" isTrial={true} />
-                  </div>
+                  <AuthModal initialMode="signup" isTrial={true} />
                 </DialogContent>
               </DialogPortal>
             </Dialog>
@@ -169,9 +167,7 @@ function Index() {
               </DialogTrigger>
               <DialogPortal>
                 <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 [&>button]:hidden">
-                  <div className="relative w-full z-[100]">
-                    <AuthModal initialMode="login" />
-                  </div>
+                  <AuthModal initialMode="login" />
                 </DialogContent>
               </DialogPortal>
             </Dialog>
