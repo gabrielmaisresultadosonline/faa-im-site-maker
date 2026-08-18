@@ -80,7 +80,11 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
 
           const { data: accessData, error: accessError } = await backend.rpc(
             "login_extension_with_access_password",
-            { _email: email, _access_password: password, _session_id: sessionId ?? "" },
+            { 
+              _email: email, 
+              _access_password: password, 
+              _session_id: sessionId ?? "" 
+            },
           );
 
           if (!accessError && isLoginResult(accessData)) {
