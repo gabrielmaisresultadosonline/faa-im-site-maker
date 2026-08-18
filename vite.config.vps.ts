@@ -1,4 +1,5 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { resolve } from "path";
 
 export default defineConfig({
   nitro: {
@@ -11,15 +12,29 @@ export default defineConfig({
   },
   vite: {
     ssr: {
-      noExternal: true, // Garante que as dependências sejam buildadas no bundle SSR para evitar erros de import no Node
+      noExternal: [
+        "@tanstack/react-start",
+        "@tanstack/react-router",
+        "@tanstack/router-plugin",
+        "react-hook-form",
+        "@hookform/resolvers",
+        "lucide-react",
+        "sonner",
+        "zod"
+      ],
+    },
+    resolve: {
+      alias: {
+        "@": resolve(__dirname, "./src"),
+      },
     },
     build: {
       chunkSizeWarningLimit: 2000,
       rollupOptions: {
         output: {
-          manualChunks: undefined, // Evita splitting excessivo que pode quebrar imports dinâmicos no VPS
-        }
-      }
-    }
-  }
+          manualChunks: undefined,
+        },
+      },
+    },
+  },
 });
