@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type { Database } from "@/integrations/supabase/types";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -30,79 +29,77 @@ function isLoginResult(value: unknown): value is LoginResult {
   return typeof value === "object" && value !== null && "success" in value;
 }
 
+/** Chaves novas (sb_publishable_/sb_secret_) sao opacas: nao podem ir como Bearer. */
+function supabaseFetch(key: string): typeof fetch {
+  return (input, init) => {
+    const headers = new Headers(init?.headers);
+    if (key.startsWith("sb_") && headers.get("Authorization") === `Bearer ${key}`) {
+      headers.delete("Authorization");
+    }
+    headers.set("apikey", key);
+    return fetch(input, { ...init, headers });
+  };
+}
+
 export const Route = createFileRoute("/api/public/lovablack-api")({
   server: {
     handlers: {
-      OPTIONS: async () => {
-        return new Response(null, {
+      OPTIONS: async () =>
+        new Response(null, {
           status: 204,
-          headers: {
-            ...CORS,
-            "Access-Control-Max-Age": "86400",
-            "Vary": "Origin",
-          }
-        });
-      },
+          headers: { ...CORS, "Access-Control-Max-Age": "86400", Vary: "Origin" },
+        }),
+
       POST: async ({ request }) => {
-        const requestId = Math.random().toString(36).substring(7);
+        const rid = Math.random().toString(36).slice(2, 8);
         try {
-          console.log(`[API-${requestId}] Recebendo requisição na API da extensão...`);
+          const raw = await request.text();
+          if (!raw) return json({ success: false, error: "Empty request body" }, 400);
+
           let body: LoginBody;
-          const rawBody = await request.text();
-          console.log(`[API-${requestId}] Body Size:`, rawBody.length);
-          
-          if (!rawBody) {
-            console.error(`[API-${requestId}] Empty body received`);
-            return json({ success: false, error: "Empty request body" }, 400);
+          try {
+            body = JSON.parse(raw) as LoginBody;
+          } catch {
+            return json({ success: false, error: "Invalid JSON body" }, 400);
           }
 
-          try {
-            body = JSON.parse(rawBody) as LoginBody;
-          } catch (e) {
-            console.error(`[API-${requestId}] JSON Parse Error:`, e, "Raw:", rawBody);
-            return json({ success: false, error: "Invalid JSON body" }, 400);
+          if (body.action !== "login") {
+            return json({ success: false, error: "Unsupported action" }, 400);
           }
 
           const email = (body.email ?? "").trim().toLowerCase();
           const rawPassword = body.password ?? "";
           const password = rawPassword.trim();
-          
-          console.log(`[API-${requestId}] Tentativa de login para: ${email}`);
-          const sessionId = body.session_id;
+          const sessionId = body.session_id ?? "";
 
-          if (body.action !== "login") {
-            return json({ success: false, error: "Unsupported action" }, 400);
-          }
           if (!email || !password) {
             return json({ success: false, error: "Missing credentials" }, 400);
           }
 
-          const url = process.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"];
-          const key = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["SERVICE_ROLE_KEY"];
-          
-          if (!url || !key) {
-            console.error(`[API-${requestId}] Missing Supabase configuration. URL: ${!!url}, Key: ${!!key}`);
-            return json({ 
-              success: false, 
-              error: "nao consigo abrir a extensao ainda.. veja Configuração do servidor incompleta. Reinicie o serviço no VPS com --update-env." 
-            }, 503);
+          // Chave publica basta: login e leituras sao feitos como o proprio usuario (RLS).
+          const url = process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"];
+          const anonKey =
+            process.env["SUPABASE_PUBLISHABLE_KEY"] ||
+            process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+
+          if (!url || !anonKey) {
+            console.error(`[API-${rid}] Config ausente. URL:${!!url} KEY:${!!anonKey}`);
+            return json(
+              { success: false, error: "Servidor em manutencao: configuracao ausente." },
+              503,
+            );
           }
 
-          // Importação dinâmica para evitar que o client.server.ts falhe no boot se as chaves não estiverem prontas
-          const { createClient } = await import('@supabase/supabase-js');
-          const backend = createClient(url, key, {
-            auth: { persistSession: false, autoRefreshToken: false }
+          const { createClient } = await import("@supabase/supabase-js");
+          const publicClient = createClient(url, anonKey, {
+            auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+            global: { fetch: supabaseFetch(anonKey) },
           });
 
-          console.log(`[API-${requestId}] Usando backend direto para ${email}...`);
-
-          const { data: accessData, error: accessError } = await backend.rpc(
+          // 1) Fluxo de senha de acesso da extensao (SECURITY DEFINER no banco).
+          const { data: accessData, error: accessError } = await publicClient.rpc(
             "login_extension_with_access_password",
-            { 
-              _email: email, 
-              _access_password: password, 
-              _session_id: sessionId ?? "" 
-            },
+            { _email: email, _access_password: password, _session_id: sessionId },
           );
 
           if (!accessError && isLoginResult(accessData)) {
@@ -112,64 +109,48 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             }
           }
 
-          console.log(`[API-${requestId}] Tentando login padrão Supabase para ${email}...`);
-          let authResult = await backend.auth.signInWithPassword({ email, password });
-          
-          if (authResult.error) {
-            console.log(`[API-${requestId}] Falhou login inicial, tentando senha sem trim para ${email}...`);
-            authResult = await backend.auth.signInWithPassword({ email, password: rawPassword });
-          }
-          
-          if (authResult.error) {
-            console.log(`[API-${requestId}] Tentando variações de e-mail como senha para ${email}...`);
-            const variations = [email, email.toUpperCase(), email.split('@')[0], (email.split('@')[0] || '').toUpperCase()];
-            for (const v of variations) {
-              if (v && v !== password) {
-                const retry = await backend.auth.signInWithPassword({ email, password: v });
-                if (!retry.error) {
-                  authResult = retry;
-                  break;
-                }
-              }
-            }
+          // 2) Login padrao com email/senha.
+          let auth = await publicClient.auth.signInWithPassword({ email, password });
+          if (auth.error && rawPassword !== password) {
+            auth = await publicClient.auth.signInWithPassword({ email, password: rawPassword });
           }
 
-          if (authResult.error || !authResult.data.user) {
-            console.warn(`[API-${requestId}] Login falhou definitivamente para ${email}:`, authResult.error?.message);
-            return json({ success: false, error: "Credenciais inválidas ou conta não encontrada." }, 401);
+          if (auth.error || !auth.data.user || !auth.data.session) {
+            console.warn(`[API-${rid}] Login falhou: ${auth.error?.message ?? "sem sessao"}`);
+            return json(
+              { success: false, error: "Credenciais invalidas ou conta nao encontrada." },
+              401,
+            );
           }
-          
-          const authData = authResult.data;
 
-          const [{ data: profile, error: profileError }, { data: subscription, error: subError }, { data: settings, error: settingsError }] =
-            await Promise.all([
-              backend
-                .from("profiles")
-                .select("full_name,email,language,blocked,custom_message")
-                .eq("id", authData.user.id)
-                .single(),
-              backend
-                .from("subscriptions")
-                .select("type,status,expires_at")
-                .eq("user_id", authData.user.id)
-                .order("created_at", { ascending: false })
-                .limit(1)
-                .maybeSingle(),
-              backend
-                .from("app_settings")
-                .select("key,value")
-            ]);
+          const userId = auth.data.user.id;
 
-          if (profileError || !profile) {
-            console.error(`[API-${requestId}] Profile load error:`, profileError);
+          const [profileRes, subRes, settingsRes] = await Promise.all([
+            publicClient
+              .from("profiles")
+              .select("full_name,email,language,blocked,custom_message")
+              .eq("id", userId)
+              .maybeSingle(),
+            publicClient
+              .from("subscriptions")
+              .select("type,status,expires_at")
+              .eq("user_id", userId)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle(),
+            publicClient.from("app_settings").select("key,value"),
+          ]);
+
+          const profile = profileRes.data;
+          if (profileRes.error || !profile) {
+            console.error(`[API-${rid}] Profile error:`, profileRes.error?.message);
             return json({ success: false, error: "Unable to load account profile" }, 502);
           }
-          
-          if (subError) console.error(`[API-${requestId}] Subscription load error:`, subError);
-          if (settingsError) console.error(`[API-${requestId}] Settings load error:`, settingsError);
 
-          const settingsMap: Record<string, any> = {};
-          (settings ?? []).forEach((s: any) => settingsMap[s.key] = s.value);
+          const settingsMap: Record<string, unknown> = {};
+          (settingsRes.data ?? []).forEach((s: { key: string; value: unknown }) => {
+            settingsMap[s.key] = s.value;
+          });
 
           if (profile.blocked) {
             return json(
@@ -182,10 +163,14 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             );
           }
 
+          const subscription = subRes.data;
           const isExpired =
             !subscription ||
             subscription.status !== "active" ||
             new Date(subscription.expires_at).getTime() <= Date.now();
+
+          // Encerra a sessao criada apenas para validar o login.
+          await publicClient.auth.signOut();
 
           return json({
             success: true,
@@ -202,26 +187,16 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
               global_announcement: settingsMap["global_announcement"] ?? "",
               min_version: settingsMap["min_version"] ?? "1.0.0",
               multi_login_block: settingsMap["multi_login_block"] === true,
-              member_area_url: `https://lovblack.online/dashboard?email=${encodeURIComponent(email)}&token=${encodeURIComponent(password)}`,
+              member_area_url: `https://lovblack.online/dashboard?email=${encodeURIComponent(email)}`,
             },
           });
         } catch (error) {
-          const requestId_err = Math.random().toString(36).substring(7);
-          const errMsg = error instanceof Error ? error.message : "Unknown error";
-          console.error(`[API-${requestId_err}] Lovablack API request failed:`, errMsg, error);
-          
-          if (errMsg.includes("Missing Supabase environment variable")) {
-             return json({ 
-               success: false, 
-               error: "Erro de configuração no servidor. Verifique as variáveis VITE_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no VPS." 
-             }, 500);
-          }
-          
-          return json({ 
-            success: false, 
-            error: "Erro interno no servidor ao processar login da extensão.",
-            details: errMsg
-          }, 500);
+          const msg = error instanceof Error ? error.message : "Unknown error";
+          console.error(`[API-${rid}] Falha inesperada:`, msg);
+          return json(
+            { success: false, error: "Erro interno no servidor ao processar login." },
+            500,
+          );
         }
       },
     },
