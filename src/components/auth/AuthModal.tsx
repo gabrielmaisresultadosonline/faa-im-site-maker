@@ -91,7 +91,11 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
       toast.success(userLang === 'pt' ? 'Login realizado com sucesso!' : 'Login successful!');
       
       const isAdminEmail = data.user?.email?.toLowerCase() === 'mro@gmail.com';
-      navigate({ to: isAdminEmail ? '/admin/dashboard' : '/dashboard' });
+      if (isAdminEmail) {
+        window.location.assign('/admin/dashboard');
+      } else {
+        window.location.assign('/dashboard');
+      }
     } catch (error: any) {
       toast.error(error.message || (lang === 'pt' ? 'Erro ao fazer login' : 'Login error'));
     } finally {
