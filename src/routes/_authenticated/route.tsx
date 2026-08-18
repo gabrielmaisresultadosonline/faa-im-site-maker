@@ -16,7 +16,7 @@ export const Route = createFileRoute('/_authenticated')({
         console.error("Nenhuma sessão ou usuário encontrado. Redirecionando para home.", userError?.message);
         
         // Evita loop se já estivermos tentando redirecionar para '/'
-        if (location.pathname !== '/') {
+        if (location.pathname !== '/' && location.pathname !== '/ingles') {
           throw redirect({
             to: '/',
             search: {
