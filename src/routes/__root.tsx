@@ -116,6 +116,7 @@ function RootShell({ children }: { children: ReactNode }) {
             width="1" 
             style={{ display: "none" }} 
             src={`https://www.facebook.com/tr?id=1301429228548769&ev=PageView&noscript=1`} 
+            alt=""
           />
         </noscript>
         <script
@@ -131,6 +132,13 @@ function RootShell({ children }: { children: ReactNode }) {
               'https://connect.facebook.net/en_US/fbevents.js');
               fbq('init', '1301429228548769');
               fbq('track', 'PageView');
+              
+              // Handle block errors silently
+              window.addEventListener('error', function(e) {
+                if (e.target && (e.target.src || e.target.href) && e.target.src.includes('fbevents.js')) {
+                  e.stopImmediatePropagation();
+                }
+              }, true);
             `,
           }}
         />
