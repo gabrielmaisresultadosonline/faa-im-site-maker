@@ -4,28 +4,37 @@ import { z } from "zod";
 export const getSignedVideoUrl = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ path: z.string() }).parse(data))
   .handler(async ({ data }) => {
+    console.log(`[Video] Sign request for ${data.path}`);
+
     const baseUrl =
-      process.env['VITE_SUPABASE_URL'] ||
       process.env['SUPABASE_URL'] ||
+      process.env['VITE_SUPABASE_URL'] ||
       "https://zjvmfmdyuxmyanuuralq.supabase.co";
 
     const pathClean = data.path.replace(/^\/+/, '');
     const publicUrl = `${baseUrl}/storage/v1/object/public/assets/${pathClean}`;
 
-    const serviceKey = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'];
-    if (!serviceKey) {
+    const serviceKey = 
+      process.env['SUPABASE_SERVICE_ROLE_KEY'] || 
+      process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'] ||
+      process.env['sb_secret_zjvmfmdyuxmyanuuralq'];
+
+    if (!serviceKey || serviceKey === "NO_KEY_PROVIDED") {
       return { url: publicUrl };
     }
 
     try {
+      const signEndpoint = `${baseUrl}/storage/v1/object/sign/assets/${pathClean}`;
+      console.log(`[Video] Calling Supabase Sign: ${signEndpoint}`);
+
       const res = await fetch(
-        `${baseUrl}/storage/v1/object/sign/assets/${pathClean}`,
+        signEndpoint,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             apikey: serviceKey,
-            Authorization: `Bearer ${serviceKey}`,
+            Authorization: serviceKey.startsWith('sb_') ? serviceKey : `Bearer ${serviceKey}`,
           },
           body: JSON.stringify({ expiresIn: 86400 }),
         },
@@ -40,10 +49,17 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       if (!json.signedURL) return { url: publicUrl };
 
       // O signedURL retornado pode ser relativo ou absoluto dependendo da versão da API
-      const finalUrl = json.signedURL.startsWith('http') 
+      let finalUrl = json.signedURL.startsWith('http') 
         ? json.signedURL 
         : `${baseUrl}/storage/v1${json.signedURL}`;
+      
+      // Correção crítica: em ambientes VPS onde o Supabase está atrás de proxy ou as URLs
+      // internas diferem das públicas, garantimos que a URL use o domínio correto.
+      if (finalUrl.includes('127.0.0.1') || finalUrl.includes('localhost')) {
+        finalUrl = finalUrl.replace(/https?:\/\/[^\/]+/, baseUrl);
+      }
 
+      console.log(`[Video] Success! Final URL: ${finalUrl}`);
       return { url: finalUrl };
     } catch (error) {
       console.error("Signed URL failed, falling back to public URL:", error);
