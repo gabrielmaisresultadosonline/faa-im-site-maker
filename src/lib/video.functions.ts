@@ -3,9 +3,8 @@ import { z } from "zod";
 
 export const getSignedVideoUrl = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ path: z.string() }).parse(data))
-  .handler(async ({ data, request }) => {
-    const host = request.headers.get('host') || '';
-    console.log(`[Video] Sign request for ${data.path} from host: ${host}`);
+  .handler(async ({ data }) => {
+    console.log(`[Video] Sign request for ${data.path}`);
 
     const baseUrl =
       process.env['SUPABASE_URL'] ||
