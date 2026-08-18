@@ -116,7 +116,7 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
     setLoading(true);
     try {
       // 1. IP Block Check
-      let ipStatus = { blocked: false, ip: '', message: '' };
+      let ipStatus: any = { blocked: false, ip: '', message: '' };
       try {
         ipStatus = await checkIP();
       } catch (ipErr) {
