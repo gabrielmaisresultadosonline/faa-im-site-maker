@@ -129,17 +129,14 @@ export function renderErrorPage(stack?: string): string {
         <div class="project-id">zjvmfmdyuxmyanuuralq</div>
       </div>
 
-      <p><strong>Configuração Automática via Deploy:</strong></p>
+      <p><strong>Configuração Automática Concluída:</strong></p>
       <ol>
-        <li>O script <code>deploy-vps.sh</code> foi atualizado para injetar as chaves automaticamente.</li>
-        <li>Se você não tem a chave, eu já configurei o Project ID <code>zjvmfmdyuxmyanuuralq</code> como padrão.</li>
-        <li>No terminal do VPS, execute o comando abaixo apenas uma vez para definir sua chave:
-          <div class="code-block">export SUPABASE_SERVICE_ROLE_KEY=sua_chave_aqui</div>
-        </li>
-        <li>Depois, rode o deploy normalmente:
+        <li>A chave <code>SERVICE_ROLE_KEY</code> (final 343) foi integrada ao script de deploy.</li>
+        <li>O script <code>deploy-vps.sh</code> agora injeta essa chave automaticamente no PM2.</li>
+        <li>Basta executar o deploy no terminal do VPS:
           <div class="code-block">./deploy-vps.sh</div>
         </li>
-        <li>O PM2 agora receberá a chave via <code>--update-env</code> automaticamente durante o processo.</li>
+        <li>O servidor reiniciará com acesso total ao banco de dados e funções administrativas.</li>
       </ol>
 
       <div class="actions">
