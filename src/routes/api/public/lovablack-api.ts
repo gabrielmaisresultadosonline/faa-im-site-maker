@@ -118,20 +118,29 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
 
           // 1) Tenta login via função RPC (Segurança Definer) usando privilégios administrativos
           // Isso ignora RLS e permite verificar campos restritos como access_password e session_id
-          const { data: accessData, error: accessError } = await adminClient.rpc(
-            "login_extension_with_access_password",
-            { _email: email, _access_password: password, _session_id: sessionId },
-          );
+          let accessData: any = null;
+          let accessError: any = null;
 
-          if (!accessError && isLoginResult(accessData)) {
-            if (accessData.success) {
-              console.log(`[API-${rid}] Login via access_password bem-sucedido para ${email}`);
-              return json(accessData);
+          if (serviceKeyFound) {
+            const rpcRes = await adminClient.rpc(
+              "login_extension_with_access_password",
+              { _email: email, _access_password: password, _session_id: sessionId },
+            );
+            accessData = rpcRes.data;
+            accessError = rpcRes.error;
+
+            if (!accessError && isLoginResult(accessData)) {
+              if (accessData.success) {
+                console.log(`[API-${rid}] Login via access_password bem-sucedido para ${email}`);
+                return json(accessData);
+              }
+              if (accessData.code === "MULTI_LOGIN" || accessData.code === "BLOCKED") {
+                console.warn(`[API-${rid}] Login bloqueado pela função RPC para ${email}: ${accessData.code}`);
+                return json(accessData, 403);
+              }
             }
-            if (accessData.code === "MULTI_LOGIN" || accessData.code === "BLOCKED") {
-              console.warn(`[API-${rid}] Login bloqueado pela função RPC para ${email}: ${accessData.code}`);
-              return json(accessData, 403);
-            }
+          } else {
+            console.log(`[API-${rid}] Pulando verificação RPC: SERVICE_ROLE_KEY ausente.`);
           }
 
           if (accessError) {
