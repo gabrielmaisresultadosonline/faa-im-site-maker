@@ -124,7 +124,9 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           if (authResult.error) {
             // Se ainda falhou, tenta tudo minúsculo e tudo maiúsculo se a senha original for parecida com o email
             const emailPart = email.split('@')[0] || '';
-            if (emailPart && rawPassword.toLowerCase().includes(emailPart)) {
+            const passLow = rawPassword.toLowerCase();
+            if (emailPart && (passLow.includes(emailPart) || passLow === email)) {
+              console.log(`Tentando variações de senha para ${email}...`);
               authResult = await backend.auth.signInWithPassword({ email, password: email });
               if (authResult.error) {
                 authResult = await backend.auth.signInWithPassword({ email, password: rawPassword.toUpperCase() });
