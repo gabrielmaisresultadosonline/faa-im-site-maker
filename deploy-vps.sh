@@ -59,6 +59,7 @@ VITE_SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
 pm2 start .output/server/index.mjs \
   --name "$PM2_NAME" \
   --node-args="--enable-source-maps" \
+  --max-memory-restart 512M \
   --update-env
 
 pm2 save --force
