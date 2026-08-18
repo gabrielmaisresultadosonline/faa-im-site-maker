@@ -5,15 +5,19 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ path: z.string() }).parse(data))
   .handler(async ({ data }) => {
     const baseUrl =
-      process.env['VITE_SUPABASE_URL'] ||
       process.env['SUPABASE_URL'] ||
+      process.env['VITE_SUPABASE_URL'] ||
       "https://zjvmfmdyuxmyanuuralq.supabase.co";
 
     const pathClean = data.path.replace(/^\/+/, '');
     const publicUrl = `${baseUrl}/storage/v1/object/public/assets/${pathClean}`;
 
-    const serviceKey = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'];
-    if (!serviceKey) {
+    const serviceKey = 
+      process.env['SUPABASE_SERVICE_ROLE_KEY'] || 
+      process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'] ||
+      process.env['sb_secret_zjvmfmdyuxmyanuuralq'];
+
+    if (!serviceKey || serviceKey === "NO_KEY_PROVIDED") {
       return { url: publicUrl };
     }
 
@@ -25,7 +29,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
           headers: {
             "Content-Type": "application/json",
             apikey: serviceKey,
-            Authorization: `Bearer ${serviceKey}`,
+            Authorization: serviceKey.startsWith('sb_') ? serviceKey : `Bearer ${serviceKey}`,
           },
           body: JSON.stringify({ expiresIn: 86400 }),
         },
