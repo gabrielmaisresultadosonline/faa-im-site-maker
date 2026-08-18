@@ -12,16 +12,9 @@ export default defineConfig({
   },
   vite: {
     ssr: {
-      noExternal: [
-        "@tanstack/react-start",
-        "@tanstack/react-router",
-        "@tanstack/router-plugin",
-        "react-hook-form",
-        "@hookform/resolvers",
-        "lucide-react",
-        "sonner",
-        "zod"
-      ],
+      // Usamos noExternal: true para garantir que tudo seja empacotado no bundle SSR.
+      // Isso é vital para evitar erros de "module not found" no Node no VPS.
+      noExternal: true,
     },
     resolve: {
       alias: {
