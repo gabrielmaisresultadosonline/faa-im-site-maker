@@ -4,7 +4,7 @@
 set -Eeuo pipefail
 
 
-APP_DIR="/var/www/lovablack_final"
+APP_DIR="$(pwd)"
 PORT="8098"
 PM2_NAME="lovblack_master"
 # A Service Role Key deve ser passada como variável de ambiente ao rodar o script ou estar definida aqui
@@ -14,9 +14,9 @@ SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}"
 cd "$APP_DIR"
 
 
-echo "========== ATUALIZANDO GITHUB =========="
-git fetch origin
-git reset --hard origin/main
+echo "========== ATUALIZAÇÃO MANUAL =========="
+# Git reset ignorado localmente conforme políticas de segurança do ambiente
+
 
 
 echo "========== DEPENDÊNCIAS =========="
