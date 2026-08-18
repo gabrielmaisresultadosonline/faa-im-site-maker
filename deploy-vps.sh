@@ -71,7 +71,7 @@ fi
 
 pm2 start .output/server/index.mjs --name $PM2_NAME \
     --node-args="--enable-source-maps" \
-    --env PORT=$PORT --env HOST=0.0.0.0 --env NITROPACK_HOST=0.0.0.0 --env NITROPACK_PORT=$PORT \
+    --env PORT=$PORT --env NITROPACK_PORT=$PORT --env HOST=0.0.0.0 --env NITROPACK_HOST=0.0.0.0 \
     --env NODE_ENV=production --env VITE_SSR=true \
     $ENV_VARS
 
