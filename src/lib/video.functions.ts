@@ -18,12 +18,29 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       console.warn("supabaseAdmin not available, using public client");
     }
 
-    const { data: signedData, error } = await client.storage
-      .from('assets')
-      .createSignedUrl(data.path, 86400);
+    // Se o cliente for o proxy dummy (supabaseAdmin nulo), storage será uma função dummy
+    // que retorna um objeto com erro.
+    let signedData: any = null;
+    let error: any = null;
 
-    if (error) {
-      console.error("Error creating signed URL:", error);
+    try {
+      if (typeof client.storage === 'function') {
+        // Se for o dummy proxy do client.server.ts
+        const result = client.storage();
+        error = result.error;
+      } else {
+        const result = await client.storage
+          .from('assets')
+          .createSignedUrl(data.path, 86400);
+        signedData = result.data;
+        error = result.error;
+      }
+    } catch (e) {
+      error = e;
+    }
+
+    if (error || !signedData?.signedUrl) {
+      console.error("Error creating signed URL, using fallback:", error);
       // Fallback para URL pública se o bucket permitir ou se a key service role falhar
       const publicUrl = `https://zjvmfmdyuxmyanuuralq.supabase.co/storage/v1/object/public/assets/${data.path}`;
       return { url: publicUrl };
