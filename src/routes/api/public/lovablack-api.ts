@@ -94,6 +94,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             }
           }
 
+          // Fallback ao login padrão do Supabase se o RPC falhar ou não encontrar o usuário via access_password
           const { data: authData, error: authError } = await backend.auth.signInWithPassword({
             email,
             password,
