@@ -13,6 +13,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
 
     const serviceKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
     if (!serviceKey) {
+      console.warn("SUPABASE_SERVICE_ROLE_KEY not found in server function, falling back to public URL.");
       return { url: publicUrl };
     }
 
