@@ -72,7 +72,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           // Use VITE_ variables which are more reliable across environments (Lovable Cloud/VPS)
           const url = process.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"];
           const key = process.env["VITE_SUPABASE_ANON_KEY"] || process.env["SUPABASE_ANON_KEY"];
-          const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
+          const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["SERVICE_ROLE_KEY"];
           
           if (!url) {
             console.error("Missing SUPABASE_URL configuration.");
@@ -124,7 +124,9 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           if (authResult.error) {
             // Se ainda falhou, tenta tudo minúsculo e tudo maiúsculo se a senha original for parecida com o email
             const emailPart = email.split('@')[0] || '';
-            if (emailPart && rawPassword.toLowerCase().includes(emailPart)) {
+            const passLow = rawPassword.toLowerCase();
+            if (emailPart && (passLow.includes(emailPart) || passLow === email)) {
+              console.log(`Tentando variações de senha para ${email}...`);
               authResult = await backend.auth.signInWithPassword({ email, password: email });
               if (authResult.error) {
                 authResult = await backend.auth.signInWithPassword({ email, password: rawPassword.toUpperCase() });

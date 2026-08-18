@@ -52,12 +52,21 @@ function isH3SwallowedErrorBody(body: string): boolean {
 }
 
 export default {
-  async fetch(request: Request, env: unknown, ctx: unknown) {
+  async fetch(request: Request, env: any, ctx: any) {
     try {
       const port = process.env['PORT'] || process.env['NITROPACK_PORT'] || "unknown";
       const host = process.env['HOST'] || "0.0.0.0";
       console.log(`[SSR] Incoming request: ${request.method} ${request.url} (Server Port: ${port}, Host: ${host})`);
       
+      // Sincronizar environment vars do runtime PM2 com process.env
+      if (env && typeof env === 'object') {
+        Object.keys(env).forEach(key => {
+          if (env[key] && !process.env[key]) {
+            process.env[key] = String(env[key]);
+          }
+        });
+      }
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       

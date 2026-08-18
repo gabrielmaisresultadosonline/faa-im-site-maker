@@ -34,12 +34,17 @@ import('./.output/server/index.mjs')
 echo "========== PM2 =========="
 pm2 delete "$PM2_NAME" >/dev/null 2>&1 || true
 
+# Injeta todas as variáveis do .env no PM2
+export $(grep -v '^#' .env | xargs)
+
 PORT="$PORT" \
+NITROPACK_PORT="$PORT" \
 HOST="0.0.0.0" \
 NODE_ENV="production" \
 pm2 start .output/server/index.mjs \
   --name "$PM2_NAME" \
-  --node-args="--enable-source-maps"
+  --node-args="--enable-source-maps" \
+  --update-env
 
 pm2 save --force
 
