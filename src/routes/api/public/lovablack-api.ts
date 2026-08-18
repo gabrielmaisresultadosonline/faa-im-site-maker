@@ -108,31 +108,47 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             global: { fetch: supabaseFetch(anonKey) },
           });
 
-          // 1) Fluxo de senha de acesso da extensao (SECURITY DEFINER no banco).
-          const { data: accessData, error: accessError } = await publicClient.rpc(
+          // 1) Tenta login usando a função Security Definer (acessa perfis e senhas de acesso diretamente)
+          // Usamos o supabaseAdmin para garantir privilégios de execução e leitura
+          const { supabaseAdmin: adminClient } = await import("@/integrations/supabase/client.server");
+          
+          const { data: accessData, error: accessError } = await adminClient.rpc(
             "login_extension_with_access_password",
             { _email: email, _access_password: password, _session_id: sessionId },
           );
 
           if (!accessError && isLoginResult(accessData)) {
-            if (accessData.success) return json(accessData);
+            if (accessData.success) {
+              console.log(`[API-${rid}] Login via access_password bem-sucedido para ${email}`);
+              return json(accessData);
+            }
             if (accessData.code === "MULTI_LOGIN" || accessData.code === "BLOCKED") {
+              console.warn(`[API-${rid}] Login bloqueado pela função RPC para ${email}: ${accessData.code}`);
               return json(accessData, 403);
             }
           }
 
-          // 2) Login padrao com email/senha.
-          console.log(`[API-${rid}] Tentando login padrao Supabase para ${email}...`);
+          if (accessError) {
+            console.error(`[API-${rid}] Erro na função RPC login_extension: ${accessError.message}`);
+          }
+
+          // 2) Login padrão com email/senha caso a senha de acesso falhe ou não exista
+          console.log(`[API-${rid}] Tentando login padrão Supabase Auth para ${email}...`);
           let auth = await publicClient.auth.signInWithPassword({ email, password });
+          
           if (auth.error && rawPassword !== password) {
             console.log(`[API-${rid}] Falhou login inicial, tentando senha sem trim para ${email}...`);
             auth = await publicClient.auth.signInWithPassword({ email, password: rawPassword });
           }
 
           if (auth.error || !auth.data.user || !auth.data.session) {
-            console.warn(`[API-${rid}] Login falhou definitivamente para ${email}: ${auth.error?.message ?? "sem sessao"}`);
+            console.warn(`[API-${rid}] Login falhou definitivamente para ${email}: ${auth.error?.message ?? "sem sessão"}`);
             return json(
-              { success: false, error: "Credenciais invalidas ou conta nao encontrada." },
+              { 
+                success: false, 
+                error: "Credenciais inválidas ou conta não encontrada. Verifique se a chave do backend está configurada corretamente no VPS.",
+                debug_info: auth.error?.message
+              },
               401,
             );
           }
