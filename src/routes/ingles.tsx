@@ -109,15 +109,15 @@ function Index() {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
-        const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
-        
-        if (window.location.pathname === '/ingles') {
-          console.log("User already logged in, redirecting to:", target);
-          window.location.replace(target);
-        }
-      }
+      if (!session) return;
+
+      const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
+      const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
+      
+      if (window.location.pathname !== '/ingles') return;
+
+      console.log("User already logged in, redirecting to:", target);
+      window.location.replace(target);
     };
     checkAuth();
   }, []);
