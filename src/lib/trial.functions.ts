@@ -12,30 +12,14 @@ import { z } from "zod";
 export const startTrial = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: unknown) => data) // Mantém compatibilidade com a chamada sem data
-  .handler(async ({ request }) => {
-    // IMPORTANTE: Como o requireSupabaseAuth pode falhar no VPS por questões de header/token,
-    // extraímos o token manualmente ou usamos o cookie para identificar o usuário.
+  .handler(async ({ context }) => {
+    // Usamos o context injetado pelo middleware que já validou o token JWT
+    const { userId } = context;
     
     // Importa dinamicamente o client admin para garantir bypass de RLS
     const { getSupabaseAdmin } = await import("@/integrations/supabase/client.server");
     const supabase = getSupabaseAdmin();
 
-    const authHeader = request.headers.get('authorization');
-    let userId: string | null = null;
-
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-      if (!authError && user) {
-        userId = user.id;
-      }
-    }
-
-    if (!userId) {
-      console.error("[Trial] Usuário não identificado na requisição.");
-      throw new Error("UNAUTHORIZED");
-    }
-    
     console.log(`[Trial] Iniciando ativação administrativa para usuário: ${userId}`);
 
     // Busca assinaturas existentes
