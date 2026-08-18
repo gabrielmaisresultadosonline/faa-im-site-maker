@@ -91,18 +91,22 @@ function Index() {
   const [heroVideoUrl, setHeroVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     const PATH = "video-0.02649446612669404.mp4";
     const PUBLIC_URL = `https://zjvmfmdyuxmyanuuralq.supabase.co/storage/v1/object/public/assets/${PATH}`;
+    
     const loadHeroVideo = async () => {
       try {
         const { url } = await fetchSignedUrl({ data: { path: PATH } });
-        setHeroVideoUrl(url || PUBLIC_URL);
+        if (isMounted) setHeroVideoUrl(url || PUBLIC_URL);
       } catch (err) {
         console.warn("Signed video URL failed, using public URL:", err);
-        setHeroVideoUrl(PUBLIC_URL);
+        if (isMounted) setHeroVideoUrl(PUBLIC_URL);
       }
     };
+    
     loadHeroVideo();
+    return () => { isMounted = false; };
   }, [fetchSignedUrl]);
 
 
