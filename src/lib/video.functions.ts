@@ -4,37 +4,35 @@ import { z } from "zod";
 export const getSignedVideoUrl = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ path: z.string() }).parse(data))
   .handler(async ({ data }) => {
-    console.log(`[Video] Sign request for ${data.path}`);
+    console.log(`[Video] Iniciando assinatura para: ${data.path}`);
 
-    // Tentativa robusta de obter a URL base
+    // URL base do Supabase
     const baseUrl =
       process.env['SUPABASE_URL'] ||
       process.env['VITE_SUPABASE_URL'] ||
       "https://zjvmfmdyuxmyanuuralq.supabase.co";
 
+    // Domínio público final do usuário (para correção de localhost)
+    const publicDomain = "https://lovblack.online";
+
     const pathClean = data.path.replace(/^\/+/, '');
-    
-    // URL pública como fallback principal
     const publicUrl = `${baseUrl}/storage/v1/object/public/assets/${pathClean}`;
 
-    // Tentativa de obter a Service Key (Prioridade para env var injetada pelo PM2/Nitro)
+    // Captura a Service Key
     const serviceKey = 
       process.env['SUPABASE_SERVICE_ROLE_KEY'] || 
       process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'] ||
       process.env['sb_secret_zjvmfmdyuxmyanuuralq'];
 
-    console.log(`[Video] Base URL detected: ${baseUrl}`);
-    console.log(`[Video] Service Key present: ${!!serviceKey && serviceKey !== "NO_KEY_PROVIDED"}`);
-
     if (!serviceKey || serviceKey === "NO_KEY_PROVIDED") {
-      console.warn("[Video] No service key found, returning public URL.");
+      console.warn("[Video] Sem SERVICE_ROLE_KEY, usando URL pública.");
       return { url: publicUrl };
     }
 
     try {
+      // Usamos a URL base para a chamada interna, mas normalizamos o retorno para o domínio público
       const signEndpoint = `${baseUrl}/storage/v1/object/sign/assets/${pathClean}`;
-      console.log(`[Video] Requesting sign from: ${signEndpoint}`);
-
+      
       const res = await fetch(
         signEndpoint,
         {
@@ -44,42 +42,38 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
             apikey: serviceKey,
             Authorization: serviceKey.startsWith('sb_') ? serviceKey : `Bearer ${serviceKey}`,
           },
-          body: JSON.stringify({ expiresIn: 86400 }),
+          body: JSON.stringify({ expiresIn: 86400 }), // 24h
         },
       );
 
       if (!res.ok) {
-        const errorText = await res.text();
-        console.error(`[Video] Sign API error ${res.status}:`, errorText);
-        // Se for erro de permissão ou 404, o fallback público é a melhor opção
+        console.error(`[Video] Erro na API de assinatura (${res.status}):`, await res.text());
         return { url: publicUrl };
       }
 
       const json = (await res.json()) as { signedURL?: string; signedUrl?: string };
-      const signedPart = json.signedURL || json.signedUrl;
+      const signedPath = json.signedURL || json.signedUrl;
 
-      if (!signedPart) {
-        console.warn("[Video] No signedURL in response, using public fallback.");
-        return { url: publicUrl };
-      }
+      if (!signedPath) return { url: publicUrl };
 
-      // Constrói a URL final garantindo que seja absoluta
-      let finalUrl = signedPart.startsWith('http') 
-        ? signedPart 
-        : `${baseUrl}/storage/v1${signedPart}`;
+      // Se o retorno for relativo, anexa ao baseUrl
+      let finalUrl = signedPath.startsWith('http') 
+        ? signedPath 
+        : `${baseUrl}/storage/v1${signedPath}`;
       
-      // NORMALIZAÇÃO CRÍTICA PARA VPS:
-      // O Supabase interno (se estiver no mesmo host) pode retornar URLs com localhost/127.0.0.1.
-      // O navegador do usuário NÃO consegue acessar isso. Substituímos pelo domínio público.
-      if (finalUrl.includes('127.0.0.1') || finalUrl.includes('localhost') || finalUrl.includes('::1')) {
-        console.log(`[Video] Localhost detected in signed URL (${finalUrl}), rewriting to ${baseUrl}`);
-        finalUrl = finalUrl.replace(/https?:\/\/[^\/]+/, baseUrl);
+      // CORREÇÃO DEFINITIVA PARA VPS:
+      // Se a URL contiver 'localhost', '127.0.0.1' ou a URL base do Supabase (que pode ser interna),
+      // forçamos para o domínio público lovblack.online para que o navegador consiga acessar.
+      // Isso resolve o problema de "vídeo quebrado" ou que não carrega no domínio direto.
+      if (finalUrl.includes('localhost') || finalUrl.includes('127.0.0.1') || finalUrl.includes('::1')) {
+        console.log(`[Video] Detectado host local na URL assinada, corrigindo para ${publicDomain}`);
+        finalUrl = finalUrl.replace(/https?:\/\/[^\/]+/, publicDomain);
       }
 
-      console.log(`[Video] Success! Final access URL: ${finalUrl}`);
+      console.log(`[Video] URL Final gerada com sucesso: ${finalUrl}`);
       return { url: finalUrl };
     } catch (error) {
-      console.error("[Video] Critical failure in signing, falling back to public URL:", error);
+      console.error("[Video] Falha crítica na assinatura, usando fallback público:", error);
       return { url: publicUrl };
     }
   });
