@@ -112,6 +112,9 @@ export const adminCreateUser = createServerFn({ method: "POST" })
     }
 
     const userId = authUser.user.id;
+    
+    // Como o admin.createUser NÃO dispara o gatilho de auth.users automaticamente da mesma forma que o signUp
+    // (dependendo da configuração do Supabase), forçamos a finalização aqui.
     await finishUserSetup(context.supabase, userId, data, generateAccessPassword, computeExpiry);
     return { userId };
   });
