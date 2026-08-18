@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogPortal } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getSignedVideoUrl } from "@/lib/video.functions";
