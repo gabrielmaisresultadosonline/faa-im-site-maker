@@ -129,18 +129,17 @@ export function renderErrorPage(stack?: string): string {
         <div class="project-id">zjvmfmdyuxmyanuuralq</div>
       </div>
 
-      <p><strong>Como obter a Service Role Key:</strong></p>
+      <p><strong>Configuração Necessária:</strong></p>
       <ol>
-        <li>Acesse o painel do projeto <strong>zjvmfmdyuxmyanuuralq</strong> no Lovable Cloud.</li>
-        <li>Navegue até <strong>Configurações &gt; API</strong>.</li>
-        <li>Copie a chave secreta <code>service_role</code> (nunca compartilhe ou envie por chat).</li>
-        <li>Edite o arquivo <code>.env</code> no VPS e adicione:
-          <div class="code-block">SUPABASE_SERVICE_ROLE_KEY=sua_chave_aqui</div>
+        <li>Acesse as configurações do seu projeto <strong>zjvmfmdyuxmyanuuralq</strong> no painel administrativo.</li>
+        <li>Recupere a <code>SUPABASE_SERVICE_ROLE_KEY</code> na aba de chaves API.</li>
+        <li>Configure-a no arquivo <code>.env</code> do seu servidor VPS.</li>
+        <li>Execute o comando de deploy atualizado para aplicar as mudanças:
+          <div class="code-block">./deploy-vps.sh</div>
         </li>
-        <li>Reinicie o processo PM2 para aplicar a variável:
+        <li>Reinicie o PM2 garantindo a leitura das novas variáveis:
           <div class="code-block">pm2 restart lovblack-online --update-env</div>
         </li>
-        <li>Aguarde alguns segundos e recarregue esta página.</li>
       </ol>
 
       <div class="actions">
@@ -149,7 +148,7 @@ export function renderErrorPage(stack?: string): string {
       </div>
 
       <div class="footer">
-        Dica: se você não tem a Service Role Key, abra o painel do Lovable Cloud do projeto <strong>zjvmfmdyuxmyanuuralq</strong>. Sem essa chave, o SSR não consegue acessar o banco de dados e o site exibe esta tela de erro.
+        Dica: O SSR exige acesso administrativo para gerenciar sessões e assinaturas. Certifique-se de que a chave configurada pertence ao Project ID <strong>zjvmfmdyuxmyanuuralq</strong>.
       </div>
     </div>
   </body>
