@@ -64,17 +64,29 @@ export const supabaseAdmin = new Proxy({} as any, {
         return { 
           data: null, 
           error: { message: "Configuração de servidor ausente (SERVICE_ROLE_KEY)." },
-          select: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
+          select: () => ({ data: null, error: { message: "Configuração de servidor ausente." }, single: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }), maybeSingle: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }), order: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }), limit: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }) }),
           insert: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
           update: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
           delete: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
+          upsert: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
           rpc: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
+          createSignedUrl: async () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
+          from: (bucket: string) => ({ 
+            createSignedUrl: async () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
+            upload: async () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
+            download: async () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
+          })
         };
       };
       
-      // Permite encadeamento como supabaseAdmin.auth.admin.someFunc()
       if (['auth', 'storage', 'from'].includes(prop as string)) {
-        return new Proxy(dummy, { get: () => dummy });
+        return new Proxy(dummy, { 
+          get: (target, p) => {
+            if (p === 'from') return (bucket: string) => dummy().from(bucket);
+            if (p === 'admin') return new Proxy(dummy, { get: () => dummy });
+            return dummy;
+          } 
+        });
       }
       
       return dummy;
