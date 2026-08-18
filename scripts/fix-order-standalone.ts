@@ -28,7 +28,7 @@ async function approveOrder() {
     return;
   }
 
-  console.log('Transação encontrada. Atualizando para pago...');
+  console.log(`Transação encontrada (Plano: ${transaction.plan_name}). Atualizando para pago...`);
 
   const { error: updateError } = await supabaseAdmin
     .from('infinitepay_transactions')
@@ -40,16 +40,24 @@ async function approveOrder() {
     return;
   }
 
+  // Mapeamento correto para o check constraint da tabela subscriptions
+  let subType = 'monthly';
+  if (transaction.plan_duration_days >= 365 || transaction.plan_name === 'Anual') {
+    subType = 'annual';
+  } else if (transaction.plan_duration_days >= 180 || transaction.plan_name === 'Semestral') {
+    subType = 'semiannual';
+  }
+
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + (transaction.plan_duration_days || 30));
 
-  console.log(`Atualizando assinatura para o usuário ${transaction.user_id}...`);
+  console.log(`Atualizando assinatura para o usuário ${transaction.user_id} (Tipo: ${subType})...`);
 
   const { error: subError } = await supabaseAdmin
     .from('subscriptions')
     .upsert({
       user_id: transaction.user_id,
-      type: transaction.plan_name === 'Mensal' ? 'monthly' : (transaction.plan_name === 'Semestral' ? 'semiannual' : 'annual'),
+      type: subType,
       status: 'active',
       expires_at: expiresAt.toISOString(),
       updated_at: new Date().toISOString()
