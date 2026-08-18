@@ -83,12 +83,16 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
 
           if (!url || !anonKey) {
-            console.error(`[API-${rid}] Config ausente. URL:${!!url} KEY:${!!anonKey}`);
+            console.error(`[API-${rid}] Config ausente no ambiente. URL:${!!url} KEY:${!!anonKey}`);
             return json(
-              { success: false, error: "Servidor em manutencao: configuracao ausente." },
+              { success: false, error: "Servidor em manutencao: configuracao de rede ausente." },
               503,
             );
           }
+
+          // Debug parcial das chaves (apenas prefixo e sufixo para seguranca)
+          const mask = (s: string) => `${s.slice(0, 6)}...${s.slice(-4)}`;
+          console.log(`[API-${rid}] Usando URL: ${url} | Key: ${mask(anonKey)}`);
 
           const { createClient } = await import("@supabase/supabase-js");
           const publicClient = createClient(url, anonKey, {
