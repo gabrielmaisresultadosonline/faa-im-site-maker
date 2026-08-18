@@ -123,7 +123,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           }
 
           const settingsMap: Record<string, any> = {};
-          (settings ?? []).forEach(s => settingsMap[s.key] = s.value);
+          (settings ?? []).forEach((s: any) => settingsMap[s.key] = s.value);
 
           if (profile.blocked) {
             return json(

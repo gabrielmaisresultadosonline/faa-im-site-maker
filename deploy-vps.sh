@@ -47,16 +47,25 @@ rm -rf .output .vinxi
 npx vite build --config vite.config.vps.ts
 
 echo "========== 5. REINICIANDO PROCESSO ISOLADO (PM2) =========="
-# Carrega as variáveis de ambiente do .env
-if [ -f .env ]; then
-    set -a && source .env && set +a
-fi
-
 # Garante que o PM2 enxergue o node correto e limpe ambiente anterior
 pm2 delete $PM2_NAME || true
 
-# Inicia com variáveis explicitas para o Nitro
-HOST=127.0.0.1 PORT=$PORT pm2 start .output/server/index.mjs --name $PM2_NAME --node-args="--enable-source-maps" --env PORT=$PORT
+# Inicia o processo lendo o .env local
+# Usamos --env explicitamente e garantimos que o diretório de trabalho está correto
+pm2 start .output/server/index.mjs --name $PM2_NAME --node-args="--enable-source-maps" --env PORT=$PORT --update-env
+
+# Espera um pouco e injeta as variáveis do .env no PM2
+if [ -f .env ]; then
+    echo "Injetando variáveis do .env no processo PM2..."
+    while read -r line || [ -n "$line" ]; do
+        if [[ ! $line =~ ^# ]] && [[ $line == *"="* ]]; then
+            key=$(echo $line | cut -d '=' -f 1)
+            value=$(echo $line | cut -d '=' -f 2- | sed 's/^"//;s/"$//')
+            pm2 set $PM2_NAME:$key "$value"
+        fi
+    done < .env
+    pm2 restart $PM2_NAME --update-env
+fi
 
 pm2 save
 
