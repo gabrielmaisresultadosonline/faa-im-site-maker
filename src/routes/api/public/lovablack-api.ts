@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
 const CORS = {
@@ -64,9 +63,8 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             return json({ success: false, error: "Serviço temporariamente indisponível. Por favor, tente novamente em instantes." }, 503);
           }
 
-          const backend = createClient<Database>(url, key, {
-            auth: { persistSession: false, autoRefreshToken: false },
-          });
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const backend = supabaseAdmin;
 
           const { data: accessData, error: accessError } = await backend.rpc(
             "login_extension_with_access_password",
