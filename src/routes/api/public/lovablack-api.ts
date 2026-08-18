@@ -121,26 +121,30 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           let accessData: any = null;
           let accessError: any = null;
 
-          if (serviceKeyFound) {
-            const rpcRes = await adminClient.rpc(
-              "login_extension_with_access_password",
-              { _email: email, _access_password: password, _session_id: sessionId },
-            );
-            accessData = rpcRes.data;
-            accessError = rpcRes.error;
+          if (serviceKeyFound && serviceKey !== "NO_KEY_PROVIDED") {
+            try {
+              const rpcRes = await adminClient.rpc(
+                "login_extension_with_access_password",
+                { _email: email, _access_password: password, _session_id: sessionId },
+              );
+              accessData = rpcRes.data;
+              accessError = rpcRes.error;
 
-            if (!accessError && isLoginResult(accessData)) {
-              if (accessData.success) {
-                console.log(`[API-${rid}] Login via access_password bem-sucedido para ${email}`);
-                return json(accessData);
+              if (!accessError && isLoginResult(accessData)) {
+                if (accessData.success) {
+                  console.log(`[API-${rid}] Login via access_password bem-sucedido para ${email}`);
+                  return json(accessData);
+                }
+                if (accessData.code === "MULTI_LOGIN" || accessData.code === "BLOCKED") {
+                  console.warn(`[API-${rid}] Login bloqueado pela função RPC para ${email}: ${accessData.code}`);
+                  return json(accessData, 403);
+                }
               }
-              if (accessData.code === "MULTI_LOGIN" || accessData.code === "BLOCKED") {
-                console.warn(`[API-${rid}] Login bloqueado pela função RPC para ${email}: ${accessData.code}`);
-                return json(accessData, 403);
-              }
+            } catch (rpcErr) {
+              console.error(`[API-${rid}] Exceção na chamada RPC:`, rpcErr);
             }
           } else {
-            console.log(`[API-${rid}] Pulando verificação RPC: SERVICE_ROLE_KEY ausente.`);
+            console.log(`[API-${rid}] Pulando verificação RPC: SERVICE_ROLE_KEY ausente ou inválida.`);
           }
 
           if (accessError && serviceKeyFound) {
