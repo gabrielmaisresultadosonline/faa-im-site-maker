@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
+
 import { getRequest } from "@tanstack/react-start/server";
 
 export const checkRegistrationIP = createServerFn({ method: "GET" })
@@ -14,7 +14,9 @@ export const checkRegistrationIP = createServerFn({ method: "GET" })
       return { blocked: false, ip: "unknown" };
     }
 
-    const { count, error } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { count, error } = await supabaseAdmin
       .from('profiles')
       .select('*', { count: 'exact', head: true })
       .eq('registration_ip', ip);
