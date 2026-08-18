@@ -109,6 +109,17 @@ function Index() {
     loadHeroVideo();
   }, [fetchSignedUrl]);
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
+        window.location.replace(isAdminEmail ? '/admin/dashboard' : '/dashboard');
+      }
+    };
+    checkAuth();
+  }, []);
+
   return (
     <div className="min-h-screen font-sans selection:bg-primary/20" style={{ backgroundColor: "#F7F1EB" }}>
       <LanguageSelectorModal />
