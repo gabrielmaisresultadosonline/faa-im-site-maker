@@ -30,7 +30,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
     }
 
     try {
-      // Usamos a URL base para a chamada interna, mas normalizamos o retorno para o domínio público
+      // Usamos a URL base para a chamada interna
       const signEndpoint = `${baseUrl}/storage/v1/object/sign/assets/${pathClean}`;
       
       const res = await fetch(
@@ -57,23 +57,29 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       if (!signedPath) return { url: publicUrl };
 
       // Se o retorno for relativo, anexa ao baseUrl
+      // IMPORTANTE: Se o baseUrl for interno (como 127.0.0.1 ou o host da Supabase), 
+      // precisamos garantir que o navegador consiga acessar.
       let finalUrl = signedPath.startsWith('http') 
         ? signedPath 
         : `${baseUrl}/storage/v1${signedPath}`;
       
-      // CORREÇÃO DEFINITIVA PARA VPS:
-      // Se a URL contiver 'localhost', '127.0.0.1' ou a URL base do Supabase (que pode ser interna),
-      // forçamos para o domínio público lovblack.online para que o navegador consiga acessar.
-      // Isso resolve o problema de "vídeo quebrado" ou que não carrega no domínio direto.
-      if (finalUrl.includes('localhost') || finalUrl.includes('127.0.0.1') || finalUrl.includes('::1')) {
-        console.log(`[Video] Detectado host local na URL assinada, corrigindo para ${publicDomain}`);
-        finalUrl = finalUrl.replace(/https?:\/\/[^\/]+/, publicDomain);
-      }
+      // NORMALIZAÇÃO AGRESSIVA PARA VPS:
+      // Substituímos o host de QUALQUER URL gerada pelo domínio público lovblack.online
+      // Isso garante que o navegador peça o vídeo para o servidor Nginx da VPS que sabe rotear.
+      // Se finalUrl for https://zjvmfmdyuxmyanuuralq.supabase.co/..., 
+      // o navegador do usuário pode ser bloqueado por CORS ou rede.
+      // Ao trocar para lovblack.online/..., o Nginx/Nitro atua como proxy.
+      
+      console.log(`[Video] URL Antes da normalização: ${finalUrl}`);
+      
+      // Regex para substituir o esquema e host pelo publicDomain
+      finalUrl = finalUrl.replace(/https?:\/\/[^\/]+/, publicDomain);
 
-      console.log(`[Video] URL Final gerada com sucesso: ${finalUrl}`);
+      console.log(`[Video] URL Final normalizada para VPS: ${finalUrl}`);
       return { url: finalUrl };
     } catch (error) {
       console.error("[Video] Falha crítica na assinatura, usando fallback público:", error);
-      return { url: publicUrl };
+      // Até o fallback público precisa ser normalizado
+      return { url: publicUrl.replace(/https?:\/\/[^\/]+/, publicDomain) };
     }
   });
