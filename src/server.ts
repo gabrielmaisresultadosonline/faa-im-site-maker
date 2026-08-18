@@ -1,4 +1,5 @@
 import "./lib/error-capture";
+console.log("[SERVER_BOOT] Initializing server.ts entry point...");
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
