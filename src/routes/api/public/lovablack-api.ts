@@ -45,14 +45,21 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
       },
       POST: async ({ request }) => {
         const requestId = Math.random().toString(36).substring(7);
-        console.log(`[API-${requestId}] Recebendo requisição na API da extensão...`);
+        try {
+          console.log(`[API-${requestId}] Recebendo requisição na API da extensão...`);
           let body: LoginBody;
+          const rawBody = await request.text();
+          console.log(`[API-${requestId}] Body Size:`, rawBody.length);
+          
+          if (!rawBody) {
+            console.error(`[API-${requestId}] Empty body received`);
+            return json({ success: false, error: "Empty request body" }, 400);
+          }
+
           try {
-            const rawBody = await request.text();
-            console.log("API Extension Body Size:", rawBody.length);
             body = JSON.parse(rawBody) as LoginBody;
           } catch (e) {
-            console.error("JSON Parse Error in API:", e);
+            console.error(`[API-${requestId}] JSON Parse Error:`, e, "Raw:", rawBody);
             return json({ success: false, error: "Invalid JSON body" }, 400);
           }
 
@@ -60,7 +67,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           const rawPassword = body.password ?? "";
           const password = rawPassword.trim();
           
-          console.log(`Tentativa de login para: ${email}`);
+          console.log(`[API-${requestId}] Tentativa de login para: ${email}`);
           const sessionId = body.session_id;
 
           if (body.action !== "login") {
@@ -70,32 +77,29 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             return json({ success: false, error: "Missing credentials" }, 400);
           }
 
-          // Use VITE_ variables which are more reliable across environments (Lovable Cloud/VPS)
           const url = process.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"];
-          const key = process.env["VITE_SUPABASE_ANON_KEY"] || process.env["SUPABASE_ANON_KEY"];
-          const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["SERVICE_ROLE_KEY"];
           
           if (!url) {
-            console.error("Missing SUPABASE_URL configuration.");
-            return json({ success: false, error: "Configuração do servidor incompleta (URL)." }, 503);
+            console.error(`[API-${requestId}] Missing SUPABASE_URL configuration.`);
+            return json({ 
+              success: false, 
+              error: "Configuração do servidor incompleta (URL). Reinicie o serviço no VPS." 
+            }, 503);
           }
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           
-          // Resilient client selection
           let backend;
           try {
             backend = supabaseAdmin;
-            // Test access to the proxy
-            const _url = backend.auth;
-            if (!backend.auth) throw new Error("supabaseAdmin.auth is null");
+            if (!backend || !backend.auth) throw new Error("supabaseAdmin.auth is unavailable");
           } catch (e) {
-            console.error("supabaseAdmin failed, falling back to public client", e);
+            console.warn(`[API-${requestId}] supabaseAdmin failed, trying public client`, e);
             const { supabase } = await import("@/integrations/supabase/client");
             backend = supabase;
           }
 
-          console.log(`Usando backend para ${email}...`);
+          console.log(`[API-${requestId}] Usando backend para ${email}...`);
 
           const { data: accessData, error: accessError } = await backend.rpc(
             "login_extension_with_access_password",
@@ -113,20 +117,16 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             }
           }
 
-          // Fallback ao login padrão do Supabase se o RPC falhar ou não encontrar o usuário via access_password.
-          // Testamos com a senha original E com variações se necessário para ser resiliente a apps de extensão.
-          console.log(`Tentando login padrão Supabase para ${email}...`);
+          console.log(`[API-${requestId}] Tentando login padrão Supabase para ${email}...`);
           let authResult = await backend.auth.signInWithPassword({ email, password });
           
           if (authResult.error) {
-            // Se falhou com trim, tenta com a senha exatamente como veio (sem trim)
-            console.log(`Falhou login inicial, tentando senha sem trim para ${email}...`);
+            console.log(`[API-${requestId}] Falhou login inicial, tentando senha sem trim para ${email}...`);
             authResult = await backend.auth.signInWithPassword({ email, password: rawPassword });
           }
           
           if (authResult.error) {
-            // Tenta o e-mail em minúsculo/maiúsculo como senha (caso comum de erro de usuário)
-            console.log(`Tentando variações de e-mail como senha para ${email}...`);
+            console.log(`[API-${requestId}] Tentando variações de e-mail como senha para ${email}...`);
             const variations = [email, email.toUpperCase(), email.split('@')[0], (email.split('@')[0] || '').toUpperCase()];
             for (const v of variations) {
               if (v && v !== password) {
@@ -140,7 +140,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           }
 
           if (authResult.error || !authResult.data.user) {
-            console.warn(`Login falhou definitivamente para ${email}:`, authResult.error?.message);
+            console.warn(`[API-${requestId}] Login falhou definitivamente para ${email}:`, authResult.error?.message);
             return json({ success: false, error: "Credenciais inválidas ou conta não encontrada." }, 401);
           }
           
@@ -166,12 +166,12 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             ]);
 
           if (profileError || !profile) {
-            console.error("Profile load error:", profileError);
+            console.error(`[API-${requestId}] Profile load error:`, profileError);
             return json({ success: false, error: "Unable to load account profile" }, 502);
           }
           
-          if (subError) console.error("Subscription load error:", subError);
-          if (settingsError) console.error("Settings load error:", settingsError);
+          if (subError) console.error(`[API-${requestId}] Subscription load error:`, subError);
+          if (settingsError) console.error(`[API-${requestId}] Settings load error:`, settingsError);
 
           const settingsMap: Record<string, any> = {};
           (settings ?? []).forEach((s: any) => settingsMap[s.key] = s.value);
