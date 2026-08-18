@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script de deploy seguro e isolado para lovblack.online no VPS Hostinger
-# Versão: 18/08/2026 - Correção DEFINITIVA 502/Porta/Environment/Host/Isolation
+# Versão: 18/08/2026 - Correção DEFINITIVA 502/Porta/Environment/Host/Isolation/LogsFix
 
 set -e
 
@@ -88,7 +88,7 @@ else
     echo "⚠️ Erro: O servidor não está respondendo corretamente na porta $PORT (Status: $RESPONSE)."
     echo "Dica: Se o status for 500, verifique se a chave SUPABASE_SERVICE_ROLE_KEY está no seu arquivo .env no VPS."
     echo "Logs recentes:"
-    pm2 logs $PM2_NAME --lines 20 --no-colors
+    pm2 logs $PM2_NAME --lines 20
 fi
 
 echo "🚀 Deploy isolado finalizado para $DOMAIN."
