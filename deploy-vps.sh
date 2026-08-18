@@ -40,36 +40,43 @@ import('./.output/server/index.mjs')
 "
 
 
-echo "========== PM2 (INJETANDO SECRETS) =========="
+echo "========== PM2 (INJETANDO VARIAVEIS) =========="
 pm2 delete "$PM2_NAME" >/dev/null 2>&1 || true
 
-# Configura as chaves diretamente no PM2 para garantir que o SSR funcione
-# Nota: Em um ambiente real, você deve rodar: export SUPABASE_SERVICE_ROLE_KEY=sua_chave no terminal uma vez.
-# O script abaixo tenta ler do shell atual ou do arquivo .env
-SUPABASE_URL="${VITE_SUPABASE_URL:-https://zjvmfmdyuxmyanuuralq.supabase.co}"
-SERVICE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}"
-
-if [ -z "$SERVICE_KEY" ]; then
-    echo "AVISO: SUPABASE_SERVICE_ROLE_KEY não encontrada no shell. Tentando ler do .env..."
-    if [ -f .env ]; then
-        SERVICE_KEY=$(grep SUPABASE_SERVICE_ROLE_KEY .env | cut -d '=' -f2 | tr -d '"' | tr -d "'")
-    fi
+# Carrega o .env do projeto (gerado pelo Lovable) sem expor valores no log.
+if [ -f .env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . ./.env
+  set +a
 fi
 
-SUPABASE_URL="${VITE_SUPABASE_URL:-https://zjvmfmdyuxmyanuuralq.supabase.co}"
-# Chave fornecida: 2342342342342342343
-SERVICE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-2342342342342342343}"
+SUPABASE_URL="${SUPABASE_URL:-${VITE_SUPABASE_URL:-}}"
+SUPABASE_PUBLISHABLE_KEY="${SUPABASE_PUBLISHABLE_KEY:-${VITE_SUPABASE_PUBLISHABLE_KEY:-}}"
+SERVICE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}"
+
+if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+  echo "ERRO: SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY ausentes no .env"
+  exit 1
+fi
+
+if [ -z "$SERVICE_KEY" ]; then
+  echo "AVISO: SUPABASE_SERVICE_ROLE_KEY nao definida (opcional; usada apenas em rotinas administrativas)."
+fi
 
 PORT="$PORT" \
 HOST="0.0.0.0" \
 NODE_ENV="production" \
 VITE_SUPABASE_URL="$SUPABASE_URL" \
 SUPABASE_URL="$SUPABASE_URL" \
+VITE_SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
+SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
 SUPABASE_SERVICE_ROLE_KEY="$SERVICE_KEY" \
 pm2 start .output/server/index.mjs \
   --name "$PM2_NAME" \
   --node-args="--enable-source-maps" \
   --update-env
+
 
 
 pm2 save --force
