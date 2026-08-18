@@ -88,19 +88,22 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           // Priorizamos process.env (injetado pelo PM2) sobre import.meta.env
           const url = process.env["SUPABASE_URL"] || 
                       process.env["VITE_SUPABASE_URL"] || 
-                      import.meta.env["VITE_SUPABASE_URL"];
+                      import.meta.env["VITE_SUPABASE_URL"] ||
+                      "https://zjvmfmdyuxmyanuuralq.supabase.co"; // Fallback fixo para o projeto
                       
           const anonKey = process.env["SUPABASE_PUBLISHABLE_KEY"] || 
                           process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || 
                           import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
 
+          const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"] || 
+                             process.env["VITE_SUPABASE_SERVICE_ROLE_KEY"];
 
           if (!url || !anonKey) {
-            console.error(`[API-${rid}] Config ausente no ambiente. URL:${!!url} KEY:${!!anonKey}`);
+            console.error(`[API-${rid}] Config insuficiente. URL:${!!url} ANON:${!!anonKey}`);
             return json(
               { 
                 success: false, 
-                error: "Configuracao do servidor incompleta. Reinicie o servico no VPS com --update-env.",
+                error: "Configuração do servidor incompleta. Execute ./deploy-vps.sh no terminal para injetar as chaves.",
                 debug: { url: !!url, key: !!anonKey }
               },
               503,
@@ -109,7 +112,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
 
           // Debug parcial das chaves (apenas prefixo e sufixo para seguranca)
           const mask = (s: string) => `${s.slice(0, 6)}...${s.slice(-4)}`;
-          console.log(`[API-${rid}] Usando URL: ${url} | Key: ${mask(anonKey)}`);
+          console.log(`[API-${rid}] Usando URL: ${url} | Key: ${mask(anonKey)} | Service: ${!!serviceKey}`);
 
           const { createClient } = await import("@supabase/supabase-js");
           const publicClient = createClient(url, anonKey, {
