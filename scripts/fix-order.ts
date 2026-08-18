@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './integrations/supabase/client.server';
+import { supabaseAdmin } from '../src/integrations/supabase/client.server';
 
 async function approveOrder() {
   const orderNsu = 'order-1787000387867-97f26aa6-95d2-4d62-a6f4-da7245c9f7c2';
