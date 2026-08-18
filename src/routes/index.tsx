@@ -111,22 +111,26 @@ function Index() {
 
 
   useEffect(() => {
+    let isMounted = true;
     const checkAuth = async () => {
-      // Check for current session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted || !session) return;
 
-      const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
-      const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
-      
-      if (window.location.pathname !== '/') return;
+        const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
+        const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
+        
+        if (window.location.pathname !== '/') return;
 
-      console.log("Usuário já logado, redirecionando para:", target);
-      // Use replace em vez de assign para não sujar o histórico
-      window.location.replace(target);
+        console.log("Usuário já logado, redirecionando para:", target);
+        window.location.replace(target);
+      } catch (err) {
+        console.error("Erro ao verificar autenticação:", err);
+      }
     };
     
     checkAuth();
+    return () => { isMounted = false; };
   }, []);
 
   const [isMaintenance, setIsMaintenance] = useState(false);

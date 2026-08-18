@@ -107,19 +107,25 @@ function Index() {
 
 
   useEffect(() => {
+    let isMounted = true;
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted || !session) return;
 
-      const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
-      const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
-      
-      if (window.location.pathname !== '/ingles') return;
+        const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
+        const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
+        
+        if (window.location.pathname !== '/ingles') return;
 
-      console.log("User already logged in, redirecting to:", target);
-      window.location.replace(target);
+        console.log("User already logged in, redirecting to:", target);
+        window.location.replace(target);
+      } catch (err) {
+        console.error("Error checking auth:", err);
+      }
     };
     checkAuth();
+    return () => { isMounted = false; };
   }, []);
 
   const [isMaintenance, setIsMaintenance] = useState(false);
