@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script de deploy seguro e isolado para lovblack.online no VPS Hostinger
-# Versão: 18/08/2026 - Correção CRÍTICA 502/Porta/Environment/Host
+# Versão: 18/08/2026 - Correção DEFINITIVA 502/Porta/Environment/Host/Isolation
 
 set -e
 
