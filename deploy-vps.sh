@@ -1,25 +1,33 @@
 #!/bin/bash
 
+
 set -Eeuo pipefail
+
 
 APP_DIR="/var/www/lovablack_final"
 PORT="8098"
 PM2_NAME="lovblack_master"
 
+
 cd "$APP_DIR"
+
 
 echo "========== ATUALIZANDO GITHUB =========="
 git fetch origin
 git reset --hard origin/main
 
+
 echo "========== DEPENDÊNCIAS =========="
 npm install --prefer-offline
+
 
 echo "========== LIMPEZA =========="
 rm -rf .output .vinxi node_modules/.vite .nitro
 
+
 echo "========== BUILD =========="
 npx vite build
+
 
 echo "========== TESTE DO SSR =========="
 node --input-type=module -e "
@@ -31,26 +39,27 @@ import('./.output/server/index.mjs')
   })
 "
 
+
 echo "========== PM2 =========="
 pm2 delete "$PM2_NAME" >/dev/null 2>&1 || true
 
-# Injeta todas as variáveis do .env no PM2
-export $(grep -v '^#' .env | xargs)
 
 PORT="$PORT" \
-NITROPACK_PORT="$PORT" \
 HOST="0.0.0.0" \
 NODE_ENV="production" \
 pm2 start .output/server/index.mjs \
   --name "$PM2_NAME" \
-  --node-args="--enable-source-maps" \
-  --update-env
+  --node-args="--enable-source-maps"
+
 
 pm2 save --force
 
+
 sleep 5
 
+
 echo "========== HEALTH CHECK =========="
+
 
 if ! ss -lntp | grep -q ":$PORT"; then
     echo "ERRO: aplicação não abriu a porta $PORT"
@@ -58,18 +67,22 @@ if ! ss -lntp | grep -q ":$PORT"; then
     exit 1
 fi
 
+
 HTTP_CODE=$(curl -sS -o /tmp/lovblack-health.html \
   -w "%{http_code}" \
   --max-time 20 \
   "http://127.0.0.1:$PORT/" || true)
 
+
 echo "HTTP: $HTTP_CODE"
+
 
 if [[ "$HTTP_CODE" != "200" && "$HTTP_CODE" != "302" && "$HTTP_CODE" != "404" ]]; then
     echo "ERRO: aplicação respondeu HTTP $HTTP_CODE"
     pm2 logs "$PM2_NAME" --lines 100 --nostream
     exit 1
 fi
+
 
 echo ""
 echo "======================================"
