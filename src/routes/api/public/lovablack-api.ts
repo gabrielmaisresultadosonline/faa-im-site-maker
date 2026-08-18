@@ -149,9 +149,13 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
                 .select("key,value")
             ]);
 
-          if (profileError || subError || settingsError || !profile) {
-            return json({ success: false, error: "Unable to load account or settings" }, 502);
+          if (profileError || !profile) {
+            console.error("Profile load error:", profileError);
+            return json({ success: false, error: "Unable to load account profile" }, 502);
           }
+          
+          if (subError) console.error("Subscription load error:", subError);
+          if (settingsError) console.error("Settings load error:", settingsError);
 
           const settingsMap: Record<string, any> = {};
           (settings ?? []).forEach((s: any) => settingsMap[s.key] = s.value);

@@ -57,24 +57,47 @@ export const supabaseAdmin = new Proxy({} as any, {
     if (_supabaseAdmin === undefined) _supabaseAdmin = createSupabaseAdminClient();
     
     if (_supabaseAdmin === null) {
-      // Se for a propriedade 'auth', 'from', etc, retornamos um proxy recursivo
-      // para evitar erros de "cannot read property 'login' of undefined"
       const dummy = (...args: any[]) => {
         console.error(`ERRO CRÍTICO: Tentativa de usar supabaseAdmin.${String(prop)} sem SUPABASE_SERVICE_ROLE_KEY.`);
-        return { 
-          data: null, 
-          error: { message: "Configuração de servidor ausente (SERVICE_ROLE_KEY)." },
-          select: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
-          insert: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
-          update: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
-          delete: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
-          rpc: () => ({ data: null, error: { message: "Configuração de servidor ausente." } }),
+        const errResult = { data: null, error: { message: "Configuração de servidor ausente (SERVICE_ROLE_KEY)." } };
+        
+        const chainable = {
+          ...errResult,
+          select: () => chainable,
+          from: () => chainable,
+          eq: () => chainable,
+          single: () => errResult,
+          maybeSingle: () => errResult,
+          order: () => chainable,
+          limit: () => chainable,
+          insert: () => errResult,
+          update: () => errResult,
+          upsert: () => errResult,
+          delete: () => errResult,
+          rpc: () => errResult,
+          createSignedUrl: async () => errResult,
+          upload: async () => errResult,
+          download: async () => errResult,
+          signInWithPassword: async () => ({ data: { user: null, session: null }, error: { message: "Configuração de servidor ausente." } }),
         };
+
+        return chainable;
       };
       
-      // Permite encadeamento como supabaseAdmin.auth.admin.someFunc()
       if (['auth', 'storage', 'from'].includes(prop as string)) {
-        return new Proxy(dummy, { get: () => dummy });
+        const dummyObj = dummy();
+        if (prop === 'auth') {
+          return {
+            ...dummyObj,
+            admin: new Proxy({}, { get: () => dummy })
+          };
+        }
+        if (prop === 'storage') {
+          return {
+            from: () => dummy()
+          };
+        }
+        return () => dummy();
       }
       
       return dummy;
