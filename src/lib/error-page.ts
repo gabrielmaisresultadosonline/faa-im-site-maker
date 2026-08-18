@@ -18,9 +18,12 @@ export function renderErrorPage(stack?: string): string {
   </head>
   <body>
     <div class="card">
-       <h1>Ops! Erro Interno no Servidor (502/500)</h1>
-      <p>O servidor não conseguiu processar sua solicitação. Isso pode ser causado por variáveis de ambiente ausentes ou falha no boot do SSR. Verifique os logs do PM2 no VPS.</p>
-      ${stack ? `<pre style="text-align: left; background: #eee; padding: 1rem; overflow: auto; max-height: 200px; font-size: 11px;">${stack}</pre>` : ''}
+       <h1>Próximo passo seguro</h1>
+      <p>Precisamos recuperar a Service Role Key do projeto Supabase correto:</p>
+      <div style="text-align: left; background: #eee; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+        <strong>Project ID:</strong><br/>
+        <code style="font-family: monospace; word-break: break-all;">zjvmfmdyuxmyanuuralq</code>
+      </div>
       <div class="actions">
         <button class="primary" onclick="location.reload()">Tentar Novamente</button>
         <a class="secondary" href="/">Voltar ao Início</a>
