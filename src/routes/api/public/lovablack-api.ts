@@ -60,6 +60,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
 
       POST: async ({ request }) => {
         const rid = Math.random().toString(36).slice(2, 8);
+        console.log(`[API-${rid}] Requisição POST recebida.`);
         try {
           const raw = await request.text();
           if (!raw) return json({ success: false, error: "Empty request body" }, 400);
@@ -94,9 +95,20 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
                           process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || 
                           import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
 
-          const { getSupabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const adminClient = getSupabaseAdmin();
-          const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["VITE_SUPABASE_SERVICE_ROLE_KEY"];
+          let adminClient;
+          let serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["VITE_SUPABASE_SERVICE_ROLE_KEY"];
+          
+          try {
+            const { getSupabaseAdmin } = await import("@/integrations/supabase/client.server");
+            adminClient = getSupabaseAdmin();
+          } catch (importErr) {
+            console.error(`[API-${rid}] Erro ao importar client.server:`, importErr);
+            const { createClient: createSupabaseManual } = await import("@supabase/supabase-js");
+            const finalKey = serviceKey || anonKey || "sb_publishable_MiPzB015qmvANP558ovB_A_WkWjx8T7";
+            adminClient = createSupabaseManual(url, finalKey, {
+              auth: { autoRefreshToken: false, persistSession: false },
+            });
+          }
           const serviceKeyFound = !!serviceKey && serviceKey !== "NO_KEY_PROVIDED";
 
           if (!url || !anonKey) {
@@ -125,7 +137,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             try {
               const rpcRes = await adminClient.rpc(
                 "login_extension_with_access_password",
-                { _email: email, _access_password: password, _session_id: sessionId },
+                { _email: email, _access_password: password, _session_id: sessionId || null },
               );
               accessData = rpcRes.data;
               accessError = rpcRes.error;
@@ -244,9 +256,14 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           });
         } catch (error) {
           const msg = error instanceof Error ? error.message : "Unknown error";
-          console.error(`[API-${rid}] Falha inesperada:`, msg);
+          const stack = error instanceof Error ? error.stack : "";
+          console.error(`[API-${rid}] Falha inesperada:`, msg, stack);
           return json(
-            { success: false, error: "Erro interno no servidor ao processar login." },
+            { 
+              success: false, 
+              error: "Erro interno no servidor ao processar login.",
+              debug: msg
+            },
             500,
           );
         }
