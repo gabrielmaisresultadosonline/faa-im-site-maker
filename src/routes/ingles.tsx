@@ -111,7 +111,12 @@ function Index() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
-        window.location.replace(isAdminEmail ? '/admin/dashboard' : '/dashboard');
+        const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
+        
+        if (window.location.pathname === '/ingles') {
+          console.log("User already logged in, redirecting to:", target);
+          window.location.replace(target);
+        }
       }
     };
     checkAuth();
