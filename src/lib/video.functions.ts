@@ -49,9 +49,15 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       if (!json.signedURL) return { url: publicUrl };
 
       // O signedURL retornado pode ser relativo ou absoluto dependendo da versão da API
-      const finalUrl = json.signedURL.startsWith('http') 
+      let finalUrl = json.signedURL.startsWith('http') 
         ? json.signedURL 
         : `${baseUrl}/storage/v1${json.signedURL}`;
+      
+      // Correção crítica: em ambientes VPS onde o Supabase está atrás de proxy ou as URLs
+      // internas diferem das públicas, garantimos que a URL use o domínio correto.
+      if (finalUrl.includes('127.0.0.1') || finalUrl.includes('localhost')) {
+        finalUrl = finalUrl.replace(/https?:\/\/[^\/]+/, baseUrl);
+      }
 
       console.log(`[Video] Success! Final URL: ${finalUrl}`);
       return { url: finalUrl };
