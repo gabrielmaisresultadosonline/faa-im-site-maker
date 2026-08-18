@@ -95,9 +95,20 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
                           process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || 
                           import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
 
-          const { getSupabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const adminClient = getSupabaseAdmin();
-          const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["VITE_SUPABASE_SERVICE_ROLE_KEY"];
+          let adminClient;
+          let serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["VITE_SUPABASE_SERVICE_ROLE_KEY"];
+          
+          try {
+            const { getSupabaseAdmin } = await import("@/integrations/supabase/client.server");
+            adminClient = getSupabaseAdmin();
+          } catch (importErr) {
+            console.error(`[API-${rid}] Erro ao importar client.server:`, importErr);
+            const { createClient: createSupabaseManual } = await import("@supabase/supabase-js");
+            const finalKey = serviceKey || anonKey || "sb_publishable_MiPzB015qmvANP558ovB_A_WkWjx8T7";
+            adminClient = createSupabaseManual(url, finalKey, {
+              auth: { autoRefreshToken: false, persistSession: false },
+            });
+          }
           const serviceKeyFound = !!serviceKey && serviceKey !== "NO_KEY_PROVIDED";
 
           if (!url || !anonKey) {
