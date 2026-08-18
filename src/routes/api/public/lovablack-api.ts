@@ -114,29 +114,33 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
 
           // Fallback ao login padrão do Supabase se o RPC falhar ou não encontrar o usuário via access_password.
           // Testamos com a senha original E com variações se necessário para ser resiliente a apps de extensão.
+          console.log(`Tentando login padrão Supabase para ${email}...`);
           let authResult = await backend.auth.signInWithPassword({ email, password });
           
           if (authResult.error) {
             // Se falhou com trim, tenta com a senha exatamente como veio (sem trim)
+            console.log(`Falhou login inicial, tentando senha sem trim para ${email}...`);
             authResult = await backend.auth.signInWithPassword({ email, password: rawPassword });
           }
           
           if (authResult.error) {
-            // Se ainda falhou, tenta tudo minúsculo e tudo maiúsculo se a senha original for parecida com o email
-            const emailPart = email.split('@')[0] || '';
-            const passLow = rawPassword.toLowerCase();
-            if (emailPart && (passLow.includes(emailPart) || passLow === email)) {
-              console.log(`Tentando variações de senha para ${email}...`);
-              authResult = await backend.auth.signInWithPassword({ email, password: email });
-              if (authResult.error) {
-                authResult = await backend.auth.signInWithPassword({ email, password: rawPassword.toUpperCase() });
+            // Tenta o e-mail em minúsculo/maiúsculo como senha (caso comum de erro de usuário)
+            console.log(`Tentando variações de e-mail como senha para ${email}...`);
+            const variations = [email, email.toUpperCase(), email.split('@')[0], (email.split('@')[0] || '').toUpperCase()];
+            for (const v of variations) {
+              if (v && v !== password) {
+                const retry = await backend.auth.signInWithPassword({ email, password: v });
+                if (!retry.error) {
+                  authResult = retry;
+                  break;
+                }
               }
             }
           }
 
           if (authResult.error || !authResult.data.user) {
-            console.warn(`Login falhou para ${email}:`, authResult.error?.message);
-            return json({ success: false, error: "Invalid credentials" }, 401);
+            console.warn(`Login falhou definitivamente para ${email}:`, authResult.error?.message);
+            return json({ success: false, error: "Credenciais inválidas ou conta não encontrada." }, 401);
           }
           
           const authData = authResult.data;
