@@ -49,6 +49,8 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           // A senha enviada pela extensão pode ter problemas de case ou espaços, mas o login é sensível.
           // Tentar usar o password trimado primeiro.
           const password = rawPassword.trim();
+          
+          console.log(`Tentativa de login para: ${email}`);
           const sessionId = body.session_id;
 
           if (body.action !== "login") {
