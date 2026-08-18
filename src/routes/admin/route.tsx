@@ -35,7 +35,9 @@ export const Route = createFileRoute('/admin')({
     }
 
     // SE É ADMIN e está no /admin raiz, manda pro dashboard
-    if (location.pathname === '/admin' || location.pathname === '/admin/') {
+    if (location.pathname === '/admin' || location.pathname === '/admin/' || location.pathname === '/admin/dashboard') {
+      // Já está no lugar certo ou vai para o dashboard
+      if (location.pathname === '/admin/dashboard') return { isAuthenticated: true, userIsAdmin: true } satisfies AdminRouteContext;
       throw redirect({ to: '/admin/dashboard' });
     }
 
