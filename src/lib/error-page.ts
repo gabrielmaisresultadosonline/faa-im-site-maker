@@ -3,7 +3,7 @@ export function renderErrorPage(stack?: string): string {
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <title>Erro de Configuração - LOVABLACK</title>
+    <title>Erro de Sistema - LOVABLACK</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       * { box-sizing: border-box; }

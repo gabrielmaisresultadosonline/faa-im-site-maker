@@ -12,7 +12,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
     const pathClean = data.path.replace(/^\/+/, '');
     const publicUrl = `${baseUrl}/storage/v1/object/public/assets/${pathClean}`;
 
-    const serviceKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
+    const serviceKey = process.env['SUPABASE_SERVICE_ROLE_KEY'] || process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'];
     if (!serviceKey) {
       return { url: publicUrl };
     }

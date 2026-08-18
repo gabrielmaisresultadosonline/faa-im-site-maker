@@ -1,42 +1,25 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { TanStackRouterVite } from "@tanstack/router-plugin";
-import { tanstackStartVite } from "@tanstack/react-start/config";
 import tsconfigPaths from "vite-tsconfig-paths";
-import tailwindcss from "@tailwindcss/vite";
-import { resolve } from "path";
+import { tanstackRouterVite } from "@tanstack/router-plugin/vite";
 
-// Esta config NÃO usa @lovable.dev/vite-tanstack-config para ser compatível com ambientes externos (VPS)
+// Configuração otimizada para VPS Hostinger com Nitro/Node-server
 export default defineConfig({
   plugins: [
-    tanstackStartVite({
-      server: {
-        entry: "server",
-      },
-      prerender: {
-        routes: ["/"],
-      },
-    }),
-    TanStackRouterVite(),
+    tanstackRouterVite(),
     react(),
-    tailwindcss(),
     tsconfigPaths(),
   ],
-  nitro: {
-    preset: "node-server",
+  build: {
+    target: "esnext",
+    minify: "esbuild",
+    cssMinify: true,
+    rollupOptions: {
+      // Evita o erro de specifier no @tanstack/react-start/config
+      external: ["@tanstack/react-start/config"]
+    }
   },
-  vite: {
-    ssr: {
-      noExternal: true,
-    },
-    resolve: {
-      alias: {
-        "@": resolve(__dirname, "./src"),
-      },
-    },
-    build: {
-      chunkSizeWarningLimit: 2000,
-      cssCodeSplit: false,
-    },
-  },
+  ssr: {
+    noExternal: ["@tanstack/react-start", "@tanstack/react-router", "lucide-react"],
+  }
 });
