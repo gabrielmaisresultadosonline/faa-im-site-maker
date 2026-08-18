@@ -16,7 +16,7 @@ export const startTrial = createServerFn({ method: "POST" })
 
     const { data: existing, error: existingError } = await supabase
       .from("subscriptions")
-      .select("id, status, expires_at")
+      .select("id, status, expires_at, type")
       .eq("user_id", userId)
       .limit(1);
 
@@ -26,7 +26,7 @@ export const startTrial = createServerFn({ method: "POST" })
     }
 
     if (existing && existing.length > 0) {
-      const sub = existing[0];
+      const sub = existing[0] as { status: string; expires_at: string; type: string };
       const isExpired = sub.expires_at ? new Date(sub.expires_at) < new Date() : true;
       
       // Se a assinatura ativa (trial ou paga) ainda é válida, não permite outro trial
