@@ -121,7 +121,7 @@ export function renderErrorPage(stack?: string): string {
       <div class="brand">LOVABLACK</div>
       <h1>Próximo passo seguro</h1>
       <p>
-        Precisamos recuperar a <strong>Service Role Key</strong> do projeto correto para que o site funcione 100% no seu VPS.
+        nao consigo abrir a extensao ainda.. veja Configuração do servidor incompleta. Reinicie o serviço no VPS com --update-env.
       </p>
 
       <div class="highlight">
