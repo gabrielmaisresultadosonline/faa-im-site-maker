@@ -119,11 +119,10 @@ function Index() {
       const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
       const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
       
-      // If we are already on target or not on root, don't redirect
       if (window.location.pathname !== '/') return;
 
-      // Small delay to ensure state is settled
       console.log("Usuário já logado, redirecionando para:", target);
+      // Use replace em vez de assign para não sujar o histórico
       window.location.replace(target);
     };
     

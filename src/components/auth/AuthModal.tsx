@@ -60,13 +60,12 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
 
         const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
 
-        // Pequeno delay para garantir que o estado do Supabase sincronize no localStorage
-        // e evitar loops com a home
+        // Redirecionamento forçado para evitar loops
         setTimeout(() => {
           if (window.location.pathname === '/' || window.location.pathname === '/ingles') {
              window.location.replace(target);
           }
-        }, 300);
+        }, 100);
       }
     });
     return () => subscription.unsubscribe();
