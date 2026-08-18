@@ -47,12 +47,18 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      // In Nitro/Node environments, process.env might be used instead of the 'env' parameter
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
-      console.error(error);
-      return new Response(renderErrorPage(), {
+      console.error("CATASTROPHIC SSR ERROR:", error);
+      
+      // If we are in a serverless-like context, we might need to be careful with global process.env
+      const errorMessage = error instanceof Error ? error.stack || error.message : String(error);
+      console.error("Full stack trace:", errorMessage);
+
+      return new Response(renderErrorPage(errorMessage), {
         status: 500,
         headers: { "content-type": "text/html; charset=utf-8" },
       });
