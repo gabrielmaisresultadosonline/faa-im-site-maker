@@ -143,7 +143,7 @@ function Index() {
                   🚀 20 MIN FREE TRIAL
                 </Button>
               </DialogTrigger>
-              <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none">
+              <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none focus-visible:outline-none ring-0 focus:ring-0">
                 <div className="relative w-full">
                   <AuthModal initialMode="signup" isTrial={true} lang="en" />
                 </div>
@@ -156,7 +156,7 @@ function Index() {
                   ALREADY A MEMBER (LOGIN)
                 </Button>
               </DialogTrigger>
-              <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none">
+              <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none focus-visible:outline-none ring-0 focus:ring-0">
                 <div className="relative w-full">
                   <AuthModal initialMode="login" lang="en" />
                 </div>
