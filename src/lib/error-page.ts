@@ -117,36 +117,33 @@ export function renderErrorPage(stack?: string): string {
     </style>
   </head>
   <body>
-    <div class="card">
-      <div class="brand">LOVABLACK</div>
-      <h1>Próximo passo seguro</h1>
-      <p>
-        nao consigo abrir a extensao ainda.. veja Configuração do servidor incompleta. Reinicie o serviço no VPS com --update-env.
+    <div class="card" style="background: #1A1B1A; border: 1px solid rgba(255,255,255,0.1); color: white; text-align: center; max-width: 580px;">
+      <div class="brand" style="color: #DC0D0D; font-size: 2rem; margin-bottom: 2rem;">LOVABLACK</div>
+      
+      <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; border: 4px solid rgba(220,13,13,0.2);">
+        <svg style="width: 40px; height: 40px; color: #DC0D0D; margin: auto;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+
+      <h1 style="color: white; font-size: 2.5rem; font-weight: 900; letter-spacing: -0.05em; margin-bottom: 1rem;">
+        ESTAMOS EM ATUALIZAÇÃO
+      </h1>
+      
+      <p style="color: #a3a3a3; font-size: 1.25rem; font-weight: 500; line-height: 1.6; margin-bottom: 2rem;">
+        Estamos passando por uma atualização importante.<br>
+        Voltamos daqui algumas horas com novidades incríveis.
       </p>
 
-      <div class="highlight">
-        <strong>Project ID:</strong>
-        <div class="project-id">zjvmfmdyuxmyanuuralq</div>
+      <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; border-radius: 9999px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 0.875rem; font-weight: 700; color: #737373; text-transform: uppercase; letter-spacing: 0.1em;">
+        <span style="color: #DC0D0D;">⚡</span> Manutenção Programada
       </div>
 
-      <p><strong>Configuração Automática Concluída:</strong></p>
-      <ol>
-        <li>A chave <code>SERVICE_ROLE_KEY</code> (final 343) foi integrada ao script de deploy.</li>
-        <li>O script <code>deploy-vps.sh</code> agora injeta essa chave automaticamente no PM2.</li>
-        <li>Basta executar o deploy no terminal do VPS:
-          <div class="code-block">./deploy-vps.sh</div>
-        </li>
-        <li>O servidor reiniciará com acesso total ao banco de dados e funções administrativas.</li>
-      </ol>
-
-      <div class="actions">
-        <button class="primary" onclick="location.reload()">Tentar Novamente</button>
-        <a class="secondary" href="/">Voltar ao Início</a>
-      </div>
-
-      <div class="footer">
-        Dica: O SSR exige acesso administrativo para gerenciar sessões e assinaturas. Certifique-se de que a chave configurada pertence ao Project ID <strong>zjvmfmdyuxmyanuuralq</strong>.
-      </div>
+      ${stack ? `
+        <div style="margin-top: 2rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 0.5rem; text-align: left; font-family: monospace; font-size: 0.75rem; color: #444; overflow: hidden; max-height: 100px;">
+          DEBUG_INFO: ${stack.split('\n')[0]}
+        </div>
+      ` : ''}
     </div>
   </body>
 </html>`;
