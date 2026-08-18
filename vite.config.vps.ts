@@ -12,6 +12,9 @@ export default defineConfig({
   vite: {
     ssr: {
       noExternal: true, // Garante que as dependências sejam buildadas no bundle SSR para evitar erros de import no Node
+    },
+    build: {
+      chunkSizeWarningLimit: 2000,
     }
   }
 });
