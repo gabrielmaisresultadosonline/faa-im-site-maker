@@ -1,4 +1,5 @@
 import "./lib/error-capture";
+console.log("[SERVER_BOOT] Initializing server.ts entry point...");
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
@@ -12,7 +13,7 @@ let serverEntryPromise: Promise<ServerEntry> | undefined;
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     console.log("Loading server entry...");
-    serverEntryPromise = import("@tanstack/react-start/server-entry").then(
+    serverEntryPromise = import(/* @vite-ignore */ "@tanstack/react-start/server-entry").then(
       (m) => {
         console.log("Server entry loaded successfully.");
         return (m.default ?? m) as ServerEntry;

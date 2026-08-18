@@ -15,6 +15,11 @@ export default defineConfig({
     },
     build: {
       chunkSizeWarningLimit: 2000,
+      rollupOptions: {
+        output: {
+          manualChunks: undefined, // Evita splitting excessivo que pode quebrar imports dinâmicos no VPS
+        }
+      }
     }
   }
 });
