@@ -68,7 +68,8 @@ if [ -f .env ]; then
     done < .env
     
     # Reinicia com as novas variáveis aplicadas e garante a porta novamente
-    pm2 restart $PM2_NAME --update-env --env PORT=$PORT
+    # Reinicia com as novas variáveis aplicadas e garante a porta e host novamente
+    pm2 restart $PM2_NAME --update-env --env PORT=$PORT --env HOST=0.0.0.0 --env NITROPACK_HOST=0.0.0.0 --env NITROPACK_PORT=$PORT
 fi
 
 pm2 save
