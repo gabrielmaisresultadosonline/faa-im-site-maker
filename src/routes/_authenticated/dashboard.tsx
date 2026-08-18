@@ -242,14 +242,10 @@ function Dashboard() {
         const path = url.pathname.split('/').pop() || ''; 
         const { url: signedUrl } = await getSignedVideoUrl({ data: { path } });
         setSignedVideoUrl(signedUrl);
-      } catch (err: any) {
-        console.error("Error loading video:", err);
-        // Fallback for missing env vars in VPS
-        if (err.message?.includes("Missing Supabase environment variable")) {
-          setSignedVideoUrl(tut.url);
-        } else {
-          toast.error(isEn ? "Error loading video player" : "Erro ao carregar o player de vídeo");
-        }
+      } catch (err) {
+        // Qualquer falha na assinatura: usa a URL original (pública)
+        console.warn("Signed video URL failed, using original URL:", err);
+        setSignedVideoUrl(tut.url);
       } finally {
         setLoadingVideo(false);
       }
