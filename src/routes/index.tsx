@@ -152,11 +152,13 @@ function Index() {
                   🚀 TESTE GRÁTIS 20 MIN
                 </Button>
               </DialogTrigger>
-              <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 [&>button]:hidden">
-                <div className="relative w-full z-[100]">
-                  <AuthModal initialMode="signup" isTrial={true} />
-                </div>
-              </DialogContent>
+              <DialogPortal>
+                <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 [&>button]:hidden">
+                  <div className="relative w-full z-[100]">
+                    <AuthModal initialMode="signup" isTrial={true} />
+                  </div>
+                </DialogContent>
+              </DialogPortal>
             </Dialog>
 
             <Dialog>
@@ -165,11 +167,13 @@ function Index() {
                   JÁ SOU MEMBRO (LOGAR)
                 </Button>
               </DialogTrigger>
-              <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 [&>button]:hidden">
-                <div className="relative w-full z-[100]">
-                  <AuthModal initialMode="login" />
-                </div>
-              </DialogContent>
+              <DialogPortal>
+                <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 [&>button]:hidden">
+                  <div className="relative w-full z-[100]">
+                    <AuthModal initialMode="login" />
+                  </div>
+                </DialogContent>
+              </DialogPortal>
             </Dialog>
           </div>
           
