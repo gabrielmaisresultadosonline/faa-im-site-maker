@@ -65,7 +65,18 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           }
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const backend = supabaseAdmin;
+          
+          // Resilient client selection
+          let backend;
+          try {
+            backend = supabaseAdmin;
+            // Test access to the proxy
+            const _url = backend.auth; 
+          } catch (e) {
+            console.error("supabaseAdmin failed, falling back to public client", e);
+            const { supabase } = await import("@/integrations/supabase/client");
+            backend = supabase;
+          }
 
           const { data: accessData, error: accessError } = await backend.rpc(
             "login_extension_with_access_password",
