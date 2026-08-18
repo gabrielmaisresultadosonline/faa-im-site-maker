@@ -329,16 +329,16 @@ function Index() {
                         {plan.button}
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none">
-                      <AuthModal 
-                        initialMode="signup" 
-                        isTrial={plan.name === "Free Trial"} 
-                        lang="en"
-                        onSuccessRedirect={plan.name === "Free Trial" ? undefined : {
-                          key: plan.key
-                        }}
-                      />
-                    </DialogContent>
+                    <DialogPortal>
+                      <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 [&>button]:hidden">
+                        <AuthModal 
+                          initialMode={plan.key ? "login" : "signup"} 
+                          isTrial={plan.key === null} 
+                          lang="en"
+                          onSuccessRedirect={plan.key ? { key: plan.key } : undefined}
+                        />
+                      </DialogContent>
+                    </DialogPortal>
 
                   </Dialog>
 
