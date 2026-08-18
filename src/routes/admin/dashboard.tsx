@@ -18,8 +18,39 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { toast } from 'sonner';
 import { adminListUsers, adminCreateUser, adminUpdateUser, adminSetPlan } from '@/lib/admin.functions';
 
+/**
+ * Error boundary local do painel: evita tela branca caso alguma query
+ * ou renderização de tabela falhe em runtime.
+ */
+function AdminDashboardError({ error, reset }: { error: Error; reset: () => void }) {
+  console.error('[AdminDashboard] Erro de renderização:', error);
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <Card className="max-w-md w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-5 w-5" /> Erro no Painel
+          </CardTitle>
+          <CardDescription>
+            Não foi possível carregar os dados administrativos. Tente novamente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <pre className="text-xs bg-muted p-3 rounded-md overflow-auto max-h-40 text-muted-foreground">
+            {error.message}
+          </pre>
+          <Button onClick={reset} className="w-full">
+            <RefreshCw className="h-4 w-4 mr-2" /> Tentar novamente
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export const Route = createFileRoute('/admin/dashboard')({
   component: AdminDashboard,
+  errorComponent: AdminDashboardError,
 });
 
 type PlanType = 'trial' | 'monthly' | 'semiannual' | 'annual';
