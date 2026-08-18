@@ -12,16 +12,24 @@ let serverEntryPromise: Promise<ServerEntry> | undefined;
 
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
-    console.log("Loading server entry...");
-    serverEntryPromise = import(/* @vite-ignore */ "@tanstack/react-start/server-entry").then(
-      (m) => {
-        console.log("Server entry loaded successfully.");
+    console.log("[SERVER_BOOT] Loading server entry from relative output...");
+    // Em produção Nitro, o entry-point real está no bundle gerado.
+    // Tentamos carregar via import dinâmico que o Vite resolverá no build.
+    serverEntryPromise = import(/* @vite-ignore */ "@tanstack/react-start/server-entry")
+      .then((m) => {
+        console.log("[SERVER_BOOT] Server entry loaded successfully.");
         return (m.default ?? m) as ServerEntry;
-      },
-    ).catch(err => {
-      console.error("FAILED TO LOAD SERVER ENTRY:", err);
-      throw err;
-    });
+      })
+      .catch((err) => {
+        console.error("[SERVER_BOOT] FAILED TO LOAD SERVER ENTRY:", err);
+        // Fallback para tentar carregar do diretório atual se o path acima falhar
+        return import("./server-entry.mjs" as any)
+          .then((m) => (m.default ?? m) as ServerEntry)
+          .catch((err2) => {
+            console.error("[SERVER_BOOT] CRITICAL: Secondary fallback also failed.", err2);
+            throw err;
+          });
+      });
   }
   return serverEntryPromise;
 }

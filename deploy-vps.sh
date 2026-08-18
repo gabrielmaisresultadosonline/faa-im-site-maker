@@ -22,10 +22,11 @@ npm install --prefer-offline
 
 
 echo "========== LIMPEZA =========="
-rm -rf .output .vinxi node_modules/.vite .nitro
-
+rm -rf .output .vinxi node_modules/.vite .nitro dist
+npm cache clean --force
 
 echo "========== BUILD =========="
+npm run build
 npx vite build --config vite.config.vps.ts
 
 
