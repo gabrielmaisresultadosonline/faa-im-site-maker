@@ -61,11 +61,12 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
         // Pequeno delay para garantir que o estado do Supabase sincronize no localStorage
         setTimeout(() => {
           if (isAdminEmail) {
-            window.location.replace('/admin/dashboard');
+            window.location.assign('/admin/dashboard');
           } else {
-            window.location.replace('/dashboard');
+            // Usa window.location.assign para forçar um reload completo e limpar estados de roteamento antigos
+            window.location.assign('/dashboard');
           }
-        }, 300);
+        }, 500);
       }
     });
     return () => subscription.unsubscribe();
