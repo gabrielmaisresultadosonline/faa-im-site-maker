@@ -14,8 +14,6 @@ async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     console.log("[SERVER_BOOT] Loading server entry...");
     
-    // O import dinâmico do TanStack Start deve ser resolvido pelo Vite durante o build SSR.
-    // Usamos o alias para garantir que o bundle gerado pelo Nitro encontre o entrypoint.
     serverEntryPromise = import(/* @vite-ignore */ "@tanstack/react-start/server-entry")
       .then((m) => {
         console.log("[SERVER_BOOT] Server entry loaded successfully.");
@@ -23,10 +21,24 @@ async function getServerEntry(): Promise<ServerEntry> {
       })
       .catch((err) => {
         console.error("[SERVER_BOOT] CRITICAL: FAILED TO LOAD SERVER ENTRY.", err);
-        // Fallback secundário para quando o bundling total falha em resolver o nome do pacote
-        console.log("[SERVER_BOOT] Attempting secondary resolution...");
-        // @ts-ignore
-        return import("./server-entry.mjs").then(m => m.default ?? m);
+        
+        // Fallback local: Em builds do Nitro, o entrypoint costuma estar no mesmo diretório ou parent
+        const fallbacks = ["./server-entry.mjs", "../server-entry.mjs", "./index.mjs"];
+        
+        const tryFallback = async (index: number): Promise<any> => {
+          if (index >= fallbacks.length) throw err;
+          try {
+            console.log(`[SERVER_BOOT] Trying fallback ${index + 1}: ${fallbacks[index]}`);
+            // @ts-ignore
+            const m = await import(fallbacks[index]);
+            console.log(`[SERVER_BOOT] Fallback ${fallbacks[index]} loaded.`);
+            return m.default ?? m;
+          } catch (e) {
+            return tryFallback(index + 1);
+          }
+        };
+
+        return tryFallback(0);
       });
   }
   return serverEntryPromise;
