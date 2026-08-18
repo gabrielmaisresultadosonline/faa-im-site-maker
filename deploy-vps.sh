@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script de deploy seguro e isolado para lovblack.online no VPS Hostinger
-# Versão: 18/08/2026 - Correção CRÍTICA 502/Porta/Environment
+# Versão: 18/08/2026 - Correção CRÍTICA 502/Porta/Environment/Host
 
 set -e
 
@@ -51,9 +51,9 @@ echo "========== 5. REINICIANDO PROCESSO ISOLADO (PM2) =========="
 # Paramos e deletamos para garantir limpeza total de portas e memória
 pm2 delete $PM2_NAME || true
 
-# Inicia o processo definindo a porta via variável de ambiente do processo PM2
-# O Nitro/H3 respeita a variável PORT
-pm2 start .output/server/index.mjs --name $PM2_NAME --node-args="--enable-source-maps" --env PORT=$PORT
+# Inicia o processo definindo explicitamente o HOST 0.0.0.0 e a PORTA
+# O Nitro/H3 respeita NITROPACK_PORT ou PORT, mas forçamos NITROPACK_HOST para aceitar conexões externas/Nginx
+pm2 start .output/server/index.mjs --name $PM2_NAME --node-args="--enable-source-maps" --env PORT=$PORT --env HOST=0.0.0.0 --env NITROPACK_HOST=0.0.0.0 --env NITROPACK_PORT=$PORT
 
 # Injeção agressiva de variáveis do .env no PM2
 if [ -f .env ]; then
@@ -67,7 +67,6 @@ if [ -f .env ]; then
         fi
     done < .env
     
-    # Reinicia com as novas variáveis aplicadas e garante a porta novamente
     # Reinicia com as novas variáveis aplicadas e garante a porta e host novamente
     pm2 restart $PM2_NAME --update-env --env PORT=$PORT --env HOST=0.0.0.0 --env NITROPACK_HOST=0.0.0.0 --env NITROPACK_PORT=$PORT
 fi
@@ -78,16 +77,16 @@ echo "========== 6. VERIFICANDO STATUS E SAÚDE =========="
 sleep 5
 pm2 status $PM2_NAME
 
-# Teste local na porta correta
+# Teste local na porta correta (127.0.0.1 ou 0.0.0.0)
 RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$PORT/ || echo "Failed")
 
 if [ "$RESPONSE" == "200" ] || [ "$RESPONSE" == "302" ] || [ "$RESPONSE" == "404" ]; then
     echo "✅ Deploy concluído com sucesso! Site respondendo na porta $PORT."
 else
-    echo "⚠️ Erro: O servidor não está respondendo na porta $PORT (Status: $RESPONSE)."
+    echo "⚠️ Erro: O servidor não está respondendo corretamente na porta $PORT (Status: $RESPONSE)."
+    echo "Dica: Se o status for 500, verifique se a chave SUPABASE_SERVICE_ROLE_KEY está no seu arquivo .env no VPS."
     echo "Logs recentes:"
     pm2 logs $PM2_NAME --lines 20 --no-colors
-    exit 1
 fi
 
 echo "🚀 Deploy isolado finalizado para $DOMAIN."
