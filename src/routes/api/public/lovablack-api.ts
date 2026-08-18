@@ -57,14 +57,26 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           // Use VITE_ variables which are more reliable across environments (Lovable Cloud/VPS)
           const url = process.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"];
           const key = process.env["VITE_SUPABASE_ANON_KEY"] || process.env["SUPABASE_ANON_KEY"];
+          const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
           
-          if (!url || !key) {
-            console.error("Missing Supabase configuration:", { url: !!url, key: !!key });
+          if (!url || (!key && !serviceKey)) {
+            console.error("Missing Supabase configuration:", { url: !!url, key: !!key, serviceKey: !!serviceKey });
             return json({ success: false, error: "Serviço temporariamente indisponível. Por favor, tente novamente em instantes." }, 503);
           }
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const backend = supabaseAdmin;
+          
+          // Resilient client selection
+          let backend;
+          try {
+            backend = supabaseAdmin;
+            // Test access to the proxy
+            const _url = backend.auth; 
+          } catch (e) {
+            console.error("supabaseAdmin failed, falling back to public client", e);
+            const { supabase } = await import("@/integrations/supabase/client");
+            backend = supabase;
+          }
 
           const { data: accessData, error: accessError } = await backend.rpc(
             "login_extension_with_access_password",
@@ -148,11 +160,17 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             },
           });
         } catch (error) {
-          console.error(
-            "Lovablack API request failed",
-            error instanceof Error ? error.message : "Unknown error",
-          );
-          return json({ success: false, error: "Internal server error" }, 500);
+          const errMsg = error instanceof Error ? error.message : "Unknown error";
+          console.error("Lovablack API request failed:", errMsg);
+          
+          if (errMsg.includes("Missing Supabase environment variable")) {
+             return json({ 
+               success: false, 
+               error: "Erro de configuração no servidor. Verifique as variáveis VITE_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no VPS." 
+             }, 500);
+          }
+          
+          return json({ success: false, error: "Erro interno no servidor." }, 500);
         }
       },
     },
