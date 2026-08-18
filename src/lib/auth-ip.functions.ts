@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
+
 import { getRequest } from "@tanstack/react-start/server";
 
 export const checkRegistrationIP = createServerFn({ method: "GET" })
