@@ -42,14 +42,19 @@ function Dashboard() {
     if (email && token) {
       const performAutoLogin = async () => {
         try {
+          // Limpa params da URL imediatamente para evitar re-tentativas em loop se falhar
+          const url = new URL(window.location.href);
+          url.searchParams.delete('email');
+          url.searchParams.delete('token');
+          window.history.replaceState({}, '', url.toString());
+
           const { data, error } = await supabase.auth.signInWithPassword({ email, password: token });
           if (!error && data.session) {
             toast.success("Acesso automático realizado!");
-            // Remove params from URL
-            const url = new URL(window.location.href);
-            url.searchParams.delete('email');
-            url.searchParams.delete('token');
-            navigate({ to: url.pathname + url.search, replace: true });
+            // Força um reload para garantir que o AuthGuard veja a nova sessão
+            window.location.reload();
+          } else {
+            console.error("Auto-login failed:", error?.message);
           }
         } catch (err) {
           console.error("Auto-login error:", err);
@@ -57,7 +62,7 @@ function Dashboard() {
       };
       performAutoLogin();
     }
-  }, [navigate]);
+  }, []);
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -192,7 +197,7 @@ function Dashboard() {
     if (isWaitingPayment && isActive) {
       setIsWaitingPayment(false);
       setTimeout(() => {
-        navigate({ to: '/thanks', replace: true });
+        window.location.assign('/thanks');
       }, 100);
     }
 

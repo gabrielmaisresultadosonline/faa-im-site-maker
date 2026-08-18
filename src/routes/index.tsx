@@ -123,7 +123,7 @@ function Index() {
         // Se já estiver logado e estiver na home, redireciona
         if (window.location.pathname === '/') {
           console.log("Usuário já logado, redirecionando para:", target);
-          window.location.replace(target);
+          window.location.assign(target);
         }
       }
     };

@@ -9,17 +9,17 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       process.env['SUPABASE_URL'] ||
       "https://zjvmfmdyuxmyanuuralq.supabase.co";
 
-    const publicUrl = `${baseUrl}/storage/v1/object/public/assets/${data.path}`;
+    const pathClean = data.path.replace(/^\/+/, '');
+    const publicUrl = `${baseUrl}/storage/v1/object/public/assets/${pathClean}`;
 
     const serviceKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
     if (!serviceKey) {
-      console.warn("SUPABASE_SERVICE_ROLE_KEY not found in server function, falling back to public URL.");
       return { url: publicUrl };
     }
 
     try {
       const res = await fetch(
-        `${baseUrl}/storage/v1/object/sign/assets/${data.path}`,
+        `${baseUrl}/storage/v1/object/sign/assets/${pathClean}`,
         {
           method: "POST",
           headers: {
@@ -31,12 +31,20 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
         },
       );
 
-      if (!res.ok) return { url: publicUrl };
+      if (!res.ok) {
+        console.error(`Sign error ${res.status}:`, await res.text());
+        return { url: publicUrl };
+      }
 
       const json = (await res.json()) as { signedURL?: string };
       if (!json.signedURL) return { url: publicUrl };
 
-      return { url: `${baseUrl}/storage/v1${json.signedURL}` };
+      // O signedURL retornado pode ser relativo ou absoluto dependendo da versão da API
+      const finalUrl = json.signedURL.startsWith('http') 
+        ? json.signedURL 
+        : `${baseUrl}/storage/v1${json.signedURL}`;
+
+      return { url: finalUrl };
     } catch (error) {
       console.error("Signed URL failed, falling back to public URL:", error);
       return { url: publicUrl };

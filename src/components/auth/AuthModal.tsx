@@ -168,7 +168,11 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
       if (data?.session) {
         toast.success(lang === 'pt' ? 'Cadastro realizado com sucesso!' : 'Registration successful!');
         const isAdminEmail = data.session.user?.email?.toLowerCase() === 'mro@gmail.com';
-        navigate({ to: isAdminEmail ? '/admin/dashboard' : '/dashboard' });
+        
+        // Pequeno delay para garantir persistência da sessão
+        setTimeout(() => {
+          window.location.assign(isAdminEmail ? '/admin/dashboard' : '/dashboard');
+        }, 500);
       } else {
         toast.info(lang === 'pt' ? 'Cadastro realizado! Por favor, verifique seu email para confirmar a conta.' : 'Registration completed! Please check your email to confirm your account.');
       }
