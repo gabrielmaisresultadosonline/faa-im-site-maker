@@ -118,7 +118,7 @@ export function renderErrorPage(stack?: string): string {
   </head>
   <body>
     <div class="card" style="background: #1A1B1A; border: 1px solid rgba(255,255,255,0.1); color: white; text-align: center; max-width: 580px;">
-      <div class="brand" style="color: #DC0D0D; font-size: 2rem; margin-bottom: 2rem;">LOVABLACK</div>
+      <div class="brand" style="color: #DC0D0D; font-size: 2rem; margin-bottom: 2rem; font-weight: 900;">LOVABLACK</div>
       
       <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; border: 4px solid rgba(220,13,13,0.2);">
         <svg style="width: 40px; height: 40px; color: #DC0D0D; margin: auto;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,16 +127,21 @@ export function renderErrorPage(stack?: string): string {
       </div>
 
       <h1 style="color: white; font-size: 2.5rem; font-weight: 900; letter-spacing: -0.05em; margin-bottom: 1rem;">
-        ESTAMOS EM ATUALIZAÇÃO
+        ERRO NO SERVIDOR (SSR)
       </h1>
       
-      <p style="color: #a3a3a3; font-size: 1.25rem; font-weight: 500; line-height: 1.6; margin-bottom: 2rem;">
-        Estamos passando por uma atualização importante.<br>
-        Voltamos daqui algumas horas com novidades incríveis.
+      <p style="color: #a3a3a3; font-size: 1.1rem; font-weight: 500; line-height: 1.6; margin-bottom: 2rem;">
+        O servidor encontrou uma falha ao processar esta página.<br>
+        Tente atualizar em alguns segundos ou contate o suporte.
       </p>
 
-      <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; border-radius: 9999px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 0.875rem; font-weight: 700; color: #737373; text-transform: uppercase; letter-spacing: 0.1em;">
-        <span style="color: #DC0D0D;">⚡</span> Manutenção Programada
+      <div class="actions" style="justify-content: center; display: flex;">
+        <a href="/" class="primary" style="background: #DC0D0D; border: none; padding: 1rem 2rem; color: white; text-decoration: none; font-weight: bold; border-radius: 0.5rem;">RECARREGAR PÁGINA</a>
+      </div>
+
+      <div style="margin-top: 2rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 0.5rem; font-family: monospace; font-size: 0.75rem; color: #666; text-align: left; overflow: hidden; white-space: pre-wrap;">
+        Project ID: zjvmfmdyuxmyanuuralq
+        ${stack ? `<br><br>Trace: ${stack.slice(0, 200)}...` : ''}
       </div>
     </div>
   </body>
