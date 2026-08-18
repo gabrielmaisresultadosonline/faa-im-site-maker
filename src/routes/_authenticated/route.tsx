@@ -9,9 +9,6 @@ export const Route = createFileRoute('/_authenticated')({
       console.warn("Sem sessão ativa no dashboard. Redirecionando para home.", error?.message);
       throw redirect({
         to: '/',
-        search: {
-          redirect: location.href,
-        },
       });
     }
   },

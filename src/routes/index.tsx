@@ -115,7 +115,12 @@ function Index() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
-        window.location.replace(isAdminEmail ? '/admin/dashboard' : '/dashboard');
+        const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
+        
+        // Se já estiver logado e não for logout explícito, redireciona
+        if (window.location.pathname === '/') {
+          window.location.replace(target);
+        }
       }
     };
     checkAuth();

@@ -51,6 +51,13 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
         // Redirecionamento inteligente: Admin vai para /admin, usuário para /dashboard
         const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
         
+        // Limpa qualquer parâmetro de redirecionamento pendente da URL para evitar loops
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('redirect')) {
+          url.searchParams.delete('redirect');
+          window.history.replaceState({}, '', url.toString());
+        }
+
         // Pequeno delay para garantir que o estado do Supabase sincronize no localStorage
         setTimeout(() => {
           if (isAdminEmail) {
