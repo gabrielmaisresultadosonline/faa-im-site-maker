@@ -114,13 +114,15 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           }
 
           // 2) Login padrao com email/senha.
+          console.log(`[API-${rid}] Tentando login padrao Supabase para ${email}...`);
           let auth = await publicClient.auth.signInWithPassword({ email, password });
           if (auth.error && rawPassword !== password) {
+            console.log(`[API-${rid}] Falhou login inicial, tentando senha sem trim para ${email}...`);
             auth = await publicClient.auth.signInWithPassword({ email, password: rawPassword });
           }
 
           if (auth.error || !auth.data.user || !auth.data.session) {
-            console.warn(`[API-${rid}] Login falhou: ${auth.error?.message ?? "sem sessao"}`);
+            console.warn(`[API-${rid}] Login falhou definitivamente para ${email}: ${auth.error?.message ?? "sem sessao"}`);
             return json(
               { success: false, error: "Credenciais invalidas ou conta nao encontrada." },
               401,
