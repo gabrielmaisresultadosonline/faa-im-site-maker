@@ -34,7 +34,7 @@ function createSupabaseAdminClient() {
   const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'];
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    console.warn(`[Supabase Admin] Configuração incompleta no VPS. Algumas funcionalidades administrativas podem falhar.`);
+    console.warn(`[Supabase Admin] Configuração incompleta. URL: ${!!SUPABASE_URL}, Key: ${!!SUPABASE_SERVICE_ROLE_KEY}`);
     return null;
   }
 
@@ -52,16 +52,17 @@ function createSupabaseAdminClient() {
 
 let _supabaseAdmin: any | undefined;
 
-// Server-side Supabase client with service role - bypasses RLS
-// SECURITY: Only use this for trusted server-side operations, never expose to client code
 export const supabaseAdmin = new Proxy({} as any, {
   get(_, prop, receiver) {
     if (_supabaseAdmin === undefined) _supabaseAdmin = createSupabaseAdminClient();
     
-    // Se o cliente for nulo (falta de config), lançamos erro apenas no acesso a propriedades
-    // Isso evita que o import quebre o SSR/Build, mas sinaliza o erro na execução runtime.
     if (_supabaseAdmin === null) {
-      throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable. Make sure to source .env before starting the app.");
+      // Retornamos um objeto que falha silenciosamente ou loga o erro em vez de quebrar o boot do SSR
+      // Apenas se for uma chamada de função do Supabase
+      return (...args: any[]) => {
+        console.error(`ERRO CRÍTICO: Tentativa de usar supabaseAdmin.${String(prop)} sem SUPABASE_SERVICE_ROLE_KEY configurada.`);
+        return { data: null, error: { message: "Configuração de servidor ausente (SERVICE_ROLE_KEY)." } };
+      };
     }
     
     return Reflect.get(_supabaseAdmin, prop, receiver);
