@@ -55,9 +55,10 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             return json({ success: false, error: "Missing credentials" }, 400);
           }
 
-          const url = process.env["SUPABASE_URL"];
-          const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+          const url = process.env["VITE_SUPABASE_URL"];
+          const key = process.env["VITE_SUPABASE_ANON_KEY"];
           if (!url || !key) {
+            console.error("Missing Supabase VITE environment variables:", { url: !!url, key: !!key });
             return json({ success: false, error: "Server configuration unavailable" }, 503);
           }
 
