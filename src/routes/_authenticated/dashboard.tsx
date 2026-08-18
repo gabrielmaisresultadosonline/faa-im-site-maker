@@ -269,7 +269,10 @@ function Dashboard() {
             </h1>
             <p className="text-neutral-500">{isEn ? 'LOVABLACK Members Area' : 'Área de Membros LOVABLACK'}</p>
           </div>
-          <Button variant="outline" onClick={() => supabase.auth.signOut()}>
+          <Button variant="outline" onClick={async () => {
+            await supabase.auth.signOut();
+            window.location.assign('/');
+          }}>
             {isEn ? 'Logout' : 'Sair'}
           </Button>
         </header>
