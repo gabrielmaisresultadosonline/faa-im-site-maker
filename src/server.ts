@@ -54,19 +54,22 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
-      console.log(`Incoming request: ${request.method} ${request.url}`);
-      // In Nitro/Node environments, process.env might be used instead of the 'env' parameter
+      const port = process.env.PORT || process.env.NITROPACK_PORT || "unknown";
+      const host = process.env.HOST || "0.0.0.0";
+      console.log(`[SSR] Incoming request: ${request.method} ${request.url} (Server Port: ${port}, Host: ${host})`);
+      
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      console.log(`Response status: ${response.status}`);
+      
+      console.log(`[SSR] Response status: ${response.status} for ${request.url}`);
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
-      console.error("CATASTROPHIC SSR ERROR:", error);
+      console.error("CATASTROPHIC SSR ERROR during request handling:", error);
       
-      // If we are in a serverless-like context, we might need to be careful with global process.env
-      const errorMessage = error instanceof Error ? error.stack || error.message : String(error);
-      console.error("Full stack trace:", errorMessage);
+      const errorMessage = error instanceof Error ? (error.stack || error.message) : String(error);
+      console.error("Full diagnostic trace:", errorMessage);
 
+      // Return a detailed error page in Portuguese for debugging on VPS
       return new Response(renderErrorPage(errorMessage), {
         status: 500,
         headers: { "content-type": "text/html; charset=utf-8" },
