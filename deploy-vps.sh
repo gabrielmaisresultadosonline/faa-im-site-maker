@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script de deploy seguro e isolado para lovblack.online no VPS Hostinger
-# Versão: 18/08/2026 - Correção DEFINITIVA 502/Porta/Environment/Host/Isolation/LogsFix
+# Versão: 18/08/2026 - Correção DEFINITIVA 502/Porta/Environment/Host/Isolation/SSR-Fix
 
 set -e
 
@@ -29,7 +29,7 @@ export default defineConfig({
   },
   tanstackStart: {
     server: {
-      entry: "server",
+      entry: "src/server.tsx",
     },
   },
   vite: {
