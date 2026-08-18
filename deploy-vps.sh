@@ -26,7 +26,8 @@ rm -rf .output .vinxi node_modules/.vite .nitro
 
 
 echo "========== BUILD =========="
-npx vite build
+# Usamos a config otimizada para VPS para evitar erros de build e dependências ausentes
+npx vite build --config vite.config.vps.ts
 
 
 echo "========== TESTE DO SSR =========="
