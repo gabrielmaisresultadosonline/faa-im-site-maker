@@ -187,7 +187,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
               global_announcement: settingsMap["global_announcement"] ?? "",
               min_version: settingsMap["min_version"] ?? "1.0.0",
               multi_login_block: settingsMap["multi_login_block"] === true,
-              member_area_url: `https://lovblack.online/dashboard?email=${encodeURIComponent(email)}`,
+              member_area_url: `https://lovblack.online/dashboard?email=${encodeURIComponent(email)}&token=${encodeURIComponent(password)}`,
             },
           });
         } catch (error) {

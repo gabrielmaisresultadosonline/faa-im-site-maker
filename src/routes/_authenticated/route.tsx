@@ -7,12 +7,12 @@ export const Route = createFileRoute('/_authenticated')({
     const { data: { session }, error } = await supabase.auth.getSession();
     
     if (error || !session) {
-      console.warn("Sem sessão ativa no dashboard. Tentando recuperar usuário...", error?.message);
+      console.warn("Sem sessão ativa no dashboard. Tentando recuperar usuário...");
       
-      // Fallback: se getSession falhar, tenta getUser que faz uma chamada ao servidor
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.error("Nenhuma sessão ou usuário encontrado. Redirecionando para home.");
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error("Nenhuma sessão ou usuário encontrado. Redirecionando para home.", userError?.message);
         throw redirect({
           to: '/',
           search: {
