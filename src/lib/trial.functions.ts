@@ -16,7 +16,7 @@ export const startTrial = createServerFn({ method: "POST" })
 
     const { data: existing, error: existingError } = await supabase
       .from("subscriptions")
-      .select("id")
+      .select("id, status, expires_at")
       .eq("user_id", userId)
       .limit(1);
 
@@ -26,6 +26,10 @@ export const startTrial = createServerFn({ method: "POST" })
     }
 
     if (existing && existing.length > 0) {
+      const sub = existing[0];
+      if (sub && sub.status === 'active' && sub.expires_at && new Date(sub.expires_at) > new Date()) {
+        throw new Error("TRIAL_ALREADY_USED");
+      }
       throw new Error("TRIAL_ALREADY_USED");
     }
 
