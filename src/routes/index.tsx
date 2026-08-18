@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogPortal } from "@/components/ui/dialog";
 import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -130,7 +130,7 @@ function Index() {
     <div className="min-h-screen font-sans selection:bg-primary/20" style={{ backgroundColor: "#F7F1EB" }}>
       <LanguageSelectorModal />
       {/* Hero Section */}
-      <header className="container mx-auto px-4 pt-20 pb-16 text-center">
+      <header className="container mx-auto px-4 pt-20 pb-16 text-center relative z-20">
         <div className="flex justify-between items-center mb-8">
           <img src={logoFull} alt="LOVABLACK Logo" className="h-20 md:h-24 object-contain" />
           <span className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#D8D0C8] text-sm font-bold text-[#1A1B1A]">
@@ -148,28 +148,28 @@ function Index() {
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
             <Dialog>
               <DialogTrigger asChild>
-                <Button size="lg" className="h-14 px-8 text-lg font-bold rounded-full bg-[#1A1B1A] text-white hover:bg-[#080808] transition-all hover:scale-105 shadow-lg shadow-[#D8D0C8] cursor-pointer">
+                <Button size="lg" className="h-14 px-8 text-lg font-bold rounded-full bg-[#1A1B1A] text-white hover:bg-[#080808] transition-all hover:scale-105 shadow-lg shadow-[#D8D0C8] cursor-pointer relative z-10">
                   🚀 TESTE GRÁTIS 20 MIN
                 </Button>
               </DialogTrigger>
-              <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none">
-                <div className="relative w-full">
+              <DialogPortal>
+                <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 [&>button]:hidden">
                   <AuthModal initialMode="signup" isTrial={true} />
-                </div>
-              </DialogContent>
+                </DialogContent>
+              </DialogPortal>
             </Dialog>
 
             <Dialog>
               <DialogTrigger asChild>
-                <Button size="lg" variant="outline" className="h-14 px-8 text-lg font-bold rounded-full border-2 border-[#1A1B1A] text-[#1A1B1A] hover:bg-[#1A1B1A] hover:text-white transition-all hover:scale-105 shadow-lg shadow-[#D8D0C8] cursor-pointer">
+                <Button size="lg" variant="outline" className="h-14 px-8 text-lg font-bold rounded-full border-2 border-[#1A1B1A] text-[#1A1B1A] hover:bg-[#1A1B1A] hover:text-white transition-all hover:scale-105 shadow-lg shadow-[#D8D0C8] cursor-pointer relative z-10">
                   JÁ SOU MEMBRO (LOGAR)
                 </Button>
               </DialogTrigger>
-              <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none">
-                <div className="relative w-full">
+              <DialogPortal>
+                <DialogContent className="p-0 border-0 bg-transparent max-w-md shadow-none overflow-y-auto max-h-[90vh] focus:outline-none focus-visible:outline-none ring-0 focus:ring-0 [&>button]:hidden">
                   <AuthModal initialMode="login" />
-                </div>
-              </DialogContent>
+                </DialogContent>
+              </DialogPortal>
             </Dialog>
           </div>
           
