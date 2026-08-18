@@ -40,19 +40,25 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
   }, [lang]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
+        console.log("SIGNED_IN event detectado para:", session.user.email);
+        
         if (onSuccessRedirect) {
           sessionStorage.setItem('lovablack_pending_payment', JSON.stringify(onSuccessRedirect));
         }
         
         // Redirecionamento inteligente: Admin vai para /admin, usuário para /dashboard
         const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
-        if (isAdminEmail) {
-          navigate({ to: '/admin/dashboard' });
-        } else {
-          navigate({ to: '/dashboard' });
-        }
+        
+        // Pequeno delay para garantir que o estado do TanStack Router/Supabase sincronize
+        setTimeout(() => {
+          if (isAdminEmail) {
+            window.location.assign('/admin/dashboard');
+          } else {
+            window.location.assign('/dashboard');
+          }
+        }, 500);
       }
     });
     return () => subscription.unsubscribe();
@@ -85,7 +91,11 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
       toast.success(userLang === 'pt' ? 'Login realizado com sucesso!' : 'Login successful!');
       
       const isAdminEmail = data.user?.email?.toLowerCase() === 'mro@gmail.com';
-      navigate({ to: isAdminEmail ? '/admin/dashboard' : '/dashboard' });
+      if (isAdminEmail) {
+        window.location.assign('/admin/dashboard');
+      } else {
+        window.location.assign('/dashboard');
+      }
     } catch (error: any) {
       toast.error(error.message || (lang === 'pt' ? 'Erro ao fazer login' : 'Login error'));
     } finally {

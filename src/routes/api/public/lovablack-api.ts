@@ -33,21 +33,30 @@ function isLoginResult(value: unknown): value is LoginResult {
 export const Route = createFileRoute("/api/public/lovablack-api")({
   server: {
     handlers: {
-      OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
+      OPTIONS: async () => {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            ...CORS,
+            "Access-Control-Max-Age": "86400",
+          }
+        });
+      },
       POST: async ({ request }) => {
         try {
           console.log("Recebendo requisição na API da extensão...");
           let body: LoginBody;
           try {
-            body = (await request.json()) as LoginBody;
-          } catch {
+            const rawBody = await request.text();
+            console.log("API Extension Body Size:", rawBody.length);
+            body = JSON.parse(rawBody) as LoginBody;
+          } catch (e) {
+            console.error("JSON Parse Error in API:", e);
             return json({ success: false, error: "Invalid JSON body" }, 400);
           }
 
           const email = (body.email ?? "").trim().toLowerCase();
           const rawPassword = body.password ?? "";
-          // A senha enviada pela extensão pode ter problemas de case ou espaços, mas o login é sensível.
-          // Tentar usar o password trimado primeiro.
           const password = rawPassword.trim();
           
           console.log(`Tentativa de login para: ${email}`);
