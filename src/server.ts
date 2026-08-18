@@ -11,9 +11,16 @@ let serverEntryPromise: Promise<ServerEntry> | undefined;
 
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
+    console.log("Loading server entry...");
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
-      (m) => (m.default ?? m) as ServerEntry,
-    );
+      (m) => {
+        console.log("Server entry loaded successfully.");
+        return (m.default ?? m) as ServerEntry;
+      },
+    ).catch(err => {
+      console.error("FAILED TO LOAD SERVER ENTRY:", err);
+      throw err;
+    });
   }
   return serverEntryPromise;
 }
@@ -47,9 +54,11 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      console.log(`Incoming request: ${request.method} ${request.url}`);
       // In Nitro/Node environments, process.env might be used instead of the 'env' parameter
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
+      console.log(`Response status: ${response.status}`);
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
       console.error("CATASTROPHIC SSR ERROR:", error);
