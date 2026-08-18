@@ -96,21 +96,21 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
 
           const { getSupabaseAdmin } = await import("@/integrations/supabase/client.server");
           const adminClient = getSupabaseAdmin();
-          const serviceKeyFound = !!(process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["VITE_SUPABASE_SERVICE_ROLE_KEY"]);
+          const serviceKey = process.env["SUPABASE_SERVICE_ROLE_KEY"] || process.env["VITE_SUPABASE_SERVICE_ROLE_KEY"];
+          const serviceKeyFound = !!serviceKey;
 
-          if (!url || !anonKey || !serviceKeyFound) {
-            console.error(`[API-${rid}] Erro: Ambiente incompleto. URL:${!!url} ANON:${!!anonKey} SERV:${serviceKeyFound}`);
-            return json(
-              { 
-                success: false, 
-                error: "Servidor em manutenção técnica (Erro de Configuração).",
-                debug: { url: !!url, key: !!anonKey, service: serviceKeyFound }
-              },
-              503,
-            );
+          if (!url || !anonKey) {
+            console.error(`[API-${rid}] Erro: URL ou AnonKey não encontrados.`);
+            return json({ success: false, error: "Servidor em configuração." }, 503);
           }
 
           const { createClient } = await import("@supabase/supabase-js");
+
+          // Se não houver Service Role Key, tentamos operar apenas com a Anon Key
+          // Note: O login via RPC adminClient falhará se serviceKeyFound for false.
+          if (!serviceKeyFound) {
+            console.warn(`[API-${rid}] Aviso: Rodando sem SERVICE_ROLE_KEY. Algumas funções administrativas (reset HWID, bypass RLS) estarão indisponíveis.`);
+          }
           const publicClient = createClient(url, anonKey, {
             auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
             global: { fetch: supabaseFetch(anonKey) },
