@@ -143,7 +143,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             console.log(`[API-${rid}] Pulando verificação RPC: SERVICE_ROLE_KEY ausente.`);
           }
 
-          if (accessError) {
+          if (accessError && serviceKeyFound) {
             console.error(`[API-${rid}] Erro na função RPC login_extension: ${accessError.message}`);
           }
 
