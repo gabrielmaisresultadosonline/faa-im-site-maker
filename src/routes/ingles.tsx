@@ -110,18 +110,18 @@ function Index() {
     let isMounted = true;
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!isMounted || !session) return;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!isMounted || !user) return;
 
-        const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
+        const isAdminEmail = user.email?.toLowerCase() === 'mro@gmail.com';
         const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
         
-        if (window.location.pathname !== '/ingles') return;
-
-        console.log("User already logged in, redirecting to:", target);
-        window.location.replace(target);
+        if (window.location.pathname === '/ingles') {
+          console.log("Authenticated user detected, moving to:", target);
+          window.location.replace(target);
+        }
       } catch (err) {
-        console.error("Error checking auth:", err);
+        console.error("Silent error in initial check:", err);
       }
     };
     checkAuth();
