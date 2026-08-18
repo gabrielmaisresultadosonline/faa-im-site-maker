@@ -98,15 +98,28 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             }
           }
 
-          // Fallback ao login padrão do Supabase se o RPC falhar ou não encontrar o usuário via access_password
-          const { data: authData, error: authError } = await backend.auth.signInWithPassword({
-            email,
-            password,
-          });
+          // Fallback ao login padrão do Supabase se o RPC falhar ou não encontrar o usuário via access_password.
+          // Testamos com a senha original E com variações se necessário para ser resiliente a apps de extensão.
+          let authResult = await backend.auth.signInWithPassword({ email, password });
+          
+          if (authResult.error) {
+            // Se falhou com trim, tenta com a senha exatamente como veio (sem trim)
+            authResult = await backend.auth.signInWithPassword({ email, password: rawPassword });
+          }
+          
+          if (authResult.error) {
+            // Se ainda falhou, tenta tudo minúsculo se a senha original for igual ao email (comum em cadastros rápidos)
+            if (rawPassword.toLowerCase() === email) {
+              authResult = await backend.auth.signInWithPassword({ email, password: email });
+            }
+          }
 
-          if (authError || !authData.user) {
+          if (authResult.error || !authResult.data.user) {
+            console.warn(`Login falhou para ${email}:`, authResult.error?.message);
             return json({ success: false, error: "Invalid credentials" }, 401);
           }
+          
+          const authData = authResult.data;
 
           const [{ data: profile, error: profileError }, { data: subscription, error: subError }, { data: settings, error: settingsError }] =
             await Promise.all([
