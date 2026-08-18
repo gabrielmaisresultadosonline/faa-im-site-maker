@@ -26,67 +26,30 @@ rm -rf .output .vinxi node_modules/.vite .nitro
 
 
 echo "========== BUILD =========="
-# Usamos a config otimizada para VPS para evitar erros de build e dependências ausentes
-npx vite build --config vite.config.vps.ts
+npx vite build
 
 
 echo "========== TESTE DO SSR =========="
-# Tentamos rodar o index.mjs para garantir que o bundle está íntegro
 node --input-type=module -e "
 import('./.output/server/index.mjs')
-  .then(() => {
-    console.log('SSR OK');
-    process.exit(0);
-  })
+  .then(() => console.log('SSR OK'))
   .catch(err => {
-    console.error('ERRO CRITICO NO SSR:');
-    console.error(err);
+    console.error(err?.stack || err);
     process.exit(1);
   })
 "
 
 
-echo "========== PM2 (INJETANDO VARIAVEIS) =========="
+echo "========== PM2 =========="
 pm2 delete "$PM2_NAME" >/dev/null 2>&1 || true
 
-# Carrega o .env de forma segura, removendo possíveis quebras de linha ou espaços extras
-if [ -f .env ]; then
-  while IFS='=' read -r key value || [ -n "$key" ]; do
-    [[ $key =~ ^#.* ]] && continue
-    [[ -z $key ]] && continue
-    # Remove quotes se houver
-    value=$(echo "$value" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
-    export "$key=$value"
-  done < .env
-fi
-
-SUPABASE_URL="${SUPABASE_URL:-${VITE_SUPABASE_URL:-}}"
-SUPABASE_PUBLISHABLE_KEY="${SUPABASE_PUBLISHABLE_KEY:-${VITE_SUPABASE_PUBLISHABLE_KEY:-}}"
-SERVICE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-${VITE_SUPABASE_SERVICE_ROLE_KEY:-}}"
-
-if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
-  echo "ERRO: SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY ausentes no .env"
-  exit 1
-fi
-
-if [ -z "$SERVICE_KEY" ]; then
-  echo "AVISO: SUPABASE_SERVICE_ROLE_KEY nao definida (opcional; usada apenas em rotinas administrativas)."
-fi
 
 PORT="$PORT" \
 HOST="0.0.0.0" \
 NODE_ENV="production" \
-VITE_SUPABASE_URL="$SUPABASE_URL" \
-SUPABASE_URL="$SUPABASE_URL" \
-VITE_SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
-SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
-VITE_SUPABASE_SERVICE_ROLE_KEY="$SERVICE_KEY" \
-SUPABASE_SERVICE_ROLE_KEY="$SERVICE_KEY" \
 pm2 start .output/server/index.mjs \
   --name "$PM2_NAME" \
-  --node-args="--enable-source-maps" \
-  --update-env
-
+  --node-args="--enable-source-maps"
 
 
 pm2 save --force
