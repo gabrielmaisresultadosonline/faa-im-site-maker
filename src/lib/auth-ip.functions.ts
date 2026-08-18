@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { getWebRequest } from "@tanstack/react-start/server";
+import { getRequest } from "@tanstack/react-start/server";
 
 export const checkRegistrationIP = createServerFn({ method: "GET" })
   .handler(async () => {
-    const request = getWebRequest();
+    const request = getRequest();
     if (!request) return { blocked: false, ip: "unknown" };
 
     const forwarded = request.headers.get("x-forwarded-for");
