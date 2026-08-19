@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-// Versão do Dashboard: 18/08/2026 - v2.1.23 (Definitive Video & Trial Fix)
+// Versão do Dashboard: 18/08/2026 - v2.1.24 (Trial Error Recovery)
 import { getSubscriptionStatus, getProfile, getAppSettings } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -103,12 +103,20 @@ function Dashboard() {
       toast.success(isEn ? 'Trial activated! You have 20 minutes.' : 'Teste ativado! Você tem 20 minutos.');
     },
     onError: (error: any) => {
-      const alreadyUsed = String(error?.message ?? '').includes('TRIAL_ALREADY_USED');
-      toast.error(
-        alreadyUsed
-          ? (isEn ? 'This account already used the free test.' : 'Esta conta já usou o teste gratuito.')
-          : (isEn ? 'Could not activate the test. Try again.' : 'Não foi possível ativar o teste. Tente novamente.')
-      );
+      console.error("[Dashboard] Erro ao ativar teste:", error);
+      const msg = String(error?.message ?? '').toUpperCase();
+      const isAlreadyUsed = msg.includes('TRIAL_ALREADY_USED');
+      const isProfileMissing = msg.includes('PROFILE_NOT_FOUND');
+      
+      let toastMsg = isEn ? 'Could not activate the test. Try again.' : 'Não foi possível ativar o teste. Tente novamente.';
+      
+      if (isAlreadyUsed) {
+        toastMsg = isEn ? 'This account already used the free test.' : 'Esta conta já usou o teste gratuito.';
+      } else if (isProfileMissing) {
+        toastMsg = isEn ? 'Profile syncing... Please wait a few seconds and try again.' : 'Sincronizando perfil... Aguarde alguns segundos e tente novamente.';
+      }
+      
+      toast.error(toastMsg);
     }
   });
 
