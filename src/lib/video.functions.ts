@@ -92,25 +92,11 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       
       const urlObj = new URL(finalUrl);
       
-      // Lista de hosts internos conhecidos para substituição
-      const internalHosts = [
-        '127.0.0.1',
-        'localhost',
-        '::1',
-        'zjvmfmdyuxmyanuuralq.supabase.co'
-      ];
-
       // Se o host não for o domínio público, forçamos a substituição
       if (urlObj.hostname !== 'lovblack.online') {
          finalUrl = finalUrl.replace(urlObj.origin, publicDomain);
       }
-
-      // Se a URL final começar com o domínio público, o Nginx deve estar configurado 
-      // para rotear /storage/v1/* para o Supabase.
-      // Se isso falhar, o fallback é usar a URL do Supabase diretamente para o vídeo se for assinado.
       
-      console.log(`[Video] URL Final normalizada para VPS: ${finalUrl}`);
-
       console.log(`[Video] URL Final normalizada para VPS: ${finalUrl}`);
       return { url: finalUrl };
     } catch (error) {
