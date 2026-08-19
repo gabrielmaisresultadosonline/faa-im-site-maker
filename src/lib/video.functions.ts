@@ -17,7 +17,19 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
     const supabasePublicUrl = "https://zjvmfmdyuxmyanuuralq.supabase.co";
 
     const pathClean = data.path.replace(/^\/+/, '');
-    const publicUrl = `${publicDomain}/storage/v1/object/public/assets/${pathClean}`;
+    
+    // Normalização agressiva do path: se for uma URL completa, extrai apenas o filename
+    let finalPath = pathClean;
+    if (pathClean.includes('http')) {
+      try {
+        const tempUrl = new URL(pathClean);
+        finalPath = tempUrl.pathname.split('/').pop() || pathClean;
+      } catch (e) {
+        // ignora
+      }
+    }
+
+    const publicUrl = `${publicDomain}/storage/v1/object/public/assets/${finalPath}`;
 
     // Captura a Service Key
     const serviceKey = 
@@ -32,7 +44,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
 
     try {
       // Usamos a URL base para a chamada interna
-      const signEndpoint = `${baseUrl}/storage/v1/object/sign/assets/${pathClean}`;
+      const signEndpoint = `${baseUrl}/storage/v1/object/sign/assets/${finalPath}`;
       
       const res = await fetch(
         signEndpoint,
@@ -80,17 +92,17 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       
       const urlObj = new URL(finalUrl);
       
-      // Se a URL contém o host do Supabase, substituímos pelo domínio público
-      if (urlObj.hostname.includes('supabase.co')) {
-        finalUrl = finalUrl.replace(urlObj.origin, publicDomain);
-      } 
-      // Se for localhost ou IP interno
-      else if (internalHosts.includes(urlObj.hostname)) {
-        finalUrl = finalUrl.replace(urlObj.origin, publicDomain);
-      }
-      // Garante que não aponte para nada que não seja o domínio público ou o Supabase original (fallback)
-      else if (!finalUrl.includes(publicDomain)) {
-        finalUrl = finalUrl.replace(urlObj.origin, publicDomain);
+      // Lista de hosts internos conhecidos para substituição
+      const internalHosts = [
+        '127.0.0.1',
+        'localhost',
+        '::1',
+        'zjvmfmdyuxmyanuuralq.supabase.co'
+      ];
+
+      // Se o host não for o domínio público, forçamos a substituição
+      if (urlObj.hostname !== 'lovblack.online') {
+         finalUrl = finalUrl.replace(urlObj.origin, publicDomain);
       }
 
       // Se a URL final começar com o domínio público, o Nginx deve estar configurado 

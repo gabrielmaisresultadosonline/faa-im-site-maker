@@ -105,7 +105,7 @@ function Dashboard() {
     onError: (error: any) => {
       console.error("[Dashboard] Erro ao ativar teste:", error);
       const msg = String(error?.message ?? '').toUpperCase();
-      const isAlreadyUsed = msg.includes('TRIAL_ALREADY_USED');
+      const isAlreadyUsed = msg.includes('TRIAL_ALREADY_USED') || msg.includes('INSERT_FAILED_SUBSCRIPTION');
       const isProfileMissing = msg.includes('PROFILE_NOT_FOUND') || msg.includes('PROFILE_SYNC_FAILED');
       
       let toastMsg = isEn ? 'Could not activate the test. Try again.' : 'Não foi possível ativar o teste. Tente novamente.';

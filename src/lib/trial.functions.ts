@@ -107,7 +107,7 @@ export const startTrial = createServerFn({ method: "POST" })
 
       if (subRes.error) {
         console.error("[Trial] Falha ao inserir assinatura:", subRes.error);
-        throw new Error("INSERT_FAILED");
+        throw new Error("INSERT_FAILED_SUBSCRIPTION");
       }
 
       console.log(`[Trial] Sucesso para ${userId}. Expira em: ${expiresAt}`);
