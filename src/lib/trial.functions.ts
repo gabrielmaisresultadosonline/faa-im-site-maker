@@ -20,20 +20,32 @@ export const startTrial = createServerFn({ method: "POST" })
     console.log(`[Trial] Ativação para usuário: ${userId}`);
 
     // 1. Verificar se o perfil existe. Se não, esperar um pouco (race condition com trigger)
+    // Aumentamos o número de tentativas e o tempo de espera
     let profileData = null;
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 5; i++) {
       const { data, error } = await supabase.from("profiles").select("id, access_password").eq("id", userId).maybeSingle();
       if (data) {
         profileData = data;
         break;
       }
-      console.log(`[Trial] Perfil não encontrado, tentativa ${i+1}/3...`);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log(`[Trial] Perfil não encontrado (${userId}), tentativa ${i+1}/5...`);
+      await new Promise(resolve => setTimeout(resolve, 1500));
     }
 
     if (!profileData) {
       console.error(`[Trial] Perfil não encontrado após retentativas para ${userId}`);
-      throw new Error("PROFILE_NOT_FOUND");
+      // Se ainda não existir, tentamos criar um perfil básico para não travar o usuário
+      const { data: newProfile, error: createError } = await supabase.from("profiles").upsert({ 
+        id: userId,
+        full_name: 'Usuário',
+        language: 'pt'
+      }).select().single();
+
+      if (createError) {
+        console.error(`[Trial] Falha ao criar perfil de emergência:`, createError);
+        throw new Error("PROFILE_SYNC_FAILED");
+      }
+      profileData = newProfile;
     }
 
     // 2. Verificar assinaturas existentes
@@ -62,21 +74,26 @@ export const startTrial = createServerFn({ method: "POST" })
     const expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
 
     // 4. Executar transação administrativa
-    const [subRes, profileRes] = await Promise.all([
-      supabase.from("subscriptions").insert({
-        user_id: userId,
-        type: "trial",
-        status: "active",
-        expires_at: expiresAt,
-      }),
-      supabase.from("profiles").update({ access_password: accessPassword }).eq("id", userId)
-    ]);
+    try {
+      const [subRes, profileRes] = await Promise.all([
+        supabase.from("subscriptions").insert({
+          user_id: userId,
+          type: "trial",
+          status: "active",
+          expires_at: expiresAt,
+        }),
+        supabase.from("profiles").update({ access_password: accessPassword }).eq("id", userId)
+      ]);
 
-    if (subRes.error) {
-      console.error("[Trial] Falha ao inserir assinatura:", subRes.error);
-      throw new Error("INSERT_FAILED");
+      if (subRes.error) {
+        console.error("[Trial] Falha ao inserir assinatura:", subRes.error);
+        throw new Error("INSERT_FAILED");
+      }
+
+      console.log(`[Trial] Sucesso para ${userId}. Expira em: ${expiresAt}`);
+      return { expiresAt, accessPassword };
+    } catch (err: any) {
+      console.error("[Trial] Erro inesperado na transação:", err);
+      throw new Error(err.message || "INTERNAL_ERROR");
     }
-
-    console.log(`[Trial] Sucesso para ${userId}. Expira em: ${expiresAt}`);
-    return { expiresAt, accessPassword };
   });

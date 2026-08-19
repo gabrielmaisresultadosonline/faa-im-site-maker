@@ -106,17 +106,19 @@ function Dashboard() {
       console.error("[Dashboard] Erro ao ativar teste:", error);
       const msg = String(error?.message ?? '').toUpperCase();
       const isAlreadyUsed = msg.includes('TRIAL_ALREADY_USED');
-      const isProfileMissing = msg.includes('PROFILE_NOT_FOUND');
+      const isProfileMissing = msg.includes('PROFILE_NOT_FOUND') || msg.includes('PROFILE_SYNC_FAILED');
       
       let toastMsg = isEn ? 'Could not activate the test. Try again.' : 'Não foi possível ativar o teste. Tente novamente.';
       
       if (isAlreadyUsed) {
         toastMsg = isEn ? 'This account already used the free test.' : 'Esta conta já usou o teste gratuito.';
       } else if (isProfileMissing) {
-        toastMsg = isEn ? 'Profile syncing... Please wait a few seconds and try again.' : 'Sincronizando perfil... Aguarde alguns segundos e tente novamente.';
+        toastMsg = isEn ? 'Profile syncing... Please wait 10 seconds and try again.' : 'Sincronizando perfil... Aguarde 10 segundos e tente novamente.';
       }
       
-      toast.error(toastMsg);
+      toast.error(toastMsg, { duration: 5000 });
+      // Força a atualização do perfil para ajudar na próxima tentativa
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
     }
   });
 

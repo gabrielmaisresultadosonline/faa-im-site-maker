@@ -66,14 +66,24 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       // NORMALIZAÇÃO AGRESSIVA PARA VPS:
       // Substituímos o host de QUALQUER URL gerada pelo domínio público lovblack.online
       // Isso garante que o navegador peça o vídeo para o servidor Nginx da VPS que sabe rotear.
-      // Se finalUrl for https://zjvmfmdyuxmyanuuralq.supabase.co/..., 
-      // o navegador do usuário pode ser bloqueado por CORS ou rede.
-      // Ao trocar para lovblack.online/..., o Nginx/Nitro atua como proxy.
       
       console.log(`[Video] URL Antes da normalização: ${finalUrl}`);
       
-      // Regex para substituir o esquema e host pelo publicDomain
-      finalUrl = finalUrl.replace(/https?:\/\/[^\/]+/, publicDomain);
+      // Lista de hosts internos conhecidos para substituição
+      const internalHosts = [
+        '127.0.0.1',
+        'localhost',
+        '::1',
+        'zjvmfmdyuxmyanuuralq.supabase.co'
+      ];
+      
+      const urlObj = new URL(finalUrl);
+      if (internalHosts.includes(urlObj.hostname) || urlObj.hostname.includes('supabase.co')) {
+        finalUrl = finalUrl.replace(urlObj.origin, publicDomain);
+      } else if (!finalUrl.includes(publicDomain)) {
+        // Fallback: Se não contiver o domínio público, força a substituição do origin
+        finalUrl = finalUrl.replace(urlObj.origin, publicDomain);
+      }
 
       console.log(`[Video] URL Final normalizada para VPS: ${finalUrl}`);
       return { url: finalUrl };
