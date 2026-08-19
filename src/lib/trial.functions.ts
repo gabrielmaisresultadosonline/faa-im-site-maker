@@ -29,7 +29,7 @@ export const startTrial = createServerFn({ method: "POST" })
     } else {
       console.log(`[Trial] Perfil não encontrado inicialmente para ${userId}, tentando upsert de emergência...`);
       // Tentamos criar o perfil imediatamente para evitar esperar o trigger
-      const { data: newProfile, error: upsertError } = await supabase.from("profiles").upsert({ 
+      const { data: newProfile, error: upsertError } = await (supabase.from("profiles") as any).upsert({ 
         id: userId,
         full_name: 'Usuário',
         language: 'pt',
@@ -55,7 +55,7 @@ export const startTrial = createServerFn({ method: "POST" })
     if (!profileData) {
       console.error(`[Trial] Perfil não encontrado após retentativas para ${userId}`);
       // Se ainda não existir, tentamos criar um perfil básico para não travar o usuário
-      const { data: newProfile, error: createError } = await supabase.from("profiles").upsert({ 
+      const { data: newProfile, error: createError } = await (supabase.from("profiles") as any).upsert({ 
         id: userId,
         full_name: 'Usuário',
         language: 'pt'
