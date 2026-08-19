@@ -13,16 +13,30 @@ export const startTrial = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: unknown) => data) // Mantém compatibilidade com a chamada sem data
   .handler(async ({ context }) => {
-    // Usamos o context injetado pelo middleware que já validou o token JWT
     const { userId } = context;
-    
-    // Importa dinamicamente o client admin para garantir bypass de RLS
     const { getSupabaseAdmin } = await import("@/integrations/supabase/client.server");
     const supabase = getSupabaseAdmin();
 
-    console.log(`[Trial] Iniciando ativação administrativa para usuário: ${userId}`);
+    console.log(`[Trial] Ativação para usuário: ${userId}`);
 
-    // Busca assinaturas existentes
+    // 1. Verificar se o perfil existe. Se não, esperar um pouco (race condition com trigger)
+    let profileData = null;
+    for (let i = 0; i < 3; i++) {
+      const { data, error } = await supabase.from("profiles").select("id, access_password").eq("id", userId).maybeSingle();
+      if (data) {
+        profileData = data;
+        break;
+      }
+      console.log(`[Trial] Perfil não encontrado, tentativa ${i+1}/3...`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    if (!profileData) {
+      console.error(`[Trial] Perfil não encontrado após retentativas para ${userId}`);
+      throw new Error("PROFILE_NOT_FOUND");
+    }
+
+    // 2. Verificar assinaturas existentes
     const { data: existing, error: existingError } = await supabase
       .from("subscriptions")
       .select("id, status, expires_at, type")
@@ -33,33 +47,21 @@ export const startTrial = createServerFn({ method: "POST" })
       throw new Error("DATABASE_ERROR");
     }
 
-    // Verifica se já existe um trial ou assinatura ativa
     if (existing && existing.length > 0) {
-      const trials = existing.filter(s => s.type === 'trial');
-      const activePaid = existing.filter(s => s.type !== 'trial' && s.status === 'active');
+      const hasTrial = existing.some(s => s.type === 'trial');
+      const hasActivePaid = existing.some(s => s.type !== 'trial' && s.status === 'active' && (!s.expires_at || new Date(s.expires_at) > new Date()));
 
-      if (trials.length > 0) {
-        console.warn(`[Trial] Usuário ${userId} já utilizou um teste anteriormente.`);
+      if (hasTrial || hasActivePaid) {
+        console.warn(`[Trial] Usuário ${userId} já possui assinatura ou teste usado.`);
         throw new Error("TRIAL_ALREADY_USED");
-      }
-
-      if (activePaid.length > 0) {
-        const isExpired = activePaid.some(s => s.expires_at && new Date(s.expires_at) < new Date());
-        if (!isExpired) {
-          console.warn(`[Trial] Usuário ${userId} já possui assinatura paga ativa.`);
-          throw new Error("TRIAL_ALREADY_USED");
-        }
       }
     }
 
-    // Define expiração: 20 minutos a partir de agora
+    // 3. Gerar senha se não existir
+    const accessPassword = profileData.access_password || generateAccessPassword();
     const expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
 
-    // 1) Garante que o perfil tenha uma senha de acesso
-    const { data: profile } = await supabase.from("profiles").select("access_password").eq("id", userId).maybeSingle();
-    const accessPassword = profile?.access_password || generateAccessPassword();
-
-    // 2) Tenta criar a assinatura e atualizar o perfil em paralelo (bypass RLS)
+    // 4. Executar transação administrativa
     const [subRes, profileRes] = await Promise.all([
       supabase.from("subscriptions").insert({
         user_id: userId,
@@ -71,10 +73,10 @@ export const startTrial = createServerFn({ method: "POST" })
     ]);
 
     if (subRes.error) {
-      console.error("[Trial] Falha crítica ao inserir assinatura:", subRes.error);
+      console.error("[Trial] Falha ao inserir assinatura:", subRes.error);
       throw new Error("INSERT_FAILED");
     }
 
-    console.log(`[Trial] Sucesso! Expira em: ${expiresAt}`);
+    console.log(`[Trial] Sucesso para ${userId}. Expira em: ${expiresAt}`);
     return { expiresAt, accessPassword };
   });
