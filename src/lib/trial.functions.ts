@@ -22,14 +22,34 @@ export const startTrial = createServerFn({ method: "POST" })
     // 1. Verificar se o perfil existe. Se não, esperar um pouco (race condition com trigger)
     // Aumentamos o número de tentativas e o tempo de espera
     let profileData = null;
-    for (let i = 0; i < 5; i++) {
-      const { data, error } = await supabase.from("profiles").select("id, access_password").eq("id", userId).maybeSingle();
-      if (data) {
-        profileData = data;
-        break;
+    const { data: initialCheck } = await supabase.from("profiles").select("id, access_password").eq("id", userId).maybeSingle();
+    
+    if (initialCheck) {
+      profileData = initialCheck;
+    } else {
+      console.log(`[Trial] Perfil não encontrado inicialmente para ${userId}, tentando upsert de emergência...`);
+      // Tentamos criar o perfil imediatamente para evitar esperar o trigger
+      const { data: newProfile, error: upsertError } = await supabase.from("profiles").upsert({ 
+        id: userId,
+        full_name: 'Usuário',
+        language: 'pt',
+        updated_at: new Date().toISOString()
+      }).select().maybeSingle();
+
+      if (upsertError) {
+        console.error(`[Trial] Falha no upsert de emergência:`, upsertError);
+        // Se falhou o upsert, tentamos o loop de espera como último recurso
+        for (let i = 0; i < 3; i++) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          const { data, error } = await supabase.from("profiles").select("id, access_password").eq("id", userId).maybeSingle();
+          if (data) {
+            profileData = data;
+            break;
+          }
+        }
+      } else {
+        profileData = newProfile;
       }
-      console.log(`[Trial] Perfil não encontrado (${userId}), tentativa ${i+1}/5...`);
-      await new Promise(resolve => setTimeout(resolve, 1500));
     }
 
     if (!profileData) {

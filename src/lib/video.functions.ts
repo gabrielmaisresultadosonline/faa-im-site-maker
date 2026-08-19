@@ -14,6 +14,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
 
     // Domínio público final do usuário (para correção de localhost)
     const publicDomain = "https://lovblack.online";
+    const supabasePublicUrl = "https://zjvmfmdyuxmyanuuralq.supabase.co";
 
     const pathClean = data.path.replace(/^\/+/, '');
     const publicUrl = `${publicDomain}/storage/v1/object/public/assets/${pathClean}`;
@@ -78,12 +79,25 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       ];
       
       const urlObj = new URL(finalUrl);
-      if (internalHosts.includes(urlObj.hostname) || urlObj.hostname.includes('supabase.co')) {
+      
+      // Se a URL contém o host do Supabase, substituímos pelo domínio público
+      if (urlObj.hostname.includes('supabase.co')) {
         finalUrl = finalUrl.replace(urlObj.origin, publicDomain);
-      } else if (!finalUrl.includes(publicDomain)) {
-        // Fallback: Se não contiver o domínio público, força a substituição do origin
+      } 
+      // Se for localhost ou IP interno
+      else if (internalHosts.includes(urlObj.hostname)) {
         finalUrl = finalUrl.replace(urlObj.origin, publicDomain);
       }
+      // Garante que não aponte para nada que não seja o domínio público ou o Supabase original (fallback)
+      else if (!finalUrl.includes(publicDomain)) {
+        finalUrl = finalUrl.replace(urlObj.origin, publicDomain);
+      }
+
+      // Se a URL final começar com o domínio público, o Nginx deve estar configurado 
+      // para rotear /storage/v1/* para o Supabase.
+      // Se isso falhar, o fallback é usar a URL do Supabase diretamente para o vídeo se for assinado.
+      
+      console.log(`[Video] URL Final normalizada para VPS: ${finalUrl}`);
 
       console.log(`[Video] URL Final normalizada para VPS: ${finalUrl}`);
       return { url: finalUrl };
