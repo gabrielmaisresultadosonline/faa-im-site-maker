@@ -16,7 +16,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
     const publicDomain = "https://lovblack.online";
 
     const pathClean = data.path.replace(/^\/+/, '');
-    const publicUrl = `${baseUrl}/storage/v1/object/public/assets/${pathClean}`;
+    const publicUrl = `${publicDomain}/storage/v1/object/public/assets/${pathClean}`;
 
     // Captura a Service Key
     const serviceKey = 
@@ -80,6 +80,6 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
     } catch (error) {
       console.error("[Video] Falha crítica na assinatura, usando fallback público:", error);
       // Até o fallback público precisa ser normalizado
-      return { url: publicUrl.replace(/https?:\/\/[^\/]+/, publicDomain) };
+      return { url: publicUrl };
     }
   });

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { supabase } from '@/integrations/supabase/client';
-// Versão do Site: 18/08/2026 - Build Estável v2.1.24 (Aggressive VPS Normalization)
+// Versão do Site: 18/08/2026 - Build Estável v2.1.26 (Final Stabilization)
 import { Check, Shield, Zap, MessageSquare, FileText, Mic, Sparkles, PlusCircle, Eraser, Globe, Star, Clock, Heart, Users, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -175,7 +175,7 @@ function Index() {
           </span>
         </div>
         <h1 className="text-5xl md:text-8xl font-black text-[#1A1B1A] mb-6 tracking-tight leading-[1.05]">
-          Não gaste créditos com IA lovable.
+          Não gaste créditos com IA Lovable.
         </h1>
         <p className="text-xl md:text-3xl text-neutral-700 max-w-4xl mx-auto mb-10 font-medium">
           Utilize Lovablack Extensao e tenha créditos infinitos.
