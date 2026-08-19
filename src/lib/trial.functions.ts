@@ -34,7 +34,7 @@ export const startTrial = createServerFn({ method: "POST" })
         full_name: 'Usuário',
         language: 'pt',
         updated_at: new Date().toISOString()
-      }).select().maybeSingle();
+      }, { onConflict: 'id' }).select().maybeSingle();
 
       if (upsertError) {
         console.error(`[Trial] Falha no upsert de emergência:`, upsertError);
@@ -59,7 +59,7 @@ export const startTrial = createServerFn({ method: "POST" })
         id: userId,
         full_name: 'Usuário',
         language: 'pt'
-      }).select().single();
+      }, { onConflict: 'id' }).select().single();
 
       if (createError) {
         console.error(`[Trial] Falha ao criar perfil de emergência:`, createError);
