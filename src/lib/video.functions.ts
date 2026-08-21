@@ -1,107 +1,90 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+/**
+ * Gera a URL de reprodução de um vídeo armazenado no bucket "assets".
+ *
+ * IMPORTANTE: a URL retornada precisa apontar SEMPRE para o host do backend
+ * (Supabase Storage). Reescrever o host para o domínio do site quebra a
+ * reprodução, pois o Nginx da VPS não faz proxy de /storage/v1/*.
+ */
 export const getSignedVideoUrl = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ path: z.string() }).parse(data))
   .handler(async ({ data }) => {
-    console.log(`[Video] Iniciando assinatura para: ${data.path}`);
-
-    // URL base do Supabase
-    const baseUrl =
+    const baseUrl = (
       process.env['SUPABASE_URL'] ||
       process.env['VITE_SUPABASE_URL'] ||
-      "https://zjvmfmdyuxmyanuuralq.supabase.co";
+      "https://zjvmfmdyuxmyanuuralq.supabase.co"
+    ).replace(/\/+$/, "");
 
-    // Domínio público final do usuário (para correção de localhost)
-    const publicDomain = "https://lovblack.online";
-    const supabasePublicUrl = "https://zjvmfmdyuxmyanuuralq.supabase.co";
-
-    const pathClean = data.path.replace(/^\/+/, '');
-    
-    // Normalização agressiva do path: se for uma URL completa, extrai apenas o filename
-    let finalPath = pathClean;
-    if (pathClean.includes('http')) {
+    // Normaliza o path: aceita filename, path relativo ou URL completa
+    let finalPath = data.path.replace(/^\/+/, "");
+    if (/^https?:\/\//i.test(finalPath)) {
       try {
-        const tempUrl = new URL(pathClean);
-        finalPath = tempUrl.pathname.split('/').pop() || pathClean;
-      } catch (e) {
-        // ignora
+        const parsed = new URL(finalPath);
+        const marker = "/assets/";
+        const idx = parsed.pathname.indexOf(marker);
+        finalPath =
+          idx >= 0
+            ? parsed.pathname.slice(idx + marker.length)
+            : parsed.pathname.split("/").pop() || finalPath;
+      } catch {
+        // mantém o valor original
       }
     }
+    finalPath = finalPath.replace(/^assets\//, "");
 
-    const publicUrl = `${publicDomain}/storage/v1/object/public/assets/${finalPath}`;
+    const publicUrl = `${baseUrl}/storage/v1/object/public/assets/${finalPath}`;
 
-    // Captura a Service Key
-    const serviceKey = 
-      process.env['SUPABASE_SERVICE_ROLE_KEY'] || 
-      process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'] ||
-      process.env['sb_secret_zjvmfmdyuxmyanuuralq'];
+    const serviceKey =
+      process.env['SUPABASE_SERVICE_ROLE_KEY'] ||
+      process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'];
 
     if (!serviceKey || serviceKey === "NO_KEY_PROVIDED") {
-      console.warn("[Video] Sem SERVICE_ROLE_KEY, usando URL pública.");
       return { url: publicUrl };
     }
 
     try {
-      // Usamos a URL base para a chamada interna
-      const signEndpoint = `${baseUrl}/storage/v1/object/sign/assets/${finalPath}`;
-      
       const res = await fetch(
-        signEndpoint,
+        `${baseUrl}/storage/v1/object/sign/assets/${finalPath}`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             apikey: serviceKey,
-            Authorization: serviceKey.startsWith('sb_') ? serviceKey : `Bearer ${serviceKey}`,
+            Authorization: serviceKey.startsWith("sb_")
+              ? serviceKey
+              : `Bearer ${serviceKey}`,
           },
-          body: JSON.stringify({ expiresIn: 86400 }), // 24h
+          body: JSON.stringify({ expiresIn: 86400 }),
         },
       );
 
-      if (!res.ok) {
-        console.error(`[Video] Erro na API de assinatura (${res.status}):`, await res.text());
-        return { url: publicUrl };
-      }
+      if (!res.ok) return { url: publicUrl };
 
-      const json = (await res.json()) as { signedURL?: string; signedUrl?: string };
+      const json = (await res.json()) as {
+        signedURL?: string;
+        signedUrl?: string;
+      };
       const signedPath = json.signedURL || json.signedUrl;
-
       if (!signedPath) return { url: publicUrl };
 
-      // Se o retorno for relativo, anexa ao baseUrl
-      // IMPORTANTE: Se o baseUrl for interno (como 127.0.0.1 ou o host da Supabase), 
-      // precisamos garantir que o navegador consiga acessar.
-      let finalUrl = signedPath.startsWith('http') 
-        ? signedPath 
-        : `${baseUrl}/storage/v1${signedPath}`;
-      
-      // NORMALIZAÇÃO AGRESSIVA PARA VPS:
-      // Substituímos o host de QUALQUER URL gerada pelo domínio público lovblack.online
-      // Isso garante que o navegador peça o vídeo para o servidor Nginx da VPS que sabe rotear.
-      
-      console.log(`[Video] URL Antes da normalização: ${finalUrl}`);
-      
-      // Lista de hosts internos conhecidos para substituição
-      const internalHosts = [
-        '127.0.0.1',
-        'localhost',
-        '::1',
-        'zjvmfmdyuxmyanuuralq.supabase.co'
-      ];
-      
-      const urlObj = new URL(finalUrl);
-      
-      // Se o host não for o domínio público, forçamos a substituição
-      if (urlObj.hostname !== 'lovblack.online') {
-         finalUrl = finalUrl.replace(urlObj.origin, publicDomain);
+      const finalUrl = signedPath.startsWith("http")
+        ? signedPath
+        : `${baseUrl}/storage/v1${signedPath.replace(/^\/storage\/v1/, "")}`;
+
+      // Garante que o host seja o do backend público (nunca localhost/127.0.0.1)
+      try {
+        const u = new URL(finalUrl);
+        if (["127.0.0.1", "localhost", "::1"].includes(u.hostname)) {
+          return { url: finalUrl.replace(u.origin, baseUrl) };
+        }
+      } catch {
+        // ignora
       }
-      
-      console.log(`[Video] URL Final normalizada para VPS: ${finalUrl}`);
+
       return { url: finalUrl };
-    } catch (error) {
-      console.error("[Video] Falha crítica na assinatura, usando fallback público:", error);
-      // Até o fallback público precisa ser normalizado
+    } catch {
       return { url: publicUrl };
     }
   });
