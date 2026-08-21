@@ -36,13 +36,19 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
 
     const publicUrl = `${baseUrl}/storage/v1/object/public/assets/${finalPath}`;
 
+    // O bucket "assets" é privado, mas possui policy de SELECT pública,
+    // então a chave publicável já basta para assinar a URL do vídeo.
     const serviceKey =
       process.env['SUPABASE_SERVICE_ROLE_KEY'] ||
-      process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'];
+      process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'] ||
+      process.env['SUPABASE_PUBLISHABLE_KEY'] ||
+      process.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
+      "sb_publishable_MiPzB015qmvANP558ovB_A_WkWjx8T7";
 
     if (!serviceKey || serviceKey === "NO_KEY_PROVIDED") {
       return { url: publicUrl };
     }
+
 
     try {
       const res = await fetch(
