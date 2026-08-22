@@ -27,17 +27,19 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
     // Remove qualquer query parameter (ex: ?t=...)
     fileName = fileName.split('?')[0] || "";
 
-    const publicUrl = `${baseUrl}/storage/v1/object/public/assets/${fileName || ""}`;
-
-    // Tenta capturar a chave administrativa para gerar URL assinada (privada)
-    const adminKey = 
-      process.env['SUPABASE_SERVICE_ROLE_KEY'] || 
-      process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'];
-
-    if (!adminKey || adminKey === "NO_KEY_PROVIDED") {
-      console.log(`[VideoAuth] Usando URL pública (sem chave): ${fileName}`);
-      return { url: publicUrl };
+    if (!fileName) {
+      throw new Error("INVALID_VIDEO_PATH");
     }
+
+    // O bucket assets é privado. A chave pública consegue assinar os vídeos
+    // permitidos pela política de leitura e funciona também no VPS sem chave administrativa.
+    const signingKey =
+      process.env['SUPABASE_SERVICE_ROLE_KEY'] || 
+      process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'] ||
+      process.env['SUPABASE_PUBLISHABLE_KEY'] ||
+      process.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
+      import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
+      "sb_publishable_MiPzB015qmvANP558ovB_A_WkWjx8T7";
 
     try {
       console.log(`[VideoAuth] Assinando vídeo: ${fileName}`);
@@ -49,8 +51,10 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": adminKey,
-          "Authorization": `Bearer ${adminKey}`,
+          "apikey": signingKey,
+          ...(signingKey.startsWith("sb_secret_")
+            ? {}
+            : { "Authorization": `Bearer ${signingKey}` }),
         },
         body: JSON.stringify({ expiresIn: 86400 }), // 24h
       });
@@ -58,8 +62,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       if (!res.ok) {
         const errText = await res.text();
         console.error(`[VideoAuth] Erro ao assinar (${res.status}):`, errText);
-        // Fallback agressivo para a URL pública em caso de erro 400/403/404 na assinatura
-        return { url: publicUrl };
+        throw new Error(`VIDEO_SIGN_FAILED_${res.status}`);
       }
 
       const json = await res.json();
@@ -67,7 +70,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
 
       if (!signedPath) {
         console.error("[VideoAuth] signedURL não encontrada na resposta");
-        return { url: publicUrl };
+        throw new Error("VIDEO_SIGN_URL_MISSING");
       }
 
       // Constrói a URL final garantindo o host correto
@@ -80,6 +83,6 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       return { url: finalUrl };
     } catch (err) {
       console.error("[VideoAuth] Falha crítica na assinatura:", err);
-      return { url: publicUrl };
+      throw err instanceof Error ? err : new Error("VIDEO_SIGN_FAILED");
     }
   });
