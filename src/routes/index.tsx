@@ -260,6 +260,11 @@ function Index() {
                 autoPlay={false}
                 playsInline
                 preload="metadata"
+                onError={(e) => {
+                  console.error("[Home] Vídeo hero falhou ao carregar:", e);
+                  // O 400 Bad Request no console do usuário sugere que a URL pública falhou.
+                  // Se o vídeo falhar, tentamos esconder o player ou mostrar um aviso.
+                }}
               />
             ) : (
               <div className="w-full h-full bg-neutral-900 flex items-center justify-center">
