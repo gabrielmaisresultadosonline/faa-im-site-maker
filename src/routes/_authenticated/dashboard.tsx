@@ -242,29 +242,33 @@ function Dashboard() {
 
 
   const handleVideoClick = async (tut: any) => {
-    const isMp4 = tut.url && tut.url.includes('.mp4');
+    const isMp4 = tut.url && (tut.url.includes('.mp4') || tut.url.includes('supabase.co/storage'));
     setPlayingVideo({ title: tut.title, url: tut.url, isMp4 });
     
     if (isMp4) {
       setLoadingVideo(true);
       try {
-        // Limpa a URL para extrair apenas o caminho relativo do bucket
-        const urlObj = new URL(tut.url);
-        // O caminho no bucket assets deve ser apenas o nome do arquivo
-        const fileName = urlObj.pathname.split('/').pop() || '';
+        // Extrai o nome do arquivo da URL (ex: video-123.mp4)
+        const urlStr = String(tut.url);
+        let fileName = "";
         
-        console.log(`[Dashboard] Solicitando assinatura para arquivo: ${fileName}`);
+        if (urlStr.includes('/assets/')) {
+          fileName = urlStr.split('/assets/').pop()?.split('?')[0] || "";
+        } else {
+          fileName = urlStr.split('/').pop()?.split('?')[0] || "";
+        }
+
+        console.log(`[Dashboard] Solicitando assinatura para: ${fileName}`);
+        const result = await getSignedVideoUrl({ data: { path: fileName } });
         
-        const { url: signedUrl } = await getSignedVideoUrl({ data: { path: fileName } });
-        
-        if (signedUrl) {
-          console.log(`[Dashboard] URL assinada recebida: ${signedUrl}`);
-          setSignedVideoUrl(signedUrl);
+        if (result && result.url) {
+          console.log(`[Dashboard] Vídeo assinado com sucesso.`);
+          setSignedVideoUrl(result.url);
         } else {
           setSignedVideoUrl(tut.url);
         }
       } catch (err) {
-        console.warn("[Dashboard] Erro ao assinar vídeo, usando URL original:", err);
+        console.warn("[Dashboard] Fallback para URL original:", err);
         setSignedVideoUrl(tut.url);
       } finally {
         setLoadingVideo(false);
