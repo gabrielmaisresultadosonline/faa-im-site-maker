@@ -13,7 +13,12 @@ export const getSubscriptionStatus = async (userId: string) => {
   
   if (!data) return null;
 
-  const isExpired = new Date(data.expires_at) < new Date();
+  // Vitalício ou planos sem expiração (expires_at nulo) são considerados ativos.
+  // Também adicionamos uma margem de segurança de 5 minutos.
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - 5);
+  
+  const isExpired = data.expires_at ? new Date(data.expires_at) < now : false;
   
   return {
     ...data,
