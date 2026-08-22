@@ -29,8 +29,9 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
     fileName = fileName.split('?')[0] || "";
 
     if (!fileName) {
-      throw new Error("INVALID_VIDEO_PATH");
+      return { url: "", error: "INVALID_VIDEO_PATH" as const };
     }
+
 
     // O bucket assets é PRIVADO (public: false)
     // Para acessá-lo via GET direto, precisamos de uma URL assinada (signed URL)
@@ -66,7 +67,10 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       if (!res.ok) {
         const errText = await res.text();
         console.error(`[VideoAuth] Erro ao assinar (${res.status}):`, errText);
-        throw new Error(`VIDEO_SIGN_FAILED_${res.status}`);
+        return {
+          url: `${baseUrl}/storage/v1/object/public/assets/${fileName}`,
+          error: `VIDEO_SIGN_FAILED_${res.status}` as string,
+        };
       }
 
       const json = await res.json();
@@ -74,7 +78,10 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
 
       if (!signedPath) {
         console.error("[VideoAuth] signedURL não encontrada na resposta");
-        throw new Error("VIDEO_SIGN_URL_MISSING");
+        return {
+          url: `${baseUrl}/storage/v1/object/public/assets/${fileName}`,
+          error: "VIDEO_SIGN_URL_MISSING" as string,
+        };
       }
 
       // Constrói a URL final garantindo o host correto e o prefixo /storage/v1
@@ -86,7 +93,12 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       console.log(`[VideoAuth] Sucesso: ${finalUrl.slice(0, 60)}...`);
       return { url: finalUrl };
     } catch (err) {
+      // Nunca propagar erro: evita 500 no endpoint _serverFn
       console.error("[VideoAuth] Falha na assinatura:", err);
-      throw err instanceof Error ? err : new Error("VIDEO_SIGN_FAILED");
+      return {
+        url: `${baseUrl}/storage/v1/object/public/assets/${fileName}`,
+        error: err instanceof Error ? err.message : "VIDEO_SIGN_FAILED",
+      };
     }
   });
+
