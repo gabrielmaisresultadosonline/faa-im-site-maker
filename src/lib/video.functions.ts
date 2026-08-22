@@ -24,50 +24,59 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       fileName = fileName.split("/").pop() || fileName;
     }
 
-    const publicUrl = `${baseUrl}/storage/v1/object/public/assets/${fileName}`;
+    // Remove qualquer query parameter (ex: ?t=...)
+    fileName = fileName.split('?')[0] || "";
+
+    const publicUrl = `${baseUrl}/storage/v1/object/public/assets/${fileName || ""}`;
 
     // Tenta capturar a chave administrativa para gerar URL assinada (privada)
-    // No VPS, essas chaves devem estar no ecossistema PM2 (ecosystem.config.js)
     const adminKey = 
       process.env['SUPABASE_SERVICE_ROLE_KEY'] || 
       process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'];
 
     if (!adminKey || adminKey === "NO_KEY_PROVIDED") {
-      console.log(`[VideoAuth] Usando URL pública para: ${fileName}`);
+      console.log(`[VideoAuth] Usando URL pública (sem chave): ${fileName}`);
       return { url: publicUrl };
     }
 
     try {
       console.log(`[VideoAuth] Assinando vídeo: ${fileName}`);
-      const res = await fetch(
-        `${baseUrl}/storage/v1/object/sign/assets/${fileName}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": adminKey,
-            "Authorization": `Bearer ${adminKey}`,
-          },
-          body: JSON.stringify({ expiresIn: 86400 }), // 24h
-        }
-      );
+      
+      // O endpoint de assinatura do Supabase Storage
+      const signUrl = `${baseUrl}/storage/v1/object/sign/assets/${fileName}`;
+      
+      const res = await fetch(signUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": adminKey,
+          "Authorization": `Bearer ${adminKey}`,
+        },
+        body: JSON.stringify({ expiresIn: 86400 }), // 24h
+      });
 
       if (!res.ok) {
         const errText = await res.text();
         console.error(`[VideoAuth] Erro ao assinar (${res.status}):`, errText);
+        // Fallback agressivo para a URL pública em caso de erro 400/403/404 na assinatura
         return { url: publicUrl };
       }
 
       const json = await res.json();
       const signedPath = json.signedURL || json.signedUrl;
 
-      if (!signedPath) return { url: publicUrl };
+      if (!signedPath) {
+        console.error("[VideoAuth] signedURL não encontrada na resposta");
+        return { url: publicUrl };
+      }
 
-      // Constrói a URL final garantindo o host do Supabase
-      const finalUrl = signedPath.startsWith("http") 
-        ? signedPath 
-        : `${baseUrl}/storage/v1${signedPath}`;
+      // Constrói a URL final garantindo o host correto
+      let finalUrl = signedPath;
+      if (!signedPath.startsWith("http")) {
+        finalUrl = `${baseUrl}/storage/v1${signedPath}`;
+      }
 
+      console.log(`[VideoAuth] Sucesso: ${finalUrl.slice(0, 50)}...`);
       return { url: finalUrl };
     } catch (err) {
       console.error("[VideoAuth] Falha crítica na assinatura:", err);
