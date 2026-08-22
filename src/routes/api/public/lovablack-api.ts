@@ -228,10 +228,12 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           }
 
           const subscription = subRes.data;
+          // Adicionamos uma margem de tolerância de 5 minutos para evitar quedas por micro-diferenças de relógio
+          const expiryDate = subscription ? new Date(subscription.expires_at) : null;
           const isExpired =
             !subscription ||
             subscription.status !== "active" ||
-            new Date(subscription.expires_at).getTime() <= Date.now();
+            (expiryDate ? expiryDate.getTime() + (5 * 60 * 1000) <= Date.now() : true);
 
           // Encerra a sessao criada apenas para validar o login.
           await publicClient.auth.signOut();
