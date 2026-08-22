@@ -29,8 +29,9 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
     fileName = fileName.split('?')[0] || "";
 
     if (!fileName) {
-      throw new Error("INVALID_VIDEO_PATH");
+      return { url: "", error: "INVALID_VIDEO_PATH" as const };
     }
+
 
     // O bucket assets é PRIVADO (public: false)
     // Para acessá-lo via GET direto, precisamos de uma URL assinada (signed URL)
