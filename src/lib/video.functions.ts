@@ -16,12 +16,13 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
     const SUPABASE_PROJECT_ID = "zjvmfmdyuxmyanuuralq";
     const baseUrl = `https://${SUPABASE_PROJECT_ID}.supabase.co`;
 
-    // Normaliza o path
+    // Normaliza o path: remove 'assets/' se já existir e limpa barras
     let fileName = data.path.replace(/^\/+/, "").replace(/^assets\//, "");
     
     // Se vier uma URL completa, extraímos apenas o nome do arquivo
     if (fileName.includes("supabase.co")) {
-      fileName = fileName.split("/").pop() || fileName;
+      const parts = fileName.split('/');
+      fileName = parts[parts.length - 1];
     }
 
     // Remove qualquer query parameter (ex: ?t=...)
@@ -31,20 +32,22 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       throw new Error("INVALID_VIDEO_PATH");
     }
 
-    // O bucket assets é privado. A chave pública consegue assinar os vídeos
-    // permitidos pela política de leitura e funciona também no VPS sem chave administrativa.
+    // O bucket assets é PRIVADO (public: false)
+    // Para acessá-lo via GET direto, precisamos de uma URL assinada (signed URL)
+    
+    // Tentamos assinar usando SERVICE_ROLE (preferencial no servidor) 
+    // ou PUBLISHABLE_KEY (como fallback se as permissões permitirem)
     const signingKey =
       process.env['SUPABASE_SERVICE_ROLE_KEY'] || 
       process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'] ||
       process.env['SUPABASE_PUBLISHABLE_KEY'] ||
       process.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
-      import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
       "sb_publishable_MiPzB015qmvANP558ovB_A_WkWjx8T7";
 
     try {
-      console.log(`[VideoAuth] Assinando vídeo: ${fileName}`);
+      console.log(`[VideoAuth] Assinando vídeo: ${fileName} com key starting: ${signingKey.slice(0, 10)}...`);
       
-      // O endpoint de assinatura do Supabase Storage
+      // Assinatura via endpoint de STORAGE
       const signUrl = `${baseUrl}/storage/v1/object/sign/assets/${fileName}`;
       
       const res = await fetch(signUrl, {
@@ -52,9 +55,8 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
         headers: {
           "Content-Type": "application/json",
           "apikey": signingKey,
-          ...(signingKey.startsWith("sb_secret_")
-            ? {}
-            : { "Authorization": `Bearer ${signingKey}` }),
+          // Se for service_role, usamos como bearer. Se for anon, também.
+          "Authorization": `Bearer ${signingKey}`,
         },
         body: JSON.stringify({ expiresIn: 86400 }), // 24h
       });
@@ -73,16 +75,16 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
         throw new Error("VIDEO_SIGN_URL_MISSING");
       }
 
-      // Constrói a URL final garantindo o host correto
+      // Constrói a URL final garantindo o host correto e o prefixo /storage/v1
       let finalUrl = signedPath;
       if (!signedPath.startsWith("http")) {
         finalUrl = `${baseUrl}/storage/v1${signedPath}`;
       }
 
-      console.log(`[VideoAuth] Sucesso: ${finalUrl.slice(0, 50)}...`);
+      console.log(`[VideoAuth] Sucesso: ${finalUrl.slice(0, 60)}...`);
       return { url: finalUrl };
     } catch (err) {
-      console.error("[VideoAuth] Falha crítica na assinatura:", err);
+      console.error("[VideoAuth] Falha na assinatura:", err);
       throw err instanceof Error ? err : new Error("VIDEO_SIGN_FAILED");
     }
   });
