@@ -1,7 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateAccessPassword } from "@/lib/access-code";
-import { z } from "zod";
 
 /**
  * Ativa o teste gratuito de 20 minutos para o usuario autenticado.
@@ -86,8 +84,8 @@ export const startTrial = createServerFn({ method: "POST" })
       }
     }
 
-    // 3. Preparar dados
-    const accessPassword = profileData.access_password || generateAccessPassword();
+    // 4. Preparar dados
+    const finalAccessPassword = profileData?.access_password || generateAccessPassword();
     const expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
 
     // 5. Executar transação forçada (UPSERT para evitar erro 409)
@@ -103,14 +101,13 @@ export const startTrial = createServerFn({ method: "POST" })
       if (subErr) throw subErr;
 
       const { error: profErr } = await supabase.from("profiles")
-        .update({ access_password: accessPassword })
+        .update({ access_password: finalAccessPassword })
         .eq("id", userId);
       
       if (profErr) console.warn("[Trial] Erro ao atualizar senha no perfil (não fatal):", profErr);
 
-
       console.log(`[Trial] Sucesso definitivo para ${userId}. Expira em: ${expiresAt}`);
-      return { expiresAt, accessPassword };
+      return { expiresAt, accessPassword: finalAccessPassword };
     } catch (err: any) {
       console.error("[Trial] Falha total no processamento:", err);
       throw new Error(err.message || "INTERNAL_ERROR");
