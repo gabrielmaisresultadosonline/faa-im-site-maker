@@ -249,19 +249,23 @@ function Dashboard() {
       setLoadingVideo(true);
       const urlStr = String(tut.url);
       
-      // Lógica de extração de path compatível com URLs antigas e novas
+      // Normalização agressiva para extrair o path (OBRIGATÓRIO)
       let fileName = "";
-      if (urlStr.includes('/assets/')) {
-        fileName = urlStr.split('/assets/').pop() || "";
+      if (urlStr.includes('/storage/v1/object/public/assets/')) {
+        fileName = urlStr.split('/storage/v1/object/public/assets/').pop()?.split('?')[0] || "";
+      } else if (urlStr.includes('/assets/')) {
+        fileName = urlStr.split('/assets/').pop()?.split('?')[0] || "";
+      } else if (urlStr.includes('supabase.co')) {
+        fileName = urlStr.split('/').pop()?.split('?')[0] || "";
       } else {
-        fileName = urlStr.split('/').pop() || "";
+        fileName = urlStr.split('?')[0] || "";
       }
       
-      // Limpa query parameters
-      fileName = fileName.split('?')[0] || '';
+      // Limpa prefixos
+      fileName = fileName.replace(/^assets\//, "").replace(/^\/+/, "");
 
       try {
-        console.log(`[Dashboard] Solicitando Signed URL (7 dias) para: ${fileName}`);
+        console.log(`[Dashboard] OBRIGATÓRIO: Gerando Signed URL para: ${fileName}`);
         const result = await getSignedVideoUrl({ data: { path: fileName } });
         
         if (result && result.url) {

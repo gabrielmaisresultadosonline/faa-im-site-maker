@@ -95,31 +95,28 @@ function Index() {
     const PATH = "video-0.07566535014049602.mp4";
     const loadHeroVideo = async () => {
       try {
-        console.log(`[Ingles] Requesting Signed URL (7 days) for hero video: ${PATH}`);
+        console.log(`[Ingles] OBRIGATÓRIO: Gerando Signed URL para: ${PATH}`);
         const result = await fetchSignedUrl({ data: { path: PATH } });
         
         if (isMounted && result && result.url) {
-          console.log("[Ingles] Hero video signed successfully.");
           setHeroVideoUrl(result.url);
         } else {
           throw new Error("VIDEO_SIGN_URL_MISSING");
         }
       } catch (err) {
-        console.warn("[Ingles] Server-side signing failed; trying client fallback:", err);
+        console.warn("[Ingles] Fallback client-side para o vídeo hero:", err);
         try {
           const { data: fallbackData, error: fallbackError } = await supabase.storage
             .from('assets')
-            .createSignedUrl(PATH, 604800);
+            .createSignedUrl(PATH, 604800); // 7 dias
 
           if (!fallbackError && fallbackData?.signedUrl) {
             if (isMounted) setHeroVideoUrl(fallbackData.signedUrl);
           } else {
-            console.error("[Ingles] Failed to sign hero video via client fallback:", fallbackError);
-            if (isMounted) setHeroVideoUrl(null);
+            console.error("[Ingles] Falha definitiva no vídeo hero:", fallbackError);
           }
         } catch (clientErr) {
-          console.error("[Ingles] Critical error signing on client:", clientErr);
-          if (isMounted) setHeroVideoUrl(null);
+          console.error("[Ingles] Erro fatal no client:", clientErr);
         }
       }
     };

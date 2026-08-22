@@ -495,11 +495,10 @@ function AdminDashboard() {
                             });
                           if (error) throw error;
                           
-                          const { data: { publicUrl } } = supabase.storage
-                            .from('assets')
-                            .getPublicUrl(data.path);
-                          
-                          updateSettingMutation.mutate({ key: 'download_link', value: publicUrl });
+                          // Para o download_link, não usamos publicUrl pois o bucket assets é privado.
+                          // Salvamos o path relativo e deixamos o frontend assinar se necessário,
+                          // ou passamos o path para uma função que gere a signed url de download.
+                          updateSettingMutation.mutate({ key: 'download_link', value: data.path });
                           toast.success("Extensão atualizada!", { id: toastId });
                         } catch (err: any) {
                           toast.error(err.message, { id: toastId });
@@ -570,11 +569,12 @@ function AdminDashboard() {
                                       cacheControl: '3600'
                                     });
                                     if (error) throw error;
-                                    const { data: { publicUrl } } = supabase.storage.from('assets').getPublicUrl(data.path);
-                                    
-                                    if (!settings) return;
-                                    const newTuts = [...(settings['tutorials'] || [])];
-                                    newTuts[index].thumbnail = publicUrl;
+                                     // Armazenamos apenas o path relativo. O frontend assinará a URL se o bucket for privado.
+                                     const filePath = data.path;
+                                     
+                                     if (!settings) return;
+                                     const newTuts = [...(settings['tutorials'] || [])];
+                                     newTuts[index].thumbnail = filePath;
                                     updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
                                     toast.success("Thumbnail atualizada!", { id: toastId });
                                   } catch (err: any) {
@@ -604,11 +604,11 @@ function AdminDashboard() {
                                   cacheControl: '3600'
                                 });
                                 if (error) throw error;
-                                const { data: { publicUrl } } = supabase.storage.from('assets').getPublicUrl(data.path);
-                                
-                                if (!settings) return;
-                                const newTuts = [...(settings['tutorials'] || [])];
-                                newTuts[index].thumbnail = publicUrl;
+                                 const filePath = data.path;
+                                 
+                                 if (!settings) return;
+                                 const newTuts = [...(settings['tutorials'] || [])];
+                                 newTuts[index].thumbnail = filePath;
                                 updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
                                 toast.success("Thumbnail atualizada!", { id: toastId });
                               } catch (err: any) {
@@ -648,12 +648,10 @@ function AdminDashboard() {
                                 });
                               if (error) throw error;
                               
-                              const { data: { publicUrl } } = supabase.storage
-                                .from('assets')
-                                .getPublicUrl(data.path);
-                              
-                              const newTuts = [...(settings?.['tutorials'] || [])];
-                              newTuts[index].url = publicUrl;
+                               const filePath = data.path;
+                               
+                               const newTuts = [...(settings?.['tutorials'] || [])];
+                               newTuts[index].url = filePath;
                               updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
                               toast.success("Vídeo atualizado!", { id: toastId });
                             } catch (err: any) {
@@ -1087,14 +1085,10 @@ function NoticesAndDocsManager() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('assets')
-        .getPublicUrl(filePath);
-
       if (type === 'notice_image') {
-        setNewNotice(prev => ({ ...prev, content: publicUrl }));
+        setNewNotice(prev => ({ ...prev, content: filePath }));
       } else {
-        setNewNotice(prev => ({ ...prev, image_thumb_url: publicUrl }));
+        setNewNotice(prev => ({ ...prev, image_thumb_url: filePath }));
       }
       toast.success("Upload concluído!");
     } catch (error: any) {

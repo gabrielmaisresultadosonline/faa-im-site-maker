@@ -33,8 +33,6 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
     }
 
     // Tenta obter a service role key do ambiente (PM2/Lovable Cloud)
-    // Se não houver service role, tentamos com a anon key como fallback, 
-    // embora para Signed URLs a service role seja o ideal.
     const signingKey =
       process.env['SUPABASE_SERVICE_ROLE_KEY'] || 
       process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'] ||
@@ -44,9 +42,8 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       "sb_publishable_MiPzB015qmvANP558ovB_A_WkWjx8T7";
 
     try {
-      console.log(`[VideoAuth] Gerando Signed URL para: ${fileName} (Bucket: assets)`);
+      console.log(`[VideoAuth] OBRIGATÓRIO: Gerando Signed URL para: ${fileName}`);
       
-      // Endpoint de criação de Signed URL no Supabase Storage
       const signUrl = `${baseUrl}/storage/v1/object/sign/assets/${fileName}`;
       
       const res = await fetch(signUrl, {
@@ -56,30 +53,24 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
           "apikey": signingKey,
           "Authorization": `Bearer ${signingKey}`,
         },
-        body: JSON.stringify({ expiresIn: 604800 }), // 7 dias (exigência do usuário)
+        body: JSON.stringify({ expiresIn: 604800 }), // 7 dias
       });
 
       if (!res.ok) {
         const errText = await res.text();
-        console.error(`[VideoAuth] Falha ao assinar (${res.status}):`, errText);
-        // Fallback: Retorna a URL autenticada genérica se falhar a assinatura
-        return {
-          url: `${baseUrl}/storage/v1/object/authenticated/assets/${fileName}`,
-          error: `SIGN_FAILED_${res.status}`
-        };
+        console.error(`[VideoAuth] CRÍTICO: Falha ao assinar no servidor (${res.status}):`, errText);
+        // NUNCA retorne /public/ ou /authenticated/ aqui se for vídeo do bucket assets.
+        // O navegador bloqueia o player se a URL não for assinada e o bucket for privado.
+        return { url: "", error: `SIGN_SERVER_ERROR_${res.status}` as const };
       }
 
       const json = await res.json();
       const signedPath = json.signedURL || json.signedUrl;
 
       if (!signedPath) {
-        return {
-          url: `${baseUrl}/storage/v1/object/authenticated/assets/${fileName}`,
-          error: "SIGNED_URL_MISSING_IN_RESPONSE"
-        };
+        return { url: "", error: "SIGNED_URL_EMPTY" as const };
       }
 
-      // Constrói a URL final absoluta
       let finalUrl = signedPath;
       if (!signedPath.startsWith("http")) {
         finalUrl = `${baseUrl}/storage/v1${signedPath}`;
@@ -87,10 +78,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
 
       return { url: finalUrl };
     } catch (err) {
-      console.error("[VideoAuth] Exception:", err);
-      return {
-        url: `${baseUrl}/storage/v1/object/authenticated/assets/${fileName}`,
-        error: err instanceof Error ? err.message : "SIGN_EXCEPTION",
-      };
+      console.error("[VideoAuth] Exception fatal:", err);
+      return { url: "", error: "SIGN_EXCEPTION" as const };
     }
   });
