@@ -252,8 +252,11 @@ function Dashboard() {
         const urlStr = String(tut.url);
         let fileName = "";
         
+        // Se for uma URL completa, extraímos apenas o nome do arquivo após /assets/ ou o último componente
         if (urlStr.includes('/assets/')) {
-          fileName = urlStr.split('/assets/').pop()?.split('?')[0] || "";
+          const parts = urlStr.split('/assets/');
+          const lastPart = parts[parts.length - 1];
+          fileName = lastPart.split('?')[0] || "";
         } else {
           fileName = urlStr.split('/').pop()?.split('?')[0] || "";
         }
