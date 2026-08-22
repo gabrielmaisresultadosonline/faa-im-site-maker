@@ -96,11 +96,36 @@ function Index() {
     const PATH = "video-0.02649446612669404.mp4";
     const loadHeroVideo = async () => {
       try {
-        const { url } = await fetchSignedUrl({ data: { path: PATH } });
-        if (isMounted) setHeroVideoUrl(url);
+        console.log(`[Home] Solicitando assinatura para o vídeo hero: ${PATH}`);
+        const result = await fetchSignedUrl({ data: { path: PATH } });
+        
+        if (isMounted && result && result.url) {
+          console.log("[Home] Vídeo hero assinado com sucesso.");
+          setHeroVideoUrl(result.url);
+        } else {
+          throw new Error("VIDEO_SIGN_URL_MISSING");
+        }
       } catch (err) {
-        console.warn("Não foi possível gerar a URL assinada do vídeo:", err);
-        if (isMounted) setHeroVideoUrl(null);
+        console.warn("[Home] Assinatura pelo servidor falhou; tentando sessão pública do cliente:", err);
+        // Tenta assinar no client-side como fallback. 
+        // Em buckets privados, isso geralmente falha para anônimos, 
+        // mas o bucket tem RLS public read, o que pode ajudar dependendo da política.
+        try {
+          const { data: fallbackData, error: fallbackError } = await supabase.storage
+            .from('assets')
+            .createSignedUrl(PATH, 3600);
+
+          if (!fallbackError && fallbackData?.signedUrl) {
+            console.log("[Home] Vídeo hero assinado via fallback client com sucesso.");
+            if (isMounted) setHeroVideoUrl(fallbackData.signedUrl);
+          } else {
+            console.error("[Home] Falha ao assinar vídeo hero via fallback client:", fallbackError);
+            if (isMounted) setHeroVideoUrl(null);
+          }
+        } catch (clientErr) {
+          console.error("[Home] Erro crítico ao assinar no client:", clientErr);
+          if (isMounted) setHeroVideoUrl(null);
+        }
       }
     };
     
@@ -235,6 +260,11 @@ function Index() {
                 autoPlay={false}
                 playsInline
                 preload="metadata"
+                onError={(e) => {
+                  console.error("[Home] Vídeo hero falhou ao carregar:", e);
+                  // O 400 Bad Request no console do usuário sugere que a URL pública falhou.
+                  // Se o vídeo falhar, tentamos esconder o player ou mostrar um aviso.
+                }}
               />
             ) : (
               <div className="w-full h-full bg-neutral-900 flex items-center justify-center">

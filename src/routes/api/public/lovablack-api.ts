@@ -237,6 +237,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           const isSubActive = (s: { type: string | null; status: string | null; expires_at: string | null }) =>
             s.status === "active" &&
             (s.type === "lifetime" ||
+              s.type === "annual" || // Considera planos anuais como ativos se o status for active (garantia extra)
               !s.expires_at ||
               new Date(s.expires_at).getTime() + GRACE_MS > Date.now());
 
