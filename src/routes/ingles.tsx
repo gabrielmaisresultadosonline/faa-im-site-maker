@@ -251,6 +251,9 @@ function Index() {
                 autoPlay={false}
                 playsInline
                 preload="metadata"
+                onError={(e) => {
+                  console.error("[Ingles] Hero video failed to load:", e);
+                }}
               />
             ) : (
               <div className="w-full h-full bg-neutral-900 flex items-center justify-center">
