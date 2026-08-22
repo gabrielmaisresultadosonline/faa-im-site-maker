@@ -256,7 +256,7 @@ function Dashboard() {
         if (urlStr.includes('/assets/')) {
           const parts = urlStr.split('/assets/');
           const lastPart = parts[parts.length - 1];
-          fileName = lastPart.split('?')[0] || "";
+          fileName = (lastPart || "").split('?')[0] || "";
         } else {
           fileName = urlStr.split('/').pop()?.split('?')[0] || "";
         }
