@@ -21,8 +21,8 @@ export const startTrial = createServerFn({ method: "POST" })
     }
 
     return {
-      expiresAt: typeof data.expiresAt === "string" ? data.expiresAt : "",
+      expiresAt: typeof data["expiresAt"] === "string" ? data["expiresAt"] : "",
       accessPassword:
-        typeof data.accessPassword === "string" ? data.accessPassword : "",
+        typeof data["accessPassword"] === "string" ? data["accessPassword"] : "",
     };
   });
