@@ -1085,14 +1085,10 @@ function NoticesAndDocsManager() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('assets')
-        .getPublicUrl(filePath);
-
       if (type === 'notice_image') {
-        setNewNotice(prev => ({ ...prev, content: publicUrl }));
+        setNewNotice(prev => ({ ...prev, content: filePath }));
       } else {
-        setNewNotice(prev => ({ ...prev, image_thumb_url: publicUrl }));
+        setNewNotice(prev => ({ ...prev, image_thumb_url: filePath }));
       }
       toast.success("Upload concluído!");
     } catch (error: any) {
