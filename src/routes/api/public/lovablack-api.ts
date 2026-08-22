@@ -227,13 +227,22 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
             );
           }
 
-          const subscription = subRes.data;
-          // Estabilização: Tolerância de 5 minutos para evitar quedas por dessincronização de relógio (VPS/Supabase)
-          const expiryDate = subscription ? new Date(subscription.expires_at) : null;
-          const isExpired =
-            !subscription ||
-            subscription.status !== "active" ||
-            (expiryDate ? expiryDate.getTime() + (5 * 60 * 1000) <= Date.now() : true);
+          // Escolhe a assinatura válida (vitalícia ou ainda dentro do prazo) antes de qualquer expirada.
+          const GRACE_MS = 5 * 60 * 1000;
+          const subs = (subRes.data ?? []) as Array<{
+            type: string | null;
+            status: string | null;
+            expires_at: string | null;
+          }>;
+          const isSubActive = (s: { type: string | null; status: string | null; expires_at: string | null }) =>
+            s.status === "active" &&
+            (s.type === "lifetime" ||
+              !s.expires_at ||
+              new Date(s.expires_at).getTime() + GRACE_MS > Date.now());
+
+          const subscription = subs.find(isSubActive) ?? subs[0] ?? null;
+          const isExpired = !subscription || !isSubActive(subscription);
+
 
           // Encerra a sessao criada apenas para validar o login.
           await publicClient.auth.signOut();
