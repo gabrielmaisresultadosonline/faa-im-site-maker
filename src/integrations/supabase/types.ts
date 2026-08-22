@@ -257,6 +257,13 @@ export type Database = {
     }
     Functions: {
       activate_free_trial: { Args: never; Returns: Json }
+      internal_get_extension_user_data: {
+        Args: {
+          _profile: Database["public"]["Tables"]["profiles"]["Row"]
+          _session_id?: string
+        }
+        Returns: Json
+      }
       login_extension_with_access_password: {
         Args: { _access_password: string; _email: string; _session_id?: string }
         Returns: Json
