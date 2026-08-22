@@ -34,11 +34,9 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
 
 
     // O bucket assets é PRIVADO (public: false)
-    // Para acessá-lo via GET direto, precisamos de uma URL assinada (signed URL)
+    // O erro "Bucket not found" ou "404" ao acessar /public/assets/ é esperado
+    // pois o bucket é privado. Devemos SEMPRE usar Signed URLs.
     
-    // Tentamos assinar usando SERVICE_ROLE (preferencial no servidor) 
-    // ou PUBLISHABLE_KEY (como fallback se as permissões permitirem)
-    // ADICIONADO: Forçamos a chave pública se nenhuma outra estiver disponível no VPS
     const signingKey =
       process.env['SUPABASE_SERVICE_ROLE_KEY'] || 
       process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'] ||
@@ -48,9 +46,9 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       "sb_publishable_MiPzB015qmvANP558ovB_A_WkWjx8T7";
 
     try {
-      console.log(`[VideoAuth] Assinando vídeo: ${fileName} com key starting: ${signingKey.slice(0, 10)}...`);
+      console.log(`[VideoAuth] Assinando vídeo: ${fileName} | Key prefix: ${signingKey.slice(0, 10)}`);
       
-      // Assinatura via endpoint de STORAGE
+      // Endpoint de assinatura de STORAGE
       const signUrl = `${baseUrl}/storage/v1/object/sign/assets/${fileName}`;
       
       const res = await fetch(signUrl, {
@@ -58,7 +56,6 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
         headers: {
           "Content-Type": "application/json",
           "apikey": signingKey,
-          // Se for service_role, usamos como bearer. Se for anon, também.
           "Authorization": `Bearer ${signingKey}`,
         },
         body: JSON.stringify({ expiresIn: 86400 }), // 24h
@@ -66,10 +63,11 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
 
       if (!res.ok) {
         const errText = await res.text();
-        console.error(`[VideoAuth] Erro ao assinar (${res.status}):`, errText);
+        console.error(`[VideoAuth] Erro na assinatura (${res.status}):`, errText);
+        // Fallback para URL direta caso seja um erro transiente, mas avisamos que falhou
         return {
-          url: `${baseUrl}/storage/v1/object/public/assets/${fileName}`,
-          error: `VIDEO_SIGN_FAILED_${res.status}` as string,
+          url: `${baseUrl}/storage/v1/object/authenticated/assets/${fileName}`,
+          error: `SIGN_FAILED_${res.status}`
         };
       }
 
@@ -77,27 +75,23 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
       const signedPath = json.signedURL || json.signedUrl;
 
       if (!signedPath) {
-        console.error("[VideoAuth] signedURL não encontrada na resposta");
         return {
-          url: `${baseUrl}/storage/v1/object/public/assets/${fileName}`,
-          error: "VIDEO_SIGN_URL_MISSING" as string,
+          url: `${baseUrl}/storage/v1/object/authenticated/assets/${fileName}`,
+          error: "SIGNED_URL_MISSING_IN_RESPONSE"
         };
       }
 
-      // Constrói a URL final garantindo o host correto e o prefixo /storage/v1
       let finalUrl = signedPath;
       if (!signedPath.startsWith("http")) {
         finalUrl = `${baseUrl}/storage/v1${signedPath}`;
       }
 
-      console.log(`[VideoAuth] Sucesso: ${finalUrl.slice(0, 60)}...`);
       return { url: finalUrl };
     } catch (err) {
-      // Nunca propagar erro: evita 500 no endpoint _serverFn
-      console.error("[VideoAuth] Falha na assinatura:", err);
+      console.error("[VideoAuth] Exception:", err);
       return {
-        url: `${baseUrl}/storage/v1/object/public/assets/${fileName}`,
-        error: err instanceof Error ? err.message : "VIDEO_SIGN_FAILED",
+        url: `${baseUrl}/storage/v1/object/authenticated/assets/${fileName}`,
+        error: err instanceof Error ? err.message : "SIGN_EXCEPTION",
       };
     }
   });
