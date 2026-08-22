@@ -95,32 +95,8 @@ function Index() {
     let isMounted = true;
     const PATH = "https://www.youtube.com/embed/vx066YJhFw8";
     const loadHeroVideo = async () => {
-      try {
-        console.log(`[Home] OBRIGATÓRIO: Gerando Signed URL para: ${PATH}`);
-        // A server function gerada pelo TanStack exige o input no campo 'data'
-        const result = await fetchSignedUrl({ data: { path: PATH } });
-        
-        if (isMounted && result && result.url) {
-          setHeroVideoUrl(result.url);
-        } else {
-          throw new Error("VIDEO_SIGN_URL_MISSING");
-        }
-      } catch (err) {
-        console.warn("[Home] Fallback client-side para o vídeo hero:", err);
-        try {
-          const { data: fallbackData, error: fallbackError } = await supabase.storage
-            .from('assets')
-            .createSignedUrl(PATH, 604800); // 7 dias
-
-          if (!fallbackError && fallbackData?.signedUrl) {
-            if (isMounted) setHeroVideoUrl(fallbackData.signedUrl);
-          } else {
-            console.error("[Home] Falha definitiva no vídeo hero:", fallbackError);
-          }
-        } catch (clientErr) {
-          console.error("[Home] Erro fatal no client:", clientErr);
-        }
-      }
+      // Simplesmente definimos a URL do YouTube diretamente
+      setHeroVideoUrl(PATH);
     };
     
     loadHeroVideo();
