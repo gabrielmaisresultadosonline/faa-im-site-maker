@@ -95,7 +95,7 @@ function Index() {
     const PATH = "video-0.07566535014049602.mp4";
     const loadHeroVideo = async () => {
       try {
-        console.log(`[Ingles] Requesting signature for hero video: ${PATH}`);
+        console.log(`[Ingles] Requesting Signed URL (7 days) for hero video: ${PATH}`);
         const result = await fetchSignedUrl({ data: { path: PATH } });
         
         if (isMounted && result && result.url) {
@@ -105,14 +105,13 @@ function Index() {
           throw new Error("VIDEO_SIGN_URL_MISSING");
         }
       } catch (err) {
-        console.warn("[Ingles] Server-side signing failed; trying public client fallback:", err);
+        console.warn("[Ingles] Server-side signing failed; trying client fallback:", err);
         try {
           const { data: fallbackData, error: fallbackError } = await supabase.storage
             .from('assets')
-            .createSignedUrl(PATH, 3600);
+            .createSignedUrl(PATH, 604800);
 
           if (!fallbackError && fallbackData?.signedUrl) {
-            console.log("[Ingles] Hero video signed via client fallback successfully.");
             if (isMounted) setHeroVideoUrl(fallbackData.signedUrl);
           } else {
             console.error("[Ingles] Failed to sign hero video via client fallback:", fallbackError);

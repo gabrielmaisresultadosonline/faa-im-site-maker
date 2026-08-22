@@ -248,13 +248,20 @@ function Dashboard() {
     if (isMp4) {
       setLoadingVideo(true);
       const urlStr = String(tut.url);
-      const pathPart = urlStr.includes('/assets/')
-        ? urlStr.split('/assets/').pop()
-        : urlStr.split('/').pop();
-      const fileName = (pathPart || '').split('?')[0] || '';
+      
+      // Lógica de extração de path compatível com URLs antigas e novas
+      let fileName = "";
+      if (urlStr.includes('/assets/')) {
+        fileName = urlStr.split('/assets/').pop() || "";
+      } else {
+        fileName = urlStr.split('/').pop() || "";
+      }
+      
+      // Limpa query parameters
+      fileName = fileName.split('?')[0] || '';
 
       try {
-        console.log(`[Dashboard] Solicitando assinatura para: ${fileName}`);
+        console.log(`[Dashboard] Solicitando Signed URL (7 dias) para: ${fileName}`);
         const result = await getSignedVideoUrl({ data: { path: fileName } });
         
         if (result && result.url) {
@@ -264,26 +271,23 @@ function Dashboard() {
           throw new Error('VIDEO_SIGN_URL_MISSING');
         }
       } catch (err) {
-        console.warn("[Dashboard] Assinatura pelo servidor falhou; tentando sessão do usuário:", err);
+        console.warn("[Dashboard] Erro na assinatura via servidor, tentando fallback client:", err);
         
-        // No client-side, tentamos criar a URL assinada usando a sessão do usuário logado.
-        // O bucket 'assets' tem políticas de leitura pública via RLS, mas se for PRIVATE=TRUE,
-        // a assinatura é obrigatória.
         try {
+          // Fallback client-side usando a sessão do usuário logado
           const { data: fallbackData, error: fallbackError } = await supabase.storage
             .from('assets')
-            .createSignedUrl(fileName, 3600);
+            .createSignedUrl(fileName, 604800); // 7 dias
 
           if (fallbackError || !fallbackData?.signedUrl) {
-            console.error("[Dashboard] Não foi possível assinar o vídeo no client:", fallbackError);
+            console.error("[Dashboard] Falha crítica na assinatura:", fallbackError);
             setSignedVideoUrl(null);
             toast.error(isEn ? 'Could not load this video.' : 'Não foi possível carregar este vídeo.');
           } else {
-            console.log("[Dashboard] Vídeo assinado via fallback client com sucesso.");
             setSignedVideoUrl(fallbackData.signedUrl);
           }
         } catch (clientErr) {
-          console.error("[Dashboard] Erro fatal ao assinar no client:", clientErr);
+          console.error("[Dashboard] Erro fatal no client:", clientErr);
           setSignedVideoUrl(null);
         }
       } finally {
