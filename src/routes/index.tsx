@@ -93,7 +93,7 @@ function Index() {
 
   useEffect(() => {
     let isMounted = true;
-    const PATH = "video-0.07566535014049602.mp4";
+    const PATH = "https://www.youtube.com/embed/vx066YJhFw8";
     const loadHeroVideo = async () => {
       try {
         console.log(`[Home] OBRIGATÓRIO: Gerando Signed URL para: ${PATH}`);
@@ -247,18 +247,12 @@ function Index() {
 
           <div className="relative rounded-3xl overflow-hidden border-[12px] border-white shadow-2xl bg-neutral-900 aspect-video flex items-center justify-center group shadow-[#D8D0C8]">
             {heroVideoUrl ? (
-              <video
-                src={heroVideoUrl}
-                className="w-full h-full absolute inset-0 z-0 object-cover"
-                controls
-                autoPlay={false}
-                playsInline
-                preload="metadata"
-                onError={(e) => {
-                  console.error("[Home] Vídeo hero falhou ao carregar:", e);
-                  // O 400 Bad Request no console do usuário sugere que a URL pública falhou.
-                  // Se o vídeo falhar, tentamos esconder o player ou mostrar um aviso.
-                }}
+              <iframe
+                src={`${heroVideoUrl}?autoplay=0&rel=0&modestbranding=1`}
+                className="w-full h-full absolute inset-0 z-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="LOVABLACK Hero Video"
               />
             ) : (
               <div className="w-full h-full bg-neutral-900 flex items-center justify-center">
