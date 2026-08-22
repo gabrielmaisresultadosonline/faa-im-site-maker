@@ -11,15 +11,18 @@ export const startTrial = createServerFn({ method: "POST" })
   .middleware([])
   .validator((data: unknown) => data) // Mantém compatibilidade com a chamada sem data
   .handler(async ({ data, context }: { data: any, context: any }) => {
+    console.log("[Trial] Handler iniciado", { context, data });
+    
     // Se não houver userId no contexto (chamada pública), tentamos pegar da data
     let userId = context?.userId;
     
     if (!userId && data && typeof data === 'object' && 'userId' in data) {
       userId = (data as any).userId;
+      console.log("[Trial] UserId recuperado da data:", userId);
     }
 
     if (!userId) {
-      console.error("[Trial] ID de usuário não fornecido");
+      console.error("[Trial] ID de usuário não fornecido ou encontrado no contexto");
       throw new Error("USER_ID_REQUIRED");
     }
 
@@ -31,26 +34,38 @@ export const startTrial = createServerFn({ method: "POST" })
     // 1. GARANTIA: Tentamos sempre o upsert do perfil primeiro para evitar qualquer race condition
     try {
       console.log(`[Trial] Forçando upsert do perfil para ${userId}`);
-      const { error: upsertError } = await (supabase.from("profiles") as any).upsert({ 
+      const profileToUpsert = { 
         id: userId,
         updated_at: new Date().toISOString()
-      }, { onConflict: 'id' });
+      };
+      console.log("[Trial] Dados do perfil para upsert:", profileToUpsert);
       
-      if (upsertError) console.warn("[Trial] Erro no upsert inicial:", upsertError);
+      const { data: upsertData, error: upsertError } = await (supabase.from("profiles") as any).upsert(profileToUpsert, { onConflict: 'id' }).select();
+      
+      if (upsertError) {
+        console.error("[Trial] Erro no upsert inicial:", upsertError);
+      } else {
+        console.log("[Trial] Upsert inicial concluído com sucesso:", upsertData);
+      }
     } catch (e) {
-      console.warn("[Trial] Exceção no upsert inicial (ignorado):", e);
+      console.error("[Trial] Exceção crítica no upsert inicial:", e);
     }
 
     // 2. Verificar se o perfil existe e buscar dados necessários
+    console.log(`[Trial] Buscando perfil final para ${userId}`);
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
       .select("id, access_password")
       .eq("id", userId)
       .maybeSingle();
     
+    if (profileError) {
+      console.error("[Trial] Erro ao buscar perfil:", profileError);
+    }
+    
     // Se ainda não existir, tentamos uma última vez criar o perfil básico
     if (!profileData) {
-      console.log(`[Trial] Perfil não encontrado, criando entrada mínima...`);
+      console.log(`[Trial] Perfil não encontrado após upsert, tentando insert direto...`);
       const { data: retryData, error: retryError } = await supabase
         .from("profiles")
         .insert({ id: userId })
@@ -58,9 +73,16 @@ export const startTrial = createServerFn({ method: "POST" })
         .single();
       
       if (retryError) {
-        console.error("[Trial] Falha crítica ao criar perfil:", retryError);
-        throw new Error("PROFILE_CREATION_FAILED");
+        console.error("[Trial] Falha crítica no insert de emergência:", retryError);
+        // Não jogamos erro aqui se o erro for de duplicidade, pois o importante é a assinatura
+        if (!retryError.message.includes("duplicate")) {
+           throw new Error(`PROFILE_CREATION_FAILED: ${retryError.message}`);
+        }
+      } else {
+        console.log("[Trial] Insert de emergência concluído:", retryData);
       }
+    } else {
+      console.log("[Trial] Perfil encontrado:", profileData);
     }
 
     // 3. Verificar assinaturas existentes
@@ -90,6 +112,7 @@ export const startTrial = createServerFn({ method: "POST" })
 
     // 5. Executar transação forçada (UPSERT para evitar erro 409)
     try {
+      console.log(`[Trial] Iniciando upsert de assinatura para ${userId}`);
       // Usamos uma abordagem sequencial para maior confiabilidade no Supabase Admin
       const { error: subErr } = await supabase.from("subscriptions").upsert({
         user_id: userId,
@@ -98,18 +121,24 @@ export const startTrial = createServerFn({ method: "POST" })
         expires_at: expiresAt,
       }, { onConflict: 'user_id,type' });
 
-      if (subErr) throw subErr;
+      if (subErr) {
+        console.error("[Trial] Erro no upsert de assinatura:", subErr);
+        throw subErr;
+      }
 
+      console.log(`[Trial] Assinatura criada, atualizando senha do perfil para ${userId}`);
       const { error: profErr } = await supabase.from("profiles")
         .update({ access_password: finalAccessPassword })
         .eq("id", userId);
       
-      if (profErr) console.warn("[Trial] Erro ao atualizar senha no perfil (não fatal):", profErr);
+      if (profErr) {
+        console.warn("[Trial] Erro ao atualizar senha no perfil (não fatal):", profErr);
+      }
 
       console.log(`[Trial] Sucesso definitivo para ${userId}. Expira em: ${expiresAt}`);
       return { expiresAt, accessPassword: finalAccessPassword };
     } catch (err: any) {
-      console.error("[Trial] Falha total no processamento:", err);
+      console.error("[Trial] Falha total no processamento da ativação:", err);
       throw new Error(err.message || "INTERNAL_ERROR");
     }
   });

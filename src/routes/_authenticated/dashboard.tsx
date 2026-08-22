@@ -117,10 +117,12 @@ function Dashboard() {
         setTimeout(() => trialMutation.mutate(), 1500);
       } else {
         // Se for um erro desconhecido, tentamos uma última vez silenciosamente
+        console.warn("[Dashboard] Erro desconhecido na ativação, tentando novamente...");
         setTimeout(() => trialMutation.mutate(), 1000);
       }
       
-      toast.error(toastMsg, { duration: 3000 });
+      const debugInfo = error?.message ? ` (Detalhes: ${error.message})` : "";
+      toast.error(toastMsg + debugInfo, { duration: 5000 });
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] });
     }
