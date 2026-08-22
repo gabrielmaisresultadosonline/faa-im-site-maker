@@ -171,7 +171,12 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
           window.location.assign(isAdminEmail ? '/admin/dashboard' : '/dashboard');
         }, 500);
       } else {
-        toast.info(lang === 'pt' ? 'Cadastro realizado! Por favor, verifique seu email para confirmar a conta.' : 'Registration completed! Please check your email to confirm your account.');
+        // Agora com auto_confirm_email: true, isso raramente deve acontecer se o Supabase responder com a sessão.
+        // Se ainda assim cair aqui, mostramos uma mensagem de sucesso direto.
+        toast.success(lang === 'pt' ? 'Cadastro realizado com sucesso!' : 'Registration successful!');
+        setTimeout(() => {
+          window.location.assign('/dashboard');
+        }, 1000);
       }
     } catch (error: any) {
       toast.error(error.message || (lang === 'pt' ? 'Erro ao realizar cadastro' : 'Error during registration'));
