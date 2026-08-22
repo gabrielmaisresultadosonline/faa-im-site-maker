@@ -108,17 +108,15 @@ function Dashboard() {
       const isAlreadyUsed = msg.includes('TRIAL_ALREADY_USED') || msg.includes('INSERT_FAILED_SUBSCRIPTION') || msg.includes('409');
       const isProfileMissing = msg.includes('PROFILE_NOT_FOUND') || msg.includes('PROFILE_SYNC_FAILED') || msg.includes('USER_ID_REQUIRED');
       
-      let toastMsg = isEn ? 'Could not activate the test. Try again.' : 'Não foi possível ativar o teste. Tente novamente.';
+      let toastMsg = isEn ? 'Activating trial, please wait...' : 'Ativando teste, aguarde um momento...';
       
       if (isAlreadyUsed) {
         toastMsg = isEn ? 'This account already used the free test.' : 'Esta conta já usou o teste gratuito.';
       } else if (isProfileMissing) {
-        toastMsg = isEn ? 'Wait a moment, setting up your access...' : 'Aguarde um momento, configurando seu acesso...';
-        // Tenta novamente automaticamente após 2 segundos se for erro de sincronização
-        setTimeout(() => trialMutation.mutate(), 2000);
+        toastMsg = isEn ? 'Syncing profile... one moment.' : 'Sincronizando perfil... um momento.';
+        setTimeout(() => trialMutation.mutate(), 1500);
       } else {
-        // Se for um erro desconhecido, tentamos uma última vez
-        toastMsg = isEn ? 'Retrying activation...' : 'Tentando ativar novamente...';
+        // Se for um erro desconhecido, tentamos uma última vez silenciosamente
         setTimeout(() => trialMutation.mutate(), 1000);
       }
       
