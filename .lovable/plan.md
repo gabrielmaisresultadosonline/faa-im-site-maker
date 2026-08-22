@@ -1,27 +1,32 @@
-# Plano de Correção: Bucket 'assets' e Permissões de Vídeo (v2.1.37)
+# Plano de Estabilização de Assinaturas e Expiração (v2.1.38)
 
-O problema "Bucket not found" e "404" ao acessar vídeos diretamente (mesmo com URLs públicas) ocorre porque o bucket `assets` está configurado como **privado** (`public: false`), mas o código e os logs do usuário tentam acessá-lo via `/storage/v1/object/public/assets/...`. Além disso, a falha na assinatura pode estar ligada à ausência de políticas específicas para o bucket existir.
+O objetivo é eliminar o erro "Acesso expirado" falso na extensão para usuários com planos ativos, sincronizando a lógica de margem de segurança (grace period) entre o Banco de Dados e a API.
 
-## Ações Técnicas
+## Alterações Técnicas
 
-### 1. Banco de Dados (Supabase)
-- Criar migração para garantir que o bucket `assets` exista e esteja explicitamente configurado.
-- Adicionar políticas de RLS para `storage.buckets` permitindo leitura pública do nome do bucket (evita o erro "Bucket not found" em algumas APIs de inspeção).
-- Manter o bucket privado (por segurança), mas garantir que as políticas de leitura permitam acesso via `authenticated` e `anon` no nível de objeto, o que viabiliza o uso de Signed URLs.
+### 1. Banco de Dados (PostgreSQL)
+- Atualizar a função `internal_get_extension_user_data` na migração para incluir um `GRACE_PERIOD` de 5 minutos na verificação de `expires_at`.
+- Garantir que planos `lifetime` (vitalícios) ignorem completamente a data de expiração na lógica do banco.
 
-### 2. Backend (Server Functions)
-- Corrigir `src/lib/video.functions.ts` para nunca gerar URLs com o prefixo `/public/` para o bucket `assets`, já que ele é privado.
-- Reforçar o tratamento de erros e logs para facilitar o debug em caso de falha na assinatura.
+### 2. API do Servidor (TypeScript)
+- Reforçar a lógica em `lovablack-api.ts` para garantir que a propriedade `is_expired` e `is_active` sejam calculadas de forma idêntica à do banco de dados.
 
-### 3. Deployment
-- Recomendar a execução do script de deploy no VPS para garantir que as novas variáveis de ambiente e código entrem em vigor.
+## Detalhes de Implementação
 
-## Detalhes de Segurança
-- Manter RLS ativo.
-- O bucket permanece privado; o acesso externo será via Signed URLs geradas no servidor ou via token de sessão do usuário no cliente.
+### Database Migration
+```sql
+-- Na função internal_get_extension_user_data
+_now timestamptz := clock_timestamp();
+_grace_period interval := interval '5 minutes';
 
----
+-- Lógica de is_active
+'is_active', _subscription.id IS NOT NULL 
+  AND _subscription.status = 'active' 
+  AND (
+    _subscription.type = 'lifetime' 
+    OR _subscription.expires_at + _grace_period > _now
+  )
+```
 
-### 📊 Relatório de Execução (Preview)
-- **Sub-agentes:** UI, Supabase, Auditoria.
-- **Arquivos:** `supabase/migrations/...`, `src/lib/video.functions.ts`.
+### API Refinement
+- Sincronizar `GRACE_MS` com a lógica SQL.
