@@ -228,7 +228,7 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
           }
 
           const subscription = subRes.data;
-          // Adicionamos uma margem de tolerância de 5 minutos para evitar quedas por micro-diferenças de relógio
+          // Estabilização: Tolerância de 5 minutos para evitar quedas por dessincronização de relógio (VPS/Supabase)
           const expiryDate = subscription ? new Date(subscription.expires_at) : null;
           const isExpired =
             !subscription ||
