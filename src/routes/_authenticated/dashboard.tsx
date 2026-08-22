@@ -247,20 +247,13 @@ function Dashboard() {
     
     if (isMp4) {
       setLoadingVideo(true);
-      try {
-        // Extrai o nome do arquivo da URL (ex: video-123.mp4)
-        const urlStr = String(tut.url);
-        let fileName = "";
-        
-        // Se for uma URL completa, extraímos apenas o nome do arquivo após /assets/ ou o último componente
-        if (urlStr.includes('/assets/')) {
-          const parts = urlStr.split('/assets/');
-          const lastPart = parts[parts.length - 1];
-          fileName = (lastPart || "").split('?')[0] || "";
-        } else {
-          fileName = urlStr.split('/').pop()?.split('?')[0] || "";
-        }
+      const urlStr = String(tut.url);
+      const pathPart = urlStr.includes('/assets/')
+        ? urlStr.split('/assets/').pop()
+        : urlStr.split('/').pop();
+      const fileName = (pathPart || '').split('?')[0] || '';
 
+      try {
         console.log(`[Dashboard] Solicitando assinatura para: ${fileName}`);
         const result = await getSignedVideoUrl({ data: { path: fileName } });
         
@@ -268,7 +261,7 @@ function Dashboard() {
           console.log(`[Dashboard] Vídeo assinado com sucesso.`);
           setSignedVideoUrl(result.url);
         } else {
-          setSignedVideoUrl(tut.url);
+          throw new Error('VIDEO_SIGN_URL_MISSING');
         }
       } catch (err) {
         console.warn("[Dashboard] Assinatura pelo servidor falhou; tentando sessão do usuário:", err);
