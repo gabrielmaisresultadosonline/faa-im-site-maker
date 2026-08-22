@@ -648,12 +648,10 @@ function AdminDashboard() {
                                 });
                               if (error) throw error;
                               
-                              const { data: { publicUrl } } = supabase.storage
-                                .from('assets')
-                                .getPublicUrl(data.path);
-                              
-                              const newTuts = [...(settings?.['tutorials'] || [])];
-                              newTuts[index].url = publicUrl;
+                               const filePath = data.path;
+                               
+                               const newTuts = [...(settings?.['tutorials'] || [])];
+                               newTuts[index].url = filePath;
                               updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
                               toast.success("Vídeo atualizado!", { id: toastId });
                             } catch (err: any) {
