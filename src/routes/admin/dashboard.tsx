@@ -564,7 +564,11 @@ function AdminDashboard() {
                                   const toastId = toast.loading("Subindo thumb colada...");
                                   try {
                                     const fileName = `thumb-paste-${Math.random()}-${file.name.replace(/\s+/g, '_')}`;
-                                    const { data, error } = await supabase.storage.from('assets').upload(fileName, file, { upsert: true });
+                                    const { data, error } = await supabase.storage.from('assets').upload(fileName, file, { 
+                                      upsert: true,
+                                      contentType: file.type || 'image/png',
+                                      cacheControl: '3600'
+                                    });
                                     if (error) throw error;
                                     const { data: { publicUrl } } = supabase.storage.from('assets').getPublicUrl(data.path);
                                     
@@ -594,7 +598,11 @@ function AdminDashboard() {
                               const toastId = toast.loading("Subindo thumbnail...");
                               try {
                                 const fileName = `thumb-${Math.random()}-${file.name.replace(/\s+/g, '_')}`;
-                                const { data, error } = await supabase.storage.from('assets').upload(fileName, file, { upsert: true });
+                                const { data, error } = await supabase.storage.from('assets').upload(fileName, file, { 
+                                  upsert: true,
+                                  contentType: file.type || 'image/png',
+                                  cacheControl: '3600'
+                                });
                                 if (error) throw error;
                                 const { data: { publicUrl } } = supabase.storage.from('assets').getPublicUrl(data.path);
                                 
@@ -1071,7 +1079,11 @@ function NoticesAndDocsManager() {
 
       const { error: uploadError } = await supabase.storage
         .from('assets')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { 
+          upsert: true,
+          contentType: file.type || (type === 'notice_image' ? 'image/png' : 'image/jpeg'),
+          cacheControl: '3600'
+        });
 
       if (uploadError) throw uploadError;
 
