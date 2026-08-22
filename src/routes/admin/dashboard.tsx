@@ -263,6 +263,7 @@ function AdminDashboard() {
                         <TableHead>Expira</TableHead>
                         <TableHead>Último acesso</TableHead>
                         <TableHead>Online</TableHead>
+                        <TableHead>IP Registro</TableHead>
                         <TableHead>Bloqueio</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
@@ -305,6 +306,9 @@ function AdminDashboard() {
                                 </div>
                               );
                             })()}
+                          </TableCell>
+                          <TableCell className="text-[10px] font-mono text-neutral-500">
+                            {u.registration_ip || '—'}
                           </TableCell>
                           <TableCell>
                             <Switch
