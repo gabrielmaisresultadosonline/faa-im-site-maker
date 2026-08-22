@@ -12,7 +12,7 @@ import { z } from "zod";
 export const startTrial = createServerFn({ method: "POST" })
   .middleware([])
   .validator((data: unknown) => data) // Mantém compatibilidade com a chamada sem data
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data, context }: { data: any, context: any }) => {
     // Se não houver userId no contexto (chamada pública), tentamos pegar da data
     let userId = context?.userId;
     
