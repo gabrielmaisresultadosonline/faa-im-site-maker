@@ -11,15 +11,18 @@ export const startTrial = createServerFn({ method: "POST" })
   .middleware([])
   .validator((data: unknown) => data) // Mantém compatibilidade com a chamada sem data
   .handler(async ({ data, context }: { data: any, context: any }) => {
+    console.log("[Trial] Handler iniciado", { context, data });
+    
     // Se não houver userId no contexto (chamada pública), tentamos pegar da data
     let userId = context?.userId;
     
     if (!userId && data && typeof data === 'object' && 'userId' in data) {
       userId = (data as any).userId;
+      console.log("[Trial] UserId recuperado da data:", userId);
     }
 
     if (!userId) {
-      console.error("[Trial] ID de usuário não fornecido");
+      console.error("[Trial] ID de usuário não fornecido ou encontrado no contexto");
       throw new Error("USER_ID_REQUIRED");
     }
 
@@ -90,6 +93,7 @@ export const startTrial = createServerFn({ method: "POST" })
 
     // 5. Executar transação forçada (UPSERT para evitar erro 409)
     try {
+      console.log(`[Trial] Iniciando upsert de assinatura para ${userId}`);
       // Usamos uma abordagem sequencial para maior confiabilidade no Supabase Admin
       const { error: subErr } = await supabase.from("subscriptions").upsert({
         user_id: userId,
@@ -98,18 +102,24 @@ export const startTrial = createServerFn({ method: "POST" })
         expires_at: expiresAt,
       }, { onConflict: 'user_id,type' });
 
-      if (subErr) throw subErr;
+      if (subErr) {
+        console.error("[Trial] Erro no upsert de assinatura:", subErr);
+        throw subErr;
+      }
 
+      console.log(`[Trial] Assinatura criada, atualizando senha do perfil para ${userId}`);
       const { error: profErr } = await supabase.from("profiles")
         .update({ access_password: finalAccessPassword })
         .eq("id", userId);
       
-      if (profErr) console.warn("[Trial] Erro ao atualizar senha no perfil (não fatal):", profErr);
+      if (profErr) {
+        console.warn("[Trial] Erro ao atualizar senha no perfil (não fatal):", profErr);
+      }
 
       console.log(`[Trial] Sucesso definitivo para ${userId}. Expira em: ${expiresAt}`);
       return { expiresAt, accessPassword: finalAccessPassword };
     } catch (err: any) {
-      console.error("[Trial] Falha total no processamento:", err);
+      console.error("[Trial] Falha total no processamento da ativação:", err);
       throw new Error(err.message || "INTERNAL_ERROR");
     }
   });
