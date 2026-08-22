@@ -199,9 +199,9 @@ export const Route = createFileRoute("/api/public/lovablack-api")({
               .from("subscriptions")
               .select("type,status,expires_at")
               .eq("user_id", userId)
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle(),
+              .order("expires_at", { ascending: false, nullsFirst: true })
+              .limit(5),
+
             dataClient.from("app_settings").select("key,value"),
           ]);
 
