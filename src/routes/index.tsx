@@ -96,19 +96,18 @@ function Index() {
     const PATH = "video-0.07566535014049602.mp4";
     const loadHeroVideo = async () => {
       try {
-        console.log(`[Home] Solicitando Signed URL (7 dias) para o vídeo hero: ${PATH}`);
-        const result = await fetchSignedUrl({ data: { path: PATH } });
+        console.log(`[Home] OBRIGATÓRIO: Gerando Signed URL para: ${PATH}`);
+        // Removido o aninhamento .data para compatibilidade com a server function plana
+        const result = await fetchSignedUrl({ path: PATH });
         
         if (isMounted && result && result.url) {
-          console.log("[Home] Vídeo hero assinado com sucesso.");
           setHeroVideoUrl(result.url);
         } else {
           throw new Error("VIDEO_SIGN_URL_MISSING");
         }
       } catch (err) {
-        console.warn("[Home] Falha na assinatura via servidor, tentando client-side:", err);
+        console.warn("[Home] Fallback client-side para o vídeo hero:", err);
         try {
-          // Fallback client-side para o vídeo hero da home
           const { data: fallbackData, error: fallbackError } = await supabase.storage
             .from('assets')
             .createSignedUrl(PATH, 604800); // 7 dias
@@ -116,12 +115,10 @@ function Index() {
           if (!fallbackError && fallbackData?.signedUrl) {
             if (isMounted) setHeroVideoUrl(fallbackData.signedUrl);
           } else {
-            console.error("[Home] Falha crítica ao assinar vídeo hero:", fallbackError);
-            if (isMounted) setHeroVideoUrl(null);
+            console.error("[Home] Falha definitiva no vídeo hero:", fallbackError);
           }
         } catch (clientErr) {
-          console.error("[Home] Erro fatal no client para hero video:", clientErr);
-          if (isMounted) setHeroVideoUrl(null);
+          console.error("[Home] Erro fatal no client:", clientErr);
         }
       }
     };
