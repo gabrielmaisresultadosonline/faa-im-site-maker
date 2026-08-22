@@ -93,34 +93,10 @@ function Index() {
 
   useEffect(() => {
     let isMounted = true;
-    const PATH = "video-0.07566535014049602.mp4";
+    const PATH = "https://www.youtube.com/embed/vx066YJhFw8";
     const loadHeroVideo = async () => {
-      try {
-        console.log(`[Home] OBRIGATÓRIO: Gerando Signed URL para: ${PATH}`);
-        // A server function gerada pelo TanStack exige o input no campo 'data'
-        const result = await fetchSignedUrl({ data: { path: PATH } });
-        
-        if (isMounted && result && result.url) {
-          setHeroVideoUrl(result.url);
-        } else {
-          throw new Error("VIDEO_SIGN_URL_MISSING");
-        }
-      } catch (err) {
-        console.warn("[Home] Fallback client-side para o vídeo hero:", err);
-        try {
-          const { data: fallbackData, error: fallbackError } = await supabase.storage
-            .from('assets')
-            .createSignedUrl(PATH, 604800); // 7 dias
-
-          if (!fallbackError && fallbackData?.signedUrl) {
-            if (isMounted) setHeroVideoUrl(fallbackData.signedUrl);
-          } else {
-            console.error("[Home] Falha definitiva no vídeo hero:", fallbackError);
-          }
-        } catch (clientErr) {
-          console.error("[Home] Erro fatal no client:", clientErr);
-        }
-      }
+      // Simplesmente definimos a URL do YouTube diretamente
+      setHeroVideoUrl(PATH);
     };
     
     loadHeroVideo();
@@ -247,18 +223,12 @@ function Index() {
 
           <div className="relative rounded-3xl overflow-hidden border-[12px] border-white shadow-2xl bg-neutral-900 aspect-video flex items-center justify-center group shadow-[#D8D0C8]">
             {heroVideoUrl ? (
-              <video
-                src={heroVideoUrl}
-                className="w-full h-full absolute inset-0 z-0 object-cover"
-                controls
-                autoPlay={false}
-                playsInline
-                preload="metadata"
-                onError={(e) => {
-                  console.error("[Home] Vídeo hero falhou ao carregar:", e);
-                  // O 400 Bad Request no console do usuário sugere que a URL pública falhou.
-                  // Se o vídeo falhar, tentamos esconder o player ou mostrar um aviso.
-                }}
+              <iframe
+                src={`${heroVideoUrl}?autoplay=0&rel=0&modestbranding=1`}
+                className="w-full h-full absolute inset-0 z-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="LOVABLACK Hero Video"
               />
             ) : (
               <div className="w-full h-full bg-neutral-900 flex items-center justify-center">
