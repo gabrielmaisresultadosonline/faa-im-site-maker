@@ -105,4 +105,3 @@ export const startTrial = createServerFn({ method: "POST" })
       throw new Error(err.message || "INTERNAL_ERROR");
     }
   });
-  });
