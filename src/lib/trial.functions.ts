@@ -34,26 +34,38 @@ export const startTrial = createServerFn({ method: "POST" })
     // 1. GARANTIA: Tentamos sempre o upsert do perfil primeiro para evitar qualquer race condition
     try {
       console.log(`[Trial] Forçando upsert do perfil para ${userId}`);
-      const { error: upsertError } = await (supabase.from("profiles") as any).upsert({ 
+      const profileToUpsert = { 
         id: userId,
         updated_at: new Date().toISOString()
-      }, { onConflict: 'id' });
+      };
+      console.log("[Trial] Dados do perfil para upsert:", profileToUpsert);
       
-      if (upsertError) console.warn("[Trial] Erro no upsert inicial:", upsertError);
+      const { data: upsertData, error: upsertError } = await (supabase.from("profiles") as any).upsert(profileToUpsert, { onConflict: 'id' }).select();
+      
+      if (upsertError) {
+        console.error("[Trial] Erro no upsert inicial:", upsertError);
+      } else {
+        console.log("[Trial] Upsert inicial concluído com sucesso:", upsertData);
+      }
     } catch (e) {
-      console.warn("[Trial] Exceção no upsert inicial (ignorado):", e);
+      console.error("[Trial] Exceção crítica no upsert inicial:", e);
     }
 
     // 2. Verificar se o perfil existe e buscar dados necessários
+    console.log(`[Trial] Buscando perfil final para ${userId}`);
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
       .select("id, access_password")
       .eq("id", userId)
       .maybeSingle();
     
+    if (profileError) {
+      console.error("[Trial] Erro ao buscar perfil:", profileError);
+    }
+    
     // Se ainda não existir, tentamos uma última vez criar o perfil básico
     if (!profileData) {
-      console.log(`[Trial] Perfil não encontrado, criando entrada mínima...`);
+      console.log(`[Trial] Perfil não encontrado após upsert, tentando insert direto...`);
       const { data: retryData, error: retryError } = await supabase
         .from("profiles")
         .insert({ id: userId })
@@ -61,9 +73,16 @@ export const startTrial = createServerFn({ method: "POST" })
         .single();
       
       if (retryError) {
-        console.error("[Trial] Falha crítica ao criar perfil:", retryError);
-        throw new Error("PROFILE_CREATION_FAILED");
+        console.error("[Trial] Falha crítica no insert de emergência:", retryError);
+        // Não jogamos erro aqui se o erro for de duplicidade, pois o importante é a assinatura
+        if (!retryError.message.includes("duplicate")) {
+           throw new Error(`PROFILE_CREATION_FAILED: ${retryError.message}`);
+        }
+      } else {
+        console.log("[Trial] Insert de emergência concluído:", retryData);
       }
+    } else {
+      console.log("[Trial] Perfil encontrado:", profileData);
     }
 
     // 3. Verificar assinaturas existentes
