@@ -633,7 +633,11 @@ function AdminDashboard() {
                               const fileName = `video-${Math.random()}-${file.name.replace(/\s+/g, '_')}`;
                               const { data, error } = await supabase.storage
                                 .from('assets')
-                                .upload(fileName, file, { upsert: true });
+                                .upload(fileName, file, { 
+                                  upsert: true,
+                                  contentType: 'video/mp4',
+                                  cacheControl: '3600'
+                                });
                               if (error) throw error;
                               
                               const { data: { publicUrl } } = supabase.storage
