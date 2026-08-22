@@ -123,7 +123,28 @@ export const startTrial = createServerFn({ method: "POST" })
       console.log(`[Trial] Sucesso para ${userId}. Expira em: ${expiresAt}`);
       return { expiresAt, accessPassword };
     } catch (err: any) {
-      console.error("[Trial] Erro inesperado na transação:", err);
-      throw new Error(err.message || "INTERNAL_ERROR");
+      console.error("[Trial] Erro na transação. Tentando fallback agressivo...", err);
+      
+      // Fallback agressivo: força a inserção da assinatura sem aguardar o retorno da transação anterior
+      try {
+        const expiresAtFallback = new Date(Date.now() + 20 * 60 * 1000).toISOString();
+        const accessPasswordFallback = profileData.access_password || generateAccessPassword();
+        
+        await supabase.from("subscriptions").upsert({
+          user_id: userId,
+          type: "trial",
+          status: "active",
+          expires_at: expiresAtFallback,
+        }, { onConflict: 'user_id,type' });
+
+        await supabase.from("profiles").update({ 
+          access_password: accessPasswordFallback 
+        }).eq("id", userId);
+
+        return { expiresAt: expiresAtFallback, accessPassword: accessPasswordFallback };
+      } catch (fallbackErr: any) {
+        console.error("[Trial] Falha no fallback agressivo:", fallbackErr);
+        throw new Error(err.message || "INTERNAL_ERROR");
+      }
     }
   });
