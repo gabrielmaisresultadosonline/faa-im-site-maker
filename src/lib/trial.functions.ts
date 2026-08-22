@@ -10,10 +10,20 @@ import { z } from "zod";
  * - A senha de acesso da extensao e gerada no servidor e salva no perfil.
  */
 export const startTrial = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([])
   .validator((data: unknown) => data) // Mantém compatibilidade com a chamada sem data
-  .handler(async ({ context }) => {
-    const { userId } = context;
+  .handler(async ({ data, context }) => {
+    // Se não houver userId no contexto (chamada pública), tentamos pegar da data
+    let userId = context?.userId;
+    
+    if (!userId && data && typeof data === 'object' && 'userId' in data) {
+      userId = (data as any).userId;
+    }
+
+    if (!userId) {
+      console.error("[Trial] ID de usuário não fornecido");
+      throw new Error("USER_ID_REQUIRED");
+    }
     const { getSupabaseAdmin } = await import("@/integrations/supabase/client.server");
     const supabase = getSupabaseAdmin();
 

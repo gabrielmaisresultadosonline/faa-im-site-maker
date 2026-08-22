@@ -95,7 +95,7 @@ function Dashboard() {
   const [showTrialSuccess, setShowTrialSuccess] = useState(false);
 
   const trialMutation = useMutation({
-    mutationFn: () => startTrial({ data: undefined }),
+    mutationFn: () => startTrial({ data: { userId: user?.id } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
