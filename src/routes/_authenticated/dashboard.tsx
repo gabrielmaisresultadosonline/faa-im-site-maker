@@ -105,20 +105,26 @@ function Dashboard() {
     onError: (error: any) => {
       console.error("[Dashboard] Erro ao ativar teste:", error);
       const msg = String(error?.message ?? '').toUpperCase();
-      const isAlreadyUsed = msg.includes('TRIAL_ALREADY_USED') || msg.includes('INSERT_FAILED_SUBSCRIPTION');
-      const isProfileMissing = msg.includes('PROFILE_NOT_FOUND') || msg.includes('PROFILE_SYNC_FAILED');
+      const isAlreadyUsed = msg.includes('TRIAL_ALREADY_USED') || msg.includes('INSERT_FAILED_SUBSCRIPTION') || msg.includes('409');
+      const isProfileMissing = msg.includes('PROFILE_NOT_FOUND') || msg.includes('PROFILE_SYNC_FAILED') || msg.includes('USER_ID_REQUIRED');
       
       let toastMsg = isEn ? 'Could not activate the test. Try again.' : 'Não foi possível ativar o teste. Tente novamente.';
       
       if (isAlreadyUsed) {
         toastMsg = isEn ? 'This account already used the free test.' : 'Esta conta já usou o teste gratuito.';
       } else if (isProfileMissing) {
-        toastMsg = isEn ? 'Profile syncing... Please wait 10 seconds and try again.' : 'Sincronizando perfil... Aguarde 10 segundos e tente novamente.';
+        toastMsg = isEn ? 'Wait a moment, setting up your access...' : 'Aguarde um momento, configurando seu acesso...';
+        // Tenta novamente automaticamente após 2 segundos se for erro de sincronização
+        setTimeout(() => trialMutation.mutate(), 2000);
+      } else {
+        // Se for um erro desconhecido, tentamos uma última vez
+        toastMsg = isEn ? 'Retrying activation...' : 'Tentando ativar novamente...';
+        setTimeout(() => trialMutation.mutate(), 1000);
       }
       
-      toast.error(toastMsg, { duration: 5000 });
-      // Força a atualização do perfil para ajudar na próxima tentativa
+      toast.error(toastMsg, { duration: 3000 });
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] });
     }
   });
 
