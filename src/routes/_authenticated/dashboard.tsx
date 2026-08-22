@@ -95,34 +95,25 @@ function Dashboard() {
   const [showTrialSuccess, setShowTrialSuccess] = useState(false);
 
   const trialMutation = useMutation({
-    mutationFn: () => startTrial({ data: { userId: user?.id } }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
+    mutationFn: () => startTrial(),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] }),
+        queryClient.invalidateQueries({ queryKey: ['profile', user?.id] }),
+      ]);
       setShowTrialSuccess(true);
       toast.success(isEn ? 'Trial activated! You have 20 minutes.' : 'Teste ativado! Você tem 20 minutos.');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error("[Dashboard] Erro ao ativar teste:", error);
-      const msg = String(error?.message ?? '').toUpperCase();
-      const isAlreadyUsed = msg.includes('TRIAL_ALREADY_USED') || msg.includes('INSERT_FAILED_SUBSCRIPTION') || msg.includes('409');
-      const isProfileMissing = msg.includes('PROFILE_NOT_FOUND') || msg.includes('PROFILE_SYNC_FAILED') || msg.includes('USER_ID_REQUIRED');
-      
-      let toastMsg = isEn ? 'Activating trial, please wait...' : 'Ativando teste, aguarde um momento...';
-      
-      if (isAlreadyUsed) {
-        toastMsg = isEn ? 'This account already used the free test.' : 'Esta conta já usou o teste gratuito.';
-      } else if (isProfileMissing) {
-        toastMsg = isEn ? 'Syncing profile... one moment.' : 'Sincronizando perfil... um momento.';
-        setTimeout(() => trialMutation.mutate(), 1500);
-      } else {
-        // Se for um erro desconhecido, tentamos uma última vez silenciosamente
-        console.warn("[Dashboard] Erro desconhecido na ativação, tentando novamente...");
-        setTimeout(() => trialMutation.mutate(), 1000);
-      }
-      
-      const debugInfo = error?.message ? ` (Detalhes: ${error.message})` : "";
-      toast.error(toastMsg + debugInfo, { duration: 5000 });
+      const msg = error.message.toUpperCase();
+      const toastMsg = msg.includes('TRIAL_ALREADY_USED')
+        ? (isEn ? 'This account already used the free test.' : 'Esta conta já usou o teste gratuito.')
+        : msg.includes('ACTIVE_PAID_PLAN')
+          ? (isEn ? 'Your paid plan is already active.' : 'Seu plano pago já está ativo.')
+          : (isEn ? 'Could not activate the trial. Please try again.' : 'Não foi possível ativar o teste. Tente novamente.');
+
+      toast.error(toastMsg, { duration: 5000 });
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['subscription', user?.id] });
     }
