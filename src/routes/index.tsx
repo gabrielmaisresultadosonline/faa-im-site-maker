@@ -96,7 +96,7 @@ function Index() {
     const PATH = "video-0.07566535014049602.mp4";
     const loadHeroVideo = async () => {
       try {
-        console.log(`[Home] Solicitando assinatura para o vídeo hero: ${PATH}`);
+        console.log(`[Home] Solicitando Signed URL (7 dias) para o vídeo hero: ${PATH}`);
         const result = await fetchSignedUrl({ data: { path: PATH } });
         
         if (isMounted && result && result.url) {
@@ -106,24 +106,21 @@ function Index() {
           throw new Error("VIDEO_SIGN_URL_MISSING");
         }
       } catch (err) {
-        console.warn("[Home] Assinatura pelo servidor falhou; tentando sessão pública do cliente:", err);
-        // Tenta assinar no client-side como fallback. 
-        // Em buckets privados, isso geralmente falha para anônimos, 
-        // mas o bucket tem RLS public read, o que pode ajudar dependendo da política.
+        console.warn("[Home] Falha na assinatura via servidor, tentando client-side:", err);
         try {
+          // Fallback client-side para o vídeo hero da home
           const { data: fallbackData, error: fallbackError } = await supabase.storage
             .from('assets')
-            .createSignedUrl(PATH, 3600);
+            .createSignedUrl(PATH, 604800); // 7 dias
 
           if (!fallbackError && fallbackData?.signedUrl) {
-            console.log("[Home] Vídeo hero assinado via fallback client com sucesso.");
             if (isMounted) setHeroVideoUrl(fallbackData.signedUrl);
           } else {
-            console.error("[Home] Falha ao assinar vídeo hero via fallback client:", fallbackError);
+            console.error("[Home] Falha crítica ao assinar vídeo hero:", fallbackError);
             if (isMounted) setHeroVideoUrl(null);
           }
         } catch (clientErr) {
-          console.error("[Home] Erro crítico ao assinar no client:", clientErr);
+          console.error("[Home] Erro fatal no client para hero video:", clientErr);
           if (isMounted) setHeroVideoUrl(null);
         }
       }
