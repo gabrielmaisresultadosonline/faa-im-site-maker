@@ -27,7 +27,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
     // Remove qualquer query parameter (ex: ?t=...)
     fileName = fileName.split('?')[0];
 
-    const publicUrl = `${baseUrl}/storage/v1/object/public/assets/${fileName}`;
+    const publicUrl = `${baseUrl}/storage/v1/object/public/assets/${fileName || ""}`;
 
     // Tenta capturar a chave administrativa para gerar URL assinada (privada)
     const adminKey = 
