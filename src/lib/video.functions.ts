@@ -37,11 +37,13 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
     
     // Tentamos assinar usando SERVICE_ROLE (preferencial no servidor) 
     // ou PUBLISHABLE_KEY (como fallback se as permissões permitirem)
+    // ADICIONADO: Forçamos a chave pública se nenhuma outra estiver disponível no VPS
     const signingKey =
       process.env['SUPABASE_SERVICE_ROLE_KEY'] || 
       process.env['VITE_SUPABASE_SERVICE_ROLE_KEY'] ||
       process.env['SUPABASE_PUBLISHABLE_KEY'] ||
       process.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
+      import.meta.env['VITE_SUPABASE_ANON_KEY'] ||
       "sb_publishable_MiPzB015qmvANP558ovB_A_WkWjx8T7";
 
     try {

@@ -92,7 +92,7 @@ function Index() {
 
   useEffect(() => {
     let isMounted = true;
-    const PATH = "video-0.02649446612669404.mp4";
+    const PATH = "video-0.07566535014049602.mp4";
     const loadHeroVideo = async () => {
       try {
         console.log(`[Ingles] Requesting signature for hero video: ${PATH}`);
