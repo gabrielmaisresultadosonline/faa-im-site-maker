@@ -37,6 +37,7 @@ export const adminListUsers = createServerFn({ method: "GET" })
         last_heartbeat_at: p.last_heartbeat_at,
         session_id: p.session_id,
         access_password: p.access_password,
+        registration_ip: p.registration_ip,
         created_at: p.created_at,
         plan: sub?.type ?? null,
         expires_at: sub?.expires_at ?? null,
