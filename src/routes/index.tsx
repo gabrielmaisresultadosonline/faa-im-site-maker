@@ -97,8 +97,8 @@ function Index() {
     const loadHeroVideo = async () => {
       try {
         console.log(`[Home] OBRIGATÓRIO: Gerando Signed URL para: ${PATH}`);
-        // Removido o aninhamento .data para compatibilidade com a server function plana
-        const result = await fetchSignedUrl({ path: PATH });
+        // A server function gerada pelo TanStack exige o input no campo 'data'
+        const result = await fetchSignedUrl({ data: { path: PATH } });
         
         if (isMounted && result && result.url) {
           setHeroVideoUrl(result.url);
