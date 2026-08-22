@@ -22,7 +22,7 @@ export const getSignedVideoUrl = createServerFn({ method: "GET" })
     // Se vier uma URL completa, extraímos apenas o nome do arquivo
     if (fileName.includes("supabase.co")) {
       const parts = fileName.split('/');
-      fileName = parts[parts.length - 1];
+      fileName = parts[parts.length - 1] || fileName;
     }
 
     // Remove qualquer query parameter (ex: ?t=...)
