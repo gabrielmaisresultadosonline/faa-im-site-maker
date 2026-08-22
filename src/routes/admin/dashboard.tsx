@@ -569,11 +569,12 @@ function AdminDashboard() {
                                       cacheControl: '3600'
                                     });
                                     if (error) throw error;
-                                    const { data: { publicUrl } } = supabase.storage.from('assets').getPublicUrl(data.path);
-                                    
-                                    if (!settings) return;
-                                    const newTuts = [...(settings['tutorials'] || [])];
-                                    newTuts[index].thumbnail = publicUrl;
+                                     // Armazenamos apenas o path relativo. O frontend assinará a URL se o bucket for privado.
+                                     const filePath = data.path;
+                                     
+                                     if (!settings) return;
+                                     const newTuts = [...(settings['tutorials'] || [])];
+                                     newTuts[index].thumbnail = filePath;
                                     updateSettingMutation.mutate({ key: 'tutorials', value: newTuts });
                                     toast.success("Thumbnail atualizada!", { id: toastId });
                                   } catch (err: any) {
