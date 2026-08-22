@@ -30,31 +30,42 @@ export const startTrial = createServerFn({ method: "POST" })
 
     console.log(`[Trial] Ativação para usuário: ${userId}`);
 
-    // GARANTIA: Tentamos sempre o upsert do perfil primeiro para evitar qualquer race condition
+    // 1. GARANTIA: Tentamos sempre o upsert do perfil primeiro para evitar qualquer race condition
     try {
-      await (supabase.from("profiles") as any).upsert({ 
+      console.log(`[Trial] Forçando upsert do perfil para ${userId}`);
+      const { error: upsertError } = await (supabase.from("profiles") as any).upsert({ 
         id: userId,
-        full_name: 'Usuário',
-        language: 'pt',
         updated_at: new Date().toISOString()
       }, { onConflict: 'id' });
+      
+      if (upsertError) console.warn("[Trial] Erro no upsert inicial:", upsertError);
     } catch (e) {
-      console.warn("[Trial] Erro no upsert inicial (ignorado):", e);
+      console.warn("[Trial] Exceção no upsert inicial (ignorado):", e);
     }
 
-    // 1. Verificar se o perfil existe
+    // 2. Verificar se o perfil existe e buscar dados necessários
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
       .select("id, access_password")
       .eq("id", userId)
       .maybeSingle();
     
-    if (profileError || !profileData) {
-      console.error("[Trial] Perfil não encontrado após upsert:", profileError);
-      throw new Error("PROFILE_SYNC_FAILED");
+    // Se ainda não existir, tentamos uma última vez criar o perfil básico
+    if (!profileData) {
+      console.log(`[Trial] Perfil não encontrado, criando entrada mínima...`);
+      const { data: retryData, error: retryError } = await supabase
+        .from("profiles")
+        .insert({ id: userId })
+        .select()
+        .single();
+      
+      if (retryError) {
+        console.error("[Trial] Falha crítica ao criar perfil:", retryError);
+        throw new Error("PROFILE_CREATION_FAILED");
+      }
     }
 
-    // 2. Verificar assinaturas existentes
+    // 3. Verificar assinaturas existentes
     const { data: existing, error: existingError } = await supabase
       .from("subscriptions")
       .select("id, status, expires_at, type")
@@ -62,7 +73,7 @@ export const startTrial = createServerFn({ method: "POST" })
 
     if (existingError) {
       console.error("[Trial] Erro ao buscar assinaturas:", existingError);
-      throw new Error("DATABASE_ERROR");
+      throw new Error("DATABASE_READ_ERROR");
     }
 
     if (existing && existing.length > 0) {
@@ -79,24 +90,24 @@ export const startTrial = createServerFn({ method: "POST" })
     const accessPassword = profileData.access_password || generateAccessPassword();
     const expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
 
-    // 4. Executar transação forçada (UPSERT para evitar erro 409)
+    // 5. Executar transação forçada (UPSERT para evitar erro 409)
     try {
-      // Inserimos a assinatura e atualizamos o perfil
-      const results = await Promise.allSettled([
-        supabase.from("subscriptions").upsert({
-          user_id: userId,
-          type: "trial",
-          status: "active",
-          expires_at: expiresAt,
-        }, { onConflict: 'user_id,type' }),
-        supabase.from("profiles").update({ access_password: accessPassword }).eq("id", userId)
-      ]);
+      // Usamos uma abordagem sequencial para maior confiabilidade no Supabase Admin
+      const { error: subErr } = await supabase.from("subscriptions").upsert({
+        user_id: userId,
+        type: "trial",
+        status: "active",
+        expires_at: expiresAt,
+      }, { onConflict: 'user_id,type' });
 
-      const subResult = results[0];
-      if (subResult.status === 'rejected' || (subResult.value as any).error) {
-        console.error("[Trial] Falha crítica na assinatura:", subResult);
-        throw new Error("INSERT_FAILED_SUBSCRIPTION");
-      }
+      if (subErr) throw subErr;
+
+      const { error: profErr } = await supabase.from("profiles")
+        .update({ access_password: accessPassword })
+        .eq("id", userId);
+      
+      if (profErr) console.warn("[Trial] Erro ao atualizar senha no perfil (não fatal):", profErr);
+
 
       console.log(`[Trial] Sucesso definitivo para ${userId}. Expira em: ${expiresAt}`);
       return { expiresAt, accessPassword };
