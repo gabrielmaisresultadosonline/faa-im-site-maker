@@ -265,16 +265,26 @@ function Dashboard() {
         }
       } catch (err) {
         console.warn("[Dashboard] Assinatura pelo servidor falhou; tentando sessão do usuário:", err);
-        const { data: fallbackData, error: fallbackError } = await supabase.storage
-          .from('assets')
-          .createSignedUrl(fileName, 3600);
+        
+        // No client-side, tentamos criar a URL assinada usando a sessão do usuário logado.
+        // O bucket 'assets' tem políticas de leitura pública via RLS, mas se for PRIVATE=TRUE,
+        // a assinatura é obrigatória.
+        try {
+          const { data: fallbackData, error: fallbackError } = await supabase.storage
+            .from('assets')
+            .createSignedUrl(fileName, 3600);
 
-        if (fallbackError || !fallbackData?.signedUrl) {
-          console.error("[Dashboard] Não foi possível assinar o vídeo:", fallbackError);
+          if (fallbackError || !fallbackData?.signedUrl) {
+            console.error("[Dashboard] Não foi possível assinar o vídeo no client:", fallbackError);
+            setSignedVideoUrl(null);
+            toast.error(isEn ? 'Could not load this video.' : 'Não foi possível carregar este vídeo.');
+          } else {
+            console.log("[Dashboard] Vídeo assinado via fallback client com sucesso.");
+            setSignedVideoUrl(fallbackData.signedUrl);
+          }
+        } catch (clientErr) {
+          console.error("[Dashboard] Erro fatal ao assinar no client:", clientErr);
           setSignedVideoUrl(null);
-          toast.error(isEn ? 'Could not load this video.' : 'Não foi possível carregar este vídeo.');
-        } else {
-          setSignedVideoUrl(fallbackData.signedUrl);
         }
       } finally {
         setLoadingVideo(false);
