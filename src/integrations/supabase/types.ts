@@ -256,6 +256,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_free_trial: { Args: never; Returns: Json }
       login_extension_with_access_password: {
         Args: { _access_password: string; _email: string; _session_id?: string }
         Returns: Json
