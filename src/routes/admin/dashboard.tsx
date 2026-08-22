@@ -495,11 +495,10 @@ function AdminDashboard() {
                             });
                           if (error) throw error;
                           
-                          const { data: { publicUrl } } = supabase.storage
-                            .from('assets')
-                            .getPublicUrl(data.path);
-                          
-                          updateSettingMutation.mutate({ key: 'download_link', value: publicUrl });
+                          // Para o download_link, não usamos publicUrl pois o bucket assets é privado.
+                          // Salvamos o path relativo e deixamos o frontend assinar se necessário,
+                          // ou passamos o path para uma função que gere a signed url de download.
+                          updateSettingMutation.mutate({ key: 'download_link', value: data.path });
                           toast.success("Extensão atualizada!", { id: toastId });
                         } catch (err: any) {
                           toast.error(err.message, { id: toastId });
