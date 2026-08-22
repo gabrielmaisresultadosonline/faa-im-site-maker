@@ -271,8 +271,18 @@ function Dashboard() {
           setSignedVideoUrl(tut.url);
         }
       } catch (err) {
-        console.warn("[Dashboard] Fallback para URL original:", err);
-        setSignedVideoUrl(tut.url);
+        console.warn("[Dashboard] Assinatura pelo servidor falhou; tentando sessão do usuário:", err);
+        const { data: fallbackData, error: fallbackError } = await supabase.storage
+          .from('assets')
+          .createSignedUrl(fileName, 3600);
+
+        if (fallbackError || !fallbackData?.signedUrl) {
+          console.error("[Dashboard] Não foi possível assinar o vídeo:", fallbackError);
+          setSignedVideoUrl(null);
+          toast.error(isEn ? 'Could not load this video.' : 'Não foi possível carregar este vídeo.');
+        } else {
+          setSignedVideoUrl(fallbackData.signedUrl);
+        }
       } finally {
         setLoadingVideo(false);
       }
