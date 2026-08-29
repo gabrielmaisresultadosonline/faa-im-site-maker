@@ -168,11 +168,9 @@ function Index() {
           </span>
         </div>
         <h1 className="text-5xl md:text-8xl font-black text-[#1A1B1A] mb-6 tracking-tight leading-[1.05]">
-          Não gaste créditos com IA Lovable.
+          LOVABLE infinito o unico método!
         </h1>
-        <p className="text-xl md:text-3xl text-neutral-700 max-w-4xl mx-auto mb-10 font-medium">
-          Utilize Lovablack Extensao e tenha créditos infinitos.
-        </p>
+
         
         <div className="flex flex-col items-center justify-center gap-6 mb-12">
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
