@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
-import { supabase } from '@/integrations/supabase/client';
+import { postgresClient as supabase } from '@/lib/postgres-client';
 import { isAdmin } from '@/lib/auth';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { Button } from '@/components/ui/button';

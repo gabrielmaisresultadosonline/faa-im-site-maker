@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { postgresClient as supabase } from '@/lib/postgres-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,34 +40,9 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
   }, [lang]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        console.log("SIGNED_IN event detectado para:", session.user.email);
-        
-        if (onSuccessRedirect) {
-          sessionStorage.setItem('lovablack_pending_payment', JSON.stringify(onSuccessRedirect));
-        }
-        
-        const isAdminEmail = session.user.email?.toLowerCase() === 'mro@gmail.com';
-        
-        // Limpa qualquer parâmetro de redirecionamento pendente da URL para evitar loops
-        const url = new URL(window.location.href);
-        if (url.searchParams.has('redirect')) {
-          url.searchParams.delete('redirect');
-          window.history.replaceState({}, '', url.toString());
-        }
-
-        const target = isAdminEmail ? '/admin/dashboard' : '/dashboard';
-
-        // Redirecionamento condicional: só redireciona se estiver na home ou ingles
-        if (window.location.pathname === '/' || window.location.pathname === '/ingles') {
-           console.log("Redirecionando de AuthModal para:", target);
-           window.location.replace(target);
-        }
-      }
-    });
+      const { data: { subscription } } = supabase.auth.onAuthStateChange();
     return () => subscription.unsubscribe();
-  }, [onSuccessRedirect]);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,26 +52,12 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
       if (error) throw error;
 
       // Idioma do cadastro manda: o dashboard abre no idioma escolhido no signup.
-      let userLang: 'pt' | 'en' = lang;
-      if (data.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('language')
-          .eq('id', data.user.id)
-          .maybeSingle();
-        if (profile?.language === 'en' || profile?.language === 'pt') {
-          userLang = profile.language;
-        } else {
-          const metaLang = (data.user.user_metadata as { language?: string } | null)?.language;
-          if (metaLang === 'en' || metaLang === 'pt') userLang = metaLang;
-        }
-      }
+      const userLang: 'pt' | 'en' = data.user?.language === 'en' ? 'en' : 'pt';
       setStoredLanguage(userLang);
 
       toast.success(userLang === 'pt' ? 'Login realizado com sucesso!' : 'Login successful!');
       
-      const isAdminEmail = data.user?.email?.toLowerCase() === 'mro@gmail.com';
-      if (isAdminEmail) {
+      if (data.session?.role === 'admin') {
         window.location.assign('/admin/dashboard');
       } else {
         window.location.assign('/dashboard');
@@ -164,11 +125,11 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
       
       if (data?.session) {
         toast.success(lang === 'pt' ? 'Cadastro realizado com sucesso!' : 'Registration successful!');
-        const isAdminEmail = data.session.user?.email?.toLowerCase() === 'mro@gmail.com';
+        const isAdmin = data.session.role === 'admin';
         
         // Pequeno delay para garantir persistência da sessão
         setTimeout(() => {
-          window.location.assign(isAdminEmail ? '/admin/dashboard' : '/dashboard');
+          window.location.assign(isAdmin ? '/admin/dashboard' : '/dashboard');
         }, 500);
       } else {
         // Agora com auto_confirm_email: true, isso raramente deve acontecer se o Supabase responder com a sessão.

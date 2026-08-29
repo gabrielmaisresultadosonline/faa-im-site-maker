@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { postgresClient as supabase } from '@/lib/postgres-client';
 // Versão do Dashboard: 18/08/2026 - v2.1.24 (Trial Error Recovery)
 import { getSubscriptionStatus, getProfile, getAppSettings } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
