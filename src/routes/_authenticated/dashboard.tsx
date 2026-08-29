@@ -242,7 +242,7 @@ function Dashboard() {
 
 
   const handleVideoClick = async (tut: any) => {
-    const isMp4 = tut.url && (tut.url.includes('.mp4') || tut.url.includes('supabase.co/storage'));
+    const isMp4 = Boolean(tut.url && tut.url.includes('.mp4'));
     setPlayingVideo({ title: tut.title, url: tut.url, isMp4 });
     
     if (isMp4) {
@@ -255,8 +255,6 @@ function Dashboard() {
         fileName = urlStr.split('/storage/v1/object/public/assets/').pop()?.split('?')[0] || "";
       } else if (urlStr.includes('/assets/')) {
         fileName = urlStr.split('/assets/').pop()?.split('?')[0] || "";
-      } else if (urlStr.includes('supabase.co')) {
-        fileName = urlStr.split('/').pop()?.split('?')[0] || "";
       } else {
         fileName = urlStr.split('?')[0] || "";
       }

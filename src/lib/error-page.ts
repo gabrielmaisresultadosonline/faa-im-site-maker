@@ -140,7 +140,7 @@ export function renderErrorPage(stack?: string): string {
       </div>
 
       <div style="margin-top: 2rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 0.5rem; font-family: monospace; font-size: 0.75rem; color: #666; text-align: left; overflow: hidden; white-space: pre-wrap;">
-        Project ID: zjvmfmdyuxmyanuuralq
+        Banco de dados PostgreSQL local indisponível
         ${stack ? `<br><br>Trace: ${stack.slice(0, 200)}...` : ''}
       </div>
     </div>
