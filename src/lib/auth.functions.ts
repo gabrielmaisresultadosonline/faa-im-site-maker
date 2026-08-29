@@ -12,15 +12,17 @@ export const login = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const { query } = await import('./db.server');
     const { verifyPassword, createWebSession, sessionCookie } = await import('./session.server');
-    const rows = await query<{ id: string; email: string; password_hash: string; language: 'pt' | 'en'; blocked: boolean }>(
-      'SELECT id,email,password_hash,language,blocked FROM users WHERE email=lower($1) LIMIT 1', [data.email.trim()]);
+    const rows = await query<{ id: string; email: string; password_hash: string; language: 'pt' | 'en'; blocked: boolean; role: 'admin'|'user' }>(
+      `SELECT u.id,u.email,u.password_hash,u.language,u.blocked,
+       CASE WHEN EXISTS(SELECT 1 FROM user_roles r WHERE r.user_id=u.id AND r.role='admin') THEN 'admin' ELSE 'user' END role
+       FROM users u WHERE u.email=lower($1) LIMIT 1`, [data.email.trim()]);
     const user = rows[0];
     if (!user || !(await verifyPassword(data.password, user.password_hash))) throw new Error('E-mail ou senha inválidos');
     if (user.blocked) throw new Error('Conta bloqueada');
     const token = await createWebSession(user.id);
     await query('UPDATE users SET last_login_at=now(),last_heartbeat_at=now() WHERE id=$1', [user.id]);
     setResponseHeader('Set-Cookie', sessionCookie(token));
-    return { user: { id: user.id, email: user.email, language: user.language }, role: user.email === 'mro@gmail.com' ? 'admin' : 'user' };
+    return { user: { id: user.id, email: user.email, language: user.language }, role: user.role };
   });
 
 export const signup = createServerFn({ method: 'POST' })
