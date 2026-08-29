@@ -151,7 +151,7 @@ function Dashboard() {
     if (sub?.type === 'trial' && sub.status === 'active' && sub.expires_at) {
       timer = setInterval(() => {
         const now = new Date().getTime();
-        const expiry = new Date(sub.expires_at).getTime();
+        const expiry = new Date(sub.expires_at ?? 0).getTime();
         const diff = expiry - now;
 
         if (diff <= 0) {

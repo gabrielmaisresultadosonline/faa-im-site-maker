@@ -4,7 +4,8 @@ import { z } from 'zod';
 
 export interface ProfileDto { id: string; email: string; full_name: string; whatsapp: string | null; language: 'pt' | 'en'; access_password: string; blocked: boolean; custom_message: string; last_login_at: string | null; last_heartbeat_at: string | null; registration_ip: string | null; created_at: string }
 export interface SubscriptionDto { id: string; user_id: string; type: string; status: string; expires_at: string | null; created_at: string; updated_at: string; isExpired: boolean }
-type SettingValue = string | number | boolean | null | SettingValue[] | { [key: string]: SettingValue };
+export interface TutorialDto { title: string; url: string; thumbnail: string }
+export interface AppSettingsDto { global_announcement?: string; min_version?: string; multi_login_block?: boolean; download_link?: string; tutorials?: TutorialDto[]; [key: string]: string | number | boolean | null | TutorialDto[] | undefined }
 
 export const getProfile = createServerFn({ method: 'GET' }).inputValidator((data) => z.object({ userId: z.string().optional() }).optional().parse(data)).handler(async () => {
   const { requireSessionUser } = await import('./session.server');
@@ -29,8 +30,8 @@ export const getSubscriptionStatus = createServerFn({ method: 'GET' }).inputVali
 
 export const getAppSettings = createServerFn({ method: 'GET' }).handler(async () => {
   const { query } = await import('./db.server');
-  const rows = await query<{ key: string; value: SettingValue }>('SELECT key,value FROM app_settings');
-  return Object.fromEntries(rows.map((row) => [row.key, row.value]));
+  const rows = await query<{ key: string; value: AppSettingsDto[string] }>('SELECT key,value FROM app_settings');
+  return Object.fromEntries(rows.map((row) => [row.key, row.value])) as AppSettingsDto;
 });
 
 export const isAdmin = createServerFn({ method: 'GET' }).inputValidator((data) => z.object({ userId: z.string().optional() }).optional().parse(data)).handler(async () => {
