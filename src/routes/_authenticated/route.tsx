@@ -1,7 +1,8 @@
-import { createFileRoute, redirect } from '@tanstack/react-router';
-import { supabase } from '@/integrations/supabase/client';
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
+import { postgresClient as supabase } from '@/lib/postgres-client';
 
 export const Route = createFileRoute('/_authenticated')({
+  ssr: false,
   beforeLoad: async ({ location }) => {
     try {
       // Usamos getUser() em vez de getSession() para garantir validação no servidor Supabase
@@ -35,4 +36,5 @@ export const Route = createFileRoute('/_authenticated')({
       console.error("Erro crítico no guarda de autenticação:", err);
     }
   },
+  component: () => <Outlet />,
 });

@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { postgresClient as supabase } from '@/lib/postgres-client';
 // Versão do Dashboard: 18/08/2026 - v2.1.24 (Trial Error Recovery)
 import { getSubscriptionStatus, getProfile, getAppSettings } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
@@ -73,7 +73,7 @@ function Dashboard() {
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
-    queryFn: () => getProfile(user!.id),
+    queryFn: () => getProfile({ data: { userId: user?.id } }),
     enabled: !!user
   });
 
@@ -82,7 +82,7 @@ function Dashboard() {
 
   const { data: sub } = useQuery({
     queryKey: ['subscription', user?.id],
-    queryFn: () => getSubscriptionStatus(user!.id),
+    queryFn: () => getSubscriptionStatus({ data: { userId: user?.id } }),
     enabled: !!user,
     refetchInterval: isWaitingPayment ? 5000 : 30000 
   });
@@ -151,7 +151,7 @@ function Dashboard() {
     if (sub?.type === 'trial' && sub.status === 'active' && sub.expires_at) {
       timer = setInterval(() => {
         const now = new Date().getTime();
-        const expiry = new Date(sub.expires_at).getTime();
+        const expiry = new Date(sub.expires_at ?? 0).getTime();
         const diff = expiry - now;
 
         if (diff <= 0) {
@@ -242,7 +242,7 @@ function Dashboard() {
 
 
   const handleVideoClick = async (tut: any) => {
-    const isMp4 = tut.url && (tut.url.includes('.mp4') || tut.url.includes('supabase.co/storage'));
+    const isMp4 = Boolean(tut.url && tut.url.includes('.mp4'));
     setPlayingVideo({ title: tut.title, url: tut.url, isMp4 });
     
     if (isMp4) {
@@ -255,8 +255,6 @@ function Dashboard() {
         fileName = urlStr.split('/storage/v1/object/public/assets/').pop()?.split('?')[0] || "";
       } else if (urlStr.includes('/assets/')) {
         fileName = urlStr.split('/assets/').pop()?.split('?')[0] || "";
-      } else if (urlStr.includes('supabase.co')) {
-        fileName = urlStr.split('/').pop()?.split('?')[0] || "";
       } else {
         fileName = urlStr.split('?')[0] || "";
       }

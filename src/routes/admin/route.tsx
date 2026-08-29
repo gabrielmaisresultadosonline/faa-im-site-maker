@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
-import { supabase } from '@/integrations/supabase/client';
+import { postgresClient as supabase } from '@/lib/postgres-client';
 import { isAdmin } from '@/lib/auth';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ export const Route = createFileRoute('/admin')({
     }
 
     // Verifica se é admin
-    const userIsAdmin = await isAdmin(user.id);
+    const userIsAdmin = await isAdmin({ data: { userId: user.id } });
     
     if (!userIsAdmin) {
       // Se estiver logado mas não for admin, e tentar acessar dashboard, mostra tela de erro no /admin
