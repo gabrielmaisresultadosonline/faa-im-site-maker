@@ -125,7 +125,7 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
       
       if (data?.session) {
         toast.success(lang === 'pt' ? 'Cadastro realizado com sucesso!' : 'Registration successful!');
-        const isAdmin = data.session.role === 'admin';
+        const isAdmin = (data.session.role as 'admin' | 'user') === 'admin';
         
         // Pequeno delay para garantir persistência da sessão
         setTimeout(() => {
