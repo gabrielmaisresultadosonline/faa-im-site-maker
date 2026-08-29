@@ -1,91 +1,91 @@
-#!/bin/bash
-
-# ==============================================================================
-# SCRIPT DE IMPLANTAÇÃO DEFINITIVO - LOVBLACK v2.1.17 (ESTABILIZAÇÃO SSR)
-# ==============================================================================
-
+#!/usr/bin/env bash
 set -Eeuo pipefail
 
-APP_DIR="$(pwd)"
-PORT="8098"
+APP_DIR="${APP_DIR:-/var/www/lovblack}"
+DOMAIN="${DOMAIN:-lovblack.online}"
+PORT="${PORT:-8098}"
 PM2_NAME="lovblack_master"
-SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}"
+UPLOAD_DIR="/var/lib/lovablack/uploads"
+ENV_FILE="$APP_DIR/.env.production"
 
-echo ">>> Iniciando deploy em: $APP_DIR"
+if [[ $EUID -ne 0 ]]; then echo "Execute como root: sudo bash deploy-vps.sh"; exit 1; fi
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+apt-get install -y curl git nginx postgresql postgresql-contrib certbot python3-certbot-nginx build-essential
+command -v bun >/dev/null || curl -fsSL https://bun.sh/install | bash
+export PATH="/root/.bun/bin:$PATH"
+command -v pm2 >/dev/null || bun add -g pm2
+
+systemctl enable --now postgresql nginx
+install -d -o www-data -g www-data "$UPLOAD_DIR"
+
+DB_PASSWORD="${DB_PASSWORD:-$(openssl rand -hex 24)}"
+SESSION_SECRET="${SESSION_SECRET:-$(openssl rand -hex 32)}"
+sudo -u postgres psql -v ON_ERROR_STOP=1 --set=dbpass="$DB_PASSWORD" <<'SQL'
+DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname='lovblack') THEN CREATE ROLE lovblack LOGIN; END IF; END $$;
+SELECT format('ALTER ROLE lovblack PASSWORD %L', :'dbpass') \gexec
+SELECT 'CREATE DATABASE lovblack OWNER lovblack' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname='lovblack') \gexec
+SQL
+
+cat > "$ENV_FILE" <<ENV
+NODE_ENV=production
+PORT=$PORT
+HOST=127.0.0.1
+NITRO_PORT=$PORT
+NITRO_HOST=127.0.0.1
+DATABASE_URL=postgresql://lovblack:$DB_PASSWORD@127.0.0.1:5432/lovblack
+SESSION_SECRET=$SESSION_SECRET
+UPLOAD_DIR=$UPLOAD_DIR
+PUBLIC_URL=https://$DOMAIN
+STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+FB_ACCESS_TOKEN=${FB_ACCESS_TOKEN:-}
+FB_PIXEL_ID=${FB_PIXEL_ID:-}
+ENV
+chmod 600 "$ENV_FILE"
+
+set -a; source "$ENV_FILE"; set +a
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$APP_DIR/db/schema.sql"
+
+ADMIN_EMAIL="${ADMIN_EMAIL:-mro@gmail.com}"
+if [[ -n "${ADMIN_PASSWORD:-}" ]]; then
+  HASH="$(node -e "import('bcryptjs').then(m=>m.hash(process.argv[1],12)).then(console.log)" "$ADMIN_PASSWORD")"
+  CODE="$(openssl rand -hex 4 | tr '[:lower:]' '[:upper:]')"
+  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 --set=email="$ADMIN_EMAIL" --set=hash="$HASH" --set=code="$CODE" <<'SQL'
+INSERT INTO users(email,password_hash,full_name,language,access_password)
+VALUES(lower(:'email'),:'hash','Administrador','pt',:'code')
+ON CONFLICT(email) DO UPDATE SET password_hash=excluded.password_hash,updated_at=now();
+INSERT INTO user_roles(user_id,role) SELECT id,'admin' FROM users WHERE email=lower(:'email') ON CONFLICT DO NOTHING;
+SQL
+fi
+
 cd "$APP_DIR"
+bun install --frozen-lockfile
+rm -rf .output
+bun run build
+test -f .output/server/index.mjs
 
-echo ">>> Instalando dependências..."
-npm install --prefer-offline
-
-echo ">>> Limpando builds anteriores..."
-rm -rf .output .vinxi .nitro dist
-
-echo ">>> Executando build de produção (SSR node-server)..."
-# Usamos o config padrão que já tem o preset node-server e bundling otimizado
-npm run build
-
-# Validação do build
-if [ ! -d ".output/server" ]; then
-    echo "ERRO: Pasta .output/server não encontrada. O build falhou."
-    exit 1
-fi
-
-echo ">>> Verificando integridade do servidor..."
-node --input-type=module -e "
-import('./.output/server/index.mjs')
-  .then(() => console.log('Servidor Nitro: OK'))
-  .catch(err => {
-    console.error('Falha na integridade do servidor:', err.message);
-    process.exit(1);
-  })
-"
-
-echo ">>> Gerenciando processo PM2..."
-pm2 delete "$PM2_NAME" >/dev/null 2>&1 || true
-
-# Injeção de variáveis críticas para evitar erros 500 por falta de chaves
-# O NODE_OPTIONS ajuda se houver problemas de memória ou sourcemaps
-PORT="$PORT" \
-HOST="0.0.0.0" \
-NODE_ENV="production" \
-NITRO_PORT="$PORT" \
-NITRO_HOST="0.0.0.0" \
-SUPABASE_URL="https://zjvmfmdyuxmyanuuralq.supabase.co" \
-VITE_SUPABASE_URL="https://zjvmfmdyuxmyanuuralq.supabase.co" \
-SUPABASE_PUBLISHABLE_KEY="sb_publishable_MiPzB015qmvANP558ovB_A_WkWjx8T7" \
-VITE_SUPABASE_PUBLISHABLE_KEY="sb_publishable_MiPzB015qmvANP558ovB_A_WkWjx8T7" \
-SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
-VITE_SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
-pm2 start .output/server/index.mjs \
-  --name "$PM2_NAME" \
-  --node-args="--enable-source-maps" \
-  --max-memory-restart 512M \
-  --update-env
-
+cat > ecosystem.config.cjs <<EOF
+module.exports={apps:[{name:'$PM2_NAME',script:'.output/server/index.mjs',cwd:'$APP_DIR',instances:1,exec_mode:'fork',env:require('fs').readFileSync('$ENV_FILE','utf8').split('\n').filter(Boolean).reduce((a,l)=>{const i=l.indexOf('=');if(i>0)a[l.slice(0,i)]=l.slice(i+1);return a},{})}]};
+EOF
+pm2 startOrReload ecosystem.config.cjs --update-env
 pm2 save --force
+pm2 startup systemd -u root --hp /root >/tmp/lovblack-pm2-startup.txt || true
 
-echo ">>> Aguardando inicialização (10s)..."
-sleep 10
+cat > /etc/nginx/sites-available/lovblack <<EOF
+server {
+  listen 80; listen [::]:80; server_name $DOMAIN www.$DOMAIN;
+  client_max_body_size 310M;
+  location / { proxy_pass http://127.0.0.1:$PORT; proxy_http_version 1.1; proxy_set_header Host \$host; proxy_set_header X-Real-IP \$remote_addr; proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for; proxy_set_header X-Forwarded-Proto \$scheme; proxy_read_timeout 300; }
+  add_header X-Content-Type-Options nosniff always;
+  add_header Referrer-Policy strict-origin-when-cross-origin always;
+}
+EOF
+ln -sfn /etc/nginx/sites-available/lovblack /etc/nginx/sites-enabled/lovblack
+rm -f /etc/nginx/sites-enabled/default
+nginx -t && systemctl reload nginx
 
-echo ">>> Verificando Health Check..."
-if ! ss -lntp | grep -q ":$PORT"; then
-    echo "ERRO: A porta $PORT não está aberta. Verifique os logs do PM2."
-    pm2 logs "$PM2_NAME" --lines 50 --nostream
-    exit 1
-fi
-
-HTTP_CODE=$(curl -sS -o /tmp/health.html -w "%{http_code}" --max-time 15 "http://127.0.0.1:$PORT/" || echo "000")
-
-echo "Resultado HTTP: $HTTP_CODE"
-
-if [[ "$HTTP_CODE" == "200" || "$HTTP_CODE" == "302" ]]; then
-    echo "======================================"
-    echo " DEPLOY CONCLUÍDO COM SUCESSO! "
-    echo " Porta: $PORT | PM2: $PM2_NAME "
-    echo "======================================"
-else
-    echo "AVISO: Health check retornou $HTTP_CODE. Verificando logs..."
-    pm2 logs "$PM2_NAME" --lines 20 --nostream
-    # Não falhamos aqui pois 404/500 podem ser rotas específicas, mas alertamos o usuário
-fi
-
+for _ in {1..30}; do curl -fsS "http://127.0.0.1:$PORT/" >/dev/null && break; sleep 1; done
+curl -fsS "http://127.0.0.1:$PORT/" >/dev/null || { pm2 logs "$PM2_NAME" --lines 80 --nostream; exit 1; }
+certbot --nginx -d "$DOMAIN" -d "www.$DOMAIN" --non-interactive --agree-tos --redirect -m "${SSL_EMAIL:-$ADMIN_EMAIL}" || true
+echo "LOVABLACK implantado em https://$DOMAIN (porta interna $PORT)."
