@@ -1,203 +1,29 @@
-import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { createServerFn } from '@tanstack/react-start';
+import { getRequest } from '@tanstack/react-start/server';
+import { z } from 'zod';
 
-/** Lista todos os usuarios com perfil, ultimo acesso e assinatura mais recente. */
-export const adminListUsers = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { assertAdmin } = await import("@/lib/admin.server");
-    await assertAdmin(context.supabase, context.userId);
+const Plan = z.enum(['trial','monthly','semiannual','annual']);
+const expiry = (plan: z.infer<typeof Plan>, days?: number) => {
+  const date = new Date();
+  if (plan === 'trial' && !days) date.setMinutes(date.getMinutes() + 20);
+  else date.setDate(date.getDate() + (days ?? ({ monthly:30,semiannual:180,annual:365,trial:0 })[plan]));
+  return date.toISOString();
+};
 
-    const { data: profiles, error } = await context.supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+export const adminListUsers = createServerFn({ method: 'GET' }).handler(async () => {
+  const { requireAdmin } = await import('./session.server'); const { query } = await import('./db.server'); await requireAdmin(getRequest());
+  return query<Record<string, string | boolean | null>>(`SELECT u.id,u.email,u.full_name,u.whatsapp,u.language,u.blocked,u.custom_message,u.last_login_at,u.last_heartbeat_at,u.session_id,u.access_password,host(u.registration_ip) registration_ip,u.created_at,s.type plan,s.expires_at,
+    (s.status='active' AND (s.expires_at IS NULL OR s.expires_at + interval '5 minutes'>now())) is_active
+    FROM users u LEFT JOIN subscriptions s ON s.user_id=u.id ORDER BY u.created_at DESC`);
+});
 
-    const { data: subs, error: subsError } = await context.supabase
-      .from("subscriptions")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (subsError) throw new Error(subsError.message);
+export const adminCreateUser = createServerFn({ method: 'POST' }).inputValidator((input) => z.object({ email:z.string().email(),password:z.string().min(6),fullName:z.string().min(1),whatsapp:z.string().optional(),language:z.enum(['pt','en']).default('pt'),plan:Plan,days:z.number().int().positive().optional() }).parse(input)).handler(async ({ data }) => {
+  const { requireAdmin, hashPassword } = await import('./session.server'); const { transaction } = await import('./db.server'); await requireAdmin(getRequest());
+  const hash = await hashPassword(data.password); const code = crypto.randomUUID().replaceAll('-','').slice(0,8).toUpperCase();
+  const userId = await transaction(async (client) => { const row=await client.query<{id:string}>(`INSERT INTO users(email,password_hash,full_name,whatsapp,language,access_password) VALUES(lower($1),$2,$3,$4,$5,$6) RETURNING id`,[data.email,hash,data.fullName,data.whatsapp??null,data.language,code]); const id=row.rows[0]?.id; if(!id) throw new Error('Falha ao criar usuário'); await client.query("INSERT INTO user_roles(user_id,role) VALUES($1,'user')",[id]); await client.query("INSERT INTO subscriptions(user_id,type,status,expires_at) VALUES($1,$2,'active',$3)",[id,data.plan,expiry(data.plan,data.days)]); return id; });
+  return { userId };
+});
 
-    const now = Date.now();
-    return (profiles ?? []).map((p) => {
-      const sub = (subs ?? []).find((s) => s.user_id === p.id) ?? null;
-      const isExpired = sub ? new Date(sub.expires_at).getTime() < now : true;
-      return {
-        id: p.id,
-        email: p.email,
-        full_name: p.full_name,
-        whatsapp: p.whatsapp,
-        language: p.language,
-        blocked: p.blocked,
-        custom_message: p.custom_message,
-        last_login_at: p.last_login_at,
-        last_heartbeat_at: p.last_heartbeat_at,
-        session_id: p.session_id,
-        access_password: p.access_password,
-        registration_ip: p.registration_ip,
-        created_at: p.created_at,
-        plan: sub?.type ?? null,
-        expires_at: sub?.expires_at ?? null,
-        is_active: !!sub && !isExpired && sub.status === "active",
-      };
-    });
-  });
+export const adminUpdateUser = createServerFn({ method:'POST' }).inputValidator((input)=>z.object({userId:z.string().uuid(),blocked:z.boolean().optional(),customMessage:z.string().optional(),resetSession:z.boolean().optional()}).parse(input)).handler(async({data})=>{ const {requireAdmin}=await import('./session.server'); const {query}=await import('./db.server'); await requireAdmin(getRequest()); await query(`UPDATE users SET blocked=coalesce($2,blocked),custom_message=coalesce($3,custom_message),session_id=CASE WHEN $4 THEN NULL ELSE session_id END,updated_at=now() WHERE id=$1`,[data.userId,data.blocked??null,data.customMessage??null,data.resetSession??false]); return {ok:true}; });
 
-/** Cria um usuario manualmente ja com o plano selecionado. */
-export const adminCreateUser = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
-    z
-      .object({
-        email: z.string().email(),
-        password: z.string().min(6),
-        fullName: z.string().min(1),
-        whatsapp: z.string().optional(),
-        language: z.enum(["pt", "en"]).default("pt"),
-        plan: z.enum(["trial", "monthly", "semiannual", "annual"]),
-        days: z.number().int().positive().optional(),
-      })
-      .parse(data),
-  )
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context, data }) => {
-    const { assertAdmin, computeExpiry } = await import("@/lib/admin.server");
-    await assertAdmin(context.supabase, context.userId);
-
-    const { generateAccessPassword } = await import("@/lib/access-code");
-
-    // USAMOS O CLIENT DO USUARIO ( context.supabase ) PARA CRIAR O USUARIO
-    // ISSO RESOLVE O ERRO DE VARIÁVEL DE AMBIENTE SUPABASE_SERVICE_ROLE_KEY
-    // E GARANTE QUE O USUÁRIO SEJA CRIADO NO BACKEND CORRETO.
-    const { data: authUser, error: signupError } = await context.supabase.auth.admin.createUser({
-      email: data.email,
-      password: data.password,
-      email_confirm: true,
-      user_metadata: { full_name: data.fullName, language: data.language },
-    });
-
-    if (signupError) {
-      // Fallback para signup publico se createUser (admin) falhar por falta de permissao do token
-      const { data: pubData, error: pubError } = await context.supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: { 
-            full_name: data.fullName, 
-            language: data.language,
-            plain_password: data.password,
-            is_trial: data.plan === 'trial' ? 'true' : 'false'
-          },
-        }
-      });
-      
-      if (pubError) throw new Error(pubError.message);
-      if (!pubData.user) throw new Error("Falha ao criar usuário");
-      
-      const userId = pubData.user.id;
-      
-      // Se não for trial, o trigger ja criou o trial ou nada.
-      // Precisamos forçar o plano escolhido pelo admin se não for trial.
-      if (data.plan !== 'trial') {
-        await finishUserSetup(context.supabase, userId, data, generateAccessPassword, computeExpiry);
-      } else {
-        // Apenas atualiza o perfil (senha de acesso, etc) pois o trial ja foi via trigger
-        await context.supabase.from("profiles").update({
-          access_password: generateAccessPassword(),
-          whatsapp: data.whatsapp ?? null,
-        }).eq("id", userId);
-      }
-      return { userId };
-    }
-
-    const userId = authUser.user.id;
-    
-    // Como o admin.createUser NÃO dispara o gatilho de auth.users automaticamente da mesma forma que o signUp
-    // (dependendo da configuração do Supabase), forçamos a finalização aqui.
-    await finishUserSetup(context.supabase, userId, data, generateAccessPassword, computeExpiry);
-    return { userId };
-  });
-
-async function finishUserSetup(supabase: any, userId: string, data: any, generateAccessPassword: any, computeExpiry: any) {
-  const { error: profileError } = await supabase.from("profiles").update({
-    full_name: data.fullName,
-    whatsapp: data.whatsapp ?? null,
-    language: data.language,
-    access_password: generateAccessPassword(),
-  }).eq("id", userId);
-  
-  if (profileError) throw new Error(`Usuário criado, mas o perfil falhou: ${profileError.message}`);
-
-  const { error: subscriptionError } = await supabase.from("subscriptions").insert({
-    user_id: userId,
-    type: data.plan,
-    status: "active",
-    expires_at: computeExpiry(data.plan, data.days),
-  });
-  
-  if (subscriptionError) {
-    throw new Error(`Usuário criado, mas o plano falhou: ${subscriptionError.message}`);
-  }
-}
-
-
-/** Atualiza bloqueio, aviso individual ou reseta a sessao (multi-login) do usuario. */
-export const adminUpdateUser = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
-    z
-      .object({
-        userId: z.string().uuid(),
-        blocked: z.boolean().optional(),
-        customMessage: z.string().optional(),
-        resetSession: z.boolean().optional(),
-      })
-      .parse(data),
-  )
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context, data }) => {
-    const { assertAdmin } = await import("@/lib/admin.server");
-    await assertAdmin(context.supabase, context.userId);
-
-    const patch: {
-      blocked?: boolean;
-      custom_message?: string | null;
-      session_id?: string | null;
-    } = {};
-    if (data.blocked !== undefined) patch.blocked = data.blocked;
-    if (data.customMessage !== undefined) patch.custom_message = data.customMessage;
-    if (data.resetSession) patch.session_id = null;
-
-    if (Object.keys(patch).length === 0) return { ok: true };
-
-    const { error } = await context.supabase.from("profiles").update(patch).eq("id", data.userId);
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
-
-/** Concede/renova manualmente um plano para o usuario. */
-export const adminSetPlan = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
-    z
-      .object({
-        userId: z.string().uuid(),
-        plan: z.enum(["trial", "monthly", "semiannual", "annual"]),
-        days: z.number().int().positive().optional(),
-      })
-      .parse(data),
-  )
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context, data }) => {
-    const { assertAdmin, computeExpiry } = await import("@/lib/admin.server");
-    await assertAdmin(context.supabase, context.userId);
-
-    const { error } = await context.supabase.from("subscriptions").upsert({
-      user_id: data.userId,
-      type: data.plan,
-      status: "active",
-      expires_at: computeExpiry(data.plan, data.days),
-    }, { onConflict: 'user_id' });
-    if (error) throw new Error(error.message);
-    return { ok: true };
-  });
+export const adminSetPlan = createServerFn({method:'POST'}).inputValidator((input)=>z.object({userId:z.string().uuid(),plan:Plan,days:z.number().int().positive().optional()}).parse(input)).handler(async({data})=>{ const {requireAdmin}=await import('./session.server'); const {query}=await import('./db.server'); await requireAdmin(getRequest()); await query(`INSERT INTO subscriptions(user_id,type,status,expires_at) VALUES($1,$2,'active',$3) ON CONFLICT(user_id) DO UPDATE SET type=excluded.type,status='active',expires_at=excluded.expires_at,updated_at=now()`,[data.userId,data.plan,expiry(data.plan,data.days)]); return {ok:true}; });
