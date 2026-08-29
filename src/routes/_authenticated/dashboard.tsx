@@ -73,7 +73,7 @@ function Dashboard() {
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
-    queryFn: () => getProfile(user!.id),
+    queryFn: () => getProfile({ data: { userId: user?.id } }),
     enabled: !!user
   });
 
@@ -82,7 +82,7 @@ function Dashboard() {
 
   const { data: sub } = useQuery({
     queryKey: ['subscription', user?.id],
-    queryFn: () => getSubscriptionStatus(user!.id),
+    queryFn: () => getSubscriptionStatus({ data: { userId: user?.id } }),
     enabled: !!user,
     refetchInterval: isWaitingPayment ? 5000 : 30000 
   });

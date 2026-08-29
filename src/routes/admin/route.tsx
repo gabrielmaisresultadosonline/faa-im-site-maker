@@ -24,7 +24,7 @@ export const Route = createFileRoute('/admin')({
     }
 
     // Verifica se é admin
-    const userIsAdmin = await isAdmin(user.id);
+    const userIsAdmin = await isAdmin({ data: { userId: user.id } });
     
     if (!userIsAdmin) {
       // Se estiver logado mas não for admin, e tentar acessar dashboard, mostra tela de erro no /admin
