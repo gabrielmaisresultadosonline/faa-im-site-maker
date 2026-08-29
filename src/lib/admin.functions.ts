@@ -3,6 +3,7 @@ import { getRequest } from '@tanstack/react-start/server';
 import { z } from 'zod';
 
 const Plan = z.enum(['trial','monthly','semiannual','annual']);
+export interface AdminUserDto { id:string;email:string;full_name:string|null;whatsapp:string|null;language:string;blocked:boolean;custom_message:string|null;last_login_at:string|null;last_heartbeat_at:string|null;session_id:string|null;access_password:string|null;registration_ip:string|null;created_at:string;plan:string|null;expires_at:string|null;is_active:boolean }
 const expiry = (plan: z.infer<typeof Plan>, days?: number) => {
   const date = new Date();
   if (plan === 'trial' && !days) date.setMinutes(date.getMinutes() + 20);
@@ -12,7 +13,7 @@ const expiry = (plan: z.infer<typeof Plan>, days?: number) => {
 
 export const adminListUsers = createServerFn({ method: 'GET' }).handler(async () => {
   const { requireAdmin } = await import('./session.server'); const { query } = await import('./db.server'); await requireAdmin(getRequest());
-  return query<Record<string, string | boolean | null>>(`SELECT u.id,u.email,u.full_name,u.whatsapp,u.language,u.blocked,u.custom_message,u.last_login_at,u.last_heartbeat_at,u.session_id,u.access_password,host(u.registration_ip) registration_ip,u.created_at,s.type plan,s.expires_at,
+  return query<AdminUserDto>(`SELECT u.id,u.email,u.full_name,u.whatsapp,u.language,u.blocked,u.custom_message,u.last_login_at,u.last_heartbeat_at,u.session_id,u.access_password,host(u.registration_ip) registration_ip,u.created_at,s.type plan,s.expires_at,
     (s.status='active' AND (s.expires_at IS NULL OR s.expires_at + interval '5 minutes'>now())) is_active
     FROM users u LEFT JOIN subscriptions s ON s.user_id=u.id ORDER BY u.created_at DESC`);
 });
