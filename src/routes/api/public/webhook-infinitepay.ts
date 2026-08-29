@@ -69,7 +69,6 @@ export const Route = createFileRoute('/api/public/webhook-infinitepay')({
             return new Response('Missing order_nsu', { status: 400 });
           }
 
-          // Usamos o client admin para garantir bypass de RLS no webhook público
           const { query, transaction: dbTransaction } = await import('@/lib/db.server');
           const transaction = (await query<{id:string;user_id:string;status:string;plan_duration_days:number;amount:number}>('SELECT id,user_id,status,plan_duration_days,amount FROM transactions WHERE order_nsu=$1',[orderNsu]))[0];
 
@@ -91,13 +90,6 @@ export const Route = createFileRoute('/api/public/webhook-infinitepay')({
             return new Response('Payment not confirmed', { status: 400 });
           }
 
-          // Nota: Para webhooks públicos sem autenticação de usuário, precisamos que o banco permita
-          // essas operações. Como o supabaseAdmin está falhando por falta de env var,
-          // usamos o supabase (anon). Certifique-se que as políticas de RLS permitem
-          // ou que os GRANTS estão configurados.
-          
-          // O supabaseAdmin ja foi importado acima
-          
           const planDays = transaction.plan_duration_days;
           const expiresAt = new Date();
           expiresAt.setDate(expiresAt.getDate() + planDays);

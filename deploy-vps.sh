@@ -47,6 +47,9 @@ chmod 600 "$ENV_FILE"
 set -a; source "$ENV_FILE"; set +a
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$APP_DIR/db/schema.sql"
 
+cd "$APP_DIR"
+bun install --frozen-lockfile
+
 ADMIN_EMAIL="${ADMIN_EMAIL:-mro@gmail.com}"
 if [[ -n "${ADMIN_PASSWORD:-}" ]]; then
   HASH="$(node -e "import('bcryptjs').then(m=>m.hash(process.argv[1],12)).then(console.log)" "$ADMIN_PASSWORD")"
@@ -59,8 +62,6 @@ INSERT INTO user_roles(user_id,role) SELECT id,'admin' FROM users WHERE email=lo
 SQL
 fi
 
-cd "$APP_DIR"
-bun install --frozen-lockfile
 rm -rf .output
 bun run build
 test -f .output/server/index.mjs
