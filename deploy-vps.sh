@@ -83,7 +83,7 @@ server {
 }
 EOF
 ln -sfn /etc/nginx/sites-available/lovblack /etc/nginx/sites-enabled/lovblack
-rm -f /etc/nginx/sites-enabled/default
+# Isolamento: nao removemos nem alteramos vhosts de outros sites.
 nginx -t && systemctl reload nginx
 
 for _ in {1..30}; do curl -fsS "http://127.0.0.1:$PORT/" >/dev/null && break; sleep 1; done
