@@ -167,9 +167,15 @@ function Index() {
             <Globe className="w-4 h-4" /> Português — BRL
           </span>
         </div>
+        <div className="mx-auto mb-8 w-full max-w-4xl rounded-2xl bg-[#DC0D0D] px-6 py-5 shadow-xl shadow-[#D8D0C8]">
+          <p className="text-xl md:text-3xl font-black uppercase tracking-tight text-white leading-tight">
+            Atualizado dia 29/08/26 — único método funcional no mercado!
+          </p>
+        </div>
         <h1 className="text-5xl md:text-8xl font-black text-[#1A1B1A] mb-6 tracking-tight leading-[1.05]">
           LOVABLE infinito o unico método!
         </h1>
+
 
         
         <div className="flex flex-col items-center justify-center gap-6 mb-12">
