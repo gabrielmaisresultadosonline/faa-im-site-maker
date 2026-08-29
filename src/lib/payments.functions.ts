@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { getPlan, PLAN_KEYS, type PlanKey } from "@/lib/plan-catalog";
 
@@ -22,10 +22,11 @@ const PaymentInput = z.object({
  * impedindo adulteracao do valor cobrado ou do tempo de assinatura.
  */
 export const createPaymentLink = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((data) => PaymentInput.parse(data))
-  .handler(async ({ data, context }) => {
-    const { userId, supabase } = context;
+  .handler(async ({ data }) => {
+    const { requireSessionUser } = await import('./session.server');
+    const { query } = await import('./db.server');
+    const userId = (await requireSessionUser(getRequest())).id;
 
 
     const plan = getPlan(data.currency, data.planKey);
@@ -74,19 +75,7 @@ export const createPaymentLink = createServerFn({ method: "POST" })
         throw new Error("Failed to create the Stripe checkout session");
       }
 
-      await supabase.from("infinitepay_transactions").insert({
-
-        user_id: userId,
-        order_nsu: orderNsu,
-        amount: priceCents,
-        plan_name: planName,
-        plan_duration_days: planDurationDays,
-        payment_link: session.url,
-        status: "pending",
-        currency: "USD",
-        provider: "stripe",
-        session_id: session.id ?? null,
-      });
+      await query(`INSERT INTO transactions(user_id,order_nsu,amount,plan_name,plan_duration_days,payment_link,status,currency,provider,session_id) VALUES($1,$2,$3,$4,$5,$6,'pending','USD','stripe',$7)`,[userId,orderNsu,priceCents,planName,planDurationDays,session.url,session.id??null]);
 
       return { url: session.url };
     }
@@ -163,18 +152,7 @@ export const createPaymentLink = createServerFn({ method: "POST" })
             if (altResponse.ok) {
               const altResult = (await altResponse.json()) as { url?: string };
               if (altResult.url) {
-                await supabase.from("infinitepay_transactions").insert({
-
-                  user_id: userId,
-                  order_nsu: orderNsu,
-                  amount: priceCents,
-                  plan_name: planName,
-                  plan_duration_days: planDurationDays,
-                  payment_link: altResult.url,
-                  status: "pending",
-                  currency: "BRL",
-                  provider: "infinitepay",
-                });
+                await query(`INSERT INTO transactions(user_id,order_nsu,amount,plan_name,plan_duration_days,payment_link,status,currency,provider) VALUES($1,$2,$3,$4,$5,$6,'pending','BRL','infinitepay')`,[userId,orderNsu,priceCents,planName,planDurationDays,altResult.url]);
                 return { url: altResult.url };
               }
             }
@@ -196,17 +174,7 @@ export const createPaymentLink = createServerFn({ method: "POST" })
       throw new Error("InfinitePay retornou sucesso, mas sem link de pagamento (URL vazia).");
     }
 
-    await supabase.from("infinitepay_transactions").insert({
-      user_id: userId,
-      order_nsu: orderNsu,
-      amount: priceCents,
-      plan_name: planName,
-      plan_duration_days: planDurationDays,
-      payment_link: result.url,
-      status: "pending",
-      currency: "BRL",
-      provider: "infinitepay",
-    });
+    await query(`INSERT INTO transactions(user_id,order_nsu,amount,plan_name,plan_duration_days,payment_link,status,currency,provider) VALUES($1,$2,$3,$4,$5,$6,'pending','BRL','infinitepay')`,[userId,orderNsu,priceCents,planName,planDurationDays,result.url]);
 
     return { url: result.url };
   });
