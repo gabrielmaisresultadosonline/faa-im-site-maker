@@ -1,6 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
 import bcrypt from 'bcryptjs';
-import type { Request } from '@tanstack/react-start/server';
 import { query } from './db.server';
 
 export interface SessionUser { id: string; email: string; full_name: string; language: 'pt' | 'en'; role: 'admin' | 'user' }
@@ -12,7 +11,7 @@ export const newToken = () => randomBytes(32).toString('base64url');
 export const hashPassword = (password: string) => bcrypt.hash(password, 12);
 export const verifyPassword = (password: string, hash: string) => bcrypt.compare(password, hash);
 
-function cookieValue(request: Request, name: string): string | null {
+function cookieValue(request: globalThis.Request, name: string): string | null {
   const entry = (request.headers.get('cookie') ?? '').split(';').map((v) => v.trim()).find((v) => v.startsWith(`${name}=`));
   return entry ? decodeURIComponent(entry.slice(name.length + 1)) : null;
 }
@@ -29,7 +28,7 @@ export async function createWebSession(userId: string): Promise<string> {
   return token;
 }
 
-export async function getSessionUser(request: Request): Promise<SessionUser | null> {
+export async function getSessionUser(request: globalThis.Request): Promise<SessionUser | null> {
   const token = cookieValue(request, COOKIE);
   if (!token) return null;
   const rows = await query<SessionUser>(`SELECT u.id,u.email,u.full_name,u.language,coalesce(r.role,'user') role
@@ -40,19 +39,19 @@ export async function getSessionUser(request: Request): Promise<SessionUser | nu
   return rows[0] ?? null;
 }
 
-export async function requireSessionUser(request: Request): Promise<SessionUser> {
+export async function requireSessionUser(request: globalThis.Request): Promise<SessionUser> {
   const user = await getSessionUser(request);
   if (!user) throw new Error('UNAUTHORIZED');
   return user;
 }
 
-export async function requireAdmin(request: Request): Promise<SessionUser> {
+export async function requireAdmin(request: globalThis.Request): Promise<SessionUser> {
   const user = await requireSessionUser(request);
   if (user.role !== 'admin') throw new Error('FORBIDDEN');
   return user;
 }
 
-export async function revokeWebSession(request: Request): Promise<void> {
+export async function revokeWebSession(request: globalThis.Request): Promise<void> {
   const token = cookieValue(request, COOKIE);
   if (token) await query('DELETE FROM web_sessions WHERE token_hash=$1', [hashToken(token)]);
 }
