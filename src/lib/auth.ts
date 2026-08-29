@@ -1,65 +1,34 @@
-import { supabase } from "@/integrations/supabase/client";
+import { createServerFn } from '@tanstack/react-start';
+import { getRequest } from '@tanstack/react-start/server';
 
-export const getSubscriptionStatus = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+export const getProfile = createServerFn({ method: 'GET' }).handler(async () => {
+  const { requireSessionUser } = await import('./session.server');
+  const { query } = await import('./db.server');
+  const user = await requireSessionUser(getRequest());
+  const rows = await query<Record<string, unknown>>(`SELECT id,email,full_name,whatsapp,language,access_password,
+    blocked,custom_message,last_login_at,last_heartbeat_at,registration_ip,created_at FROM users WHERE id=$1`, [user.id]);
+  return rows[0] ?? null;
+});
 
-  if (error) throw error;
-  
-  if (!data) return null;
+export const getSubscriptionStatus = createServerFn({ method: 'GET' }).handler(async () => {
+  const { requireSessionUser } = await import('./session.server');
+  const { query } = await import('./db.server');
+  const user = await requireSessionUser(getRequest());
+  const rows = await query<Record<string, unknown> & { expires_at: string | null; status: string }>(
+    'SELECT * FROM subscriptions WHERE user_id=$1 ORDER BY created_at DESC LIMIT 1', [user.id]);
+  const subscription = rows[0];
+  if (!subscription) return null;
+  const expiry = subscription.expires_at ? new Date(subscription.expires_at).getTime() : Number.POSITIVE_INFINITY;
+  return { ...subscription, isExpired: subscription.status !== 'active' || expiry + 300_000 <= Date.now() };
+});
 
-  // Vitalício ou planos sem expiração (expires_at nulo) são considerados ativos.
-  // Também adicionamos uma margem de segurança de 5 minutos.
-  const now = new Date();
-  now.setMinutes(now.getMinutes() - 5);
-  
-  const isExpired = data.expires_at ? new Date(data.expires_at) < now : false;
-  
-  return {
-    ...data,
-    isExpired
-  };
-};
+export const getAppSettings = createServerFn({ method: 'GET' }).handler(async () => {
+  const { query } = await import('./db.server');
+  const rows = await query<{ key: string; value: unknown }>('SELECT key,value FROM app_settings');
+  return Object.fromEntries(rows.map((row) => [row.key, row.value]));
+});
 
-export const getProfile = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-export const isAdmin = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', userId)
-    .eq('role', 'admin')
-    .maybeSingle();
-
-  if (error) return false;
-  return !!data;
-};
-
-export const getAppSettings = async () => {
-  const { data, error } = await supabase
-    .from('app_settings')
-    .select('*');
-
-  if (error) throw error;
-  
-  const settings: Record<string, any> = {};
-  data.forEach(item => {
-    settings[item.key] = item.value;
-  });
-  
-  return settings;
-};
+export const isAdmin = createServerFn({ method: 'GET' }).handler(async () => {
+  const { getSessionUser } = await import('./session.server');
+  return (await getSessionUser(getRequest()))?.role === 'admin';
+});
