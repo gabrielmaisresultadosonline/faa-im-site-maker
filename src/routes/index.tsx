@@ -59,33 +59,23 @@ function Index() {
     },
     { 
       name: "Mensal", 
-      price: "R$ 47", 
-      period: "por mês", 
+      price: "R$ 97", 
+      period: "30 dias", 
       features: ["Prompts ilimitados", "Todos os navegadores", "Hospedagem inclusa", "Suporte WhatsApp"],
       button: "ASSINAR AGORA",
-      popular: false,
+      popular: true,
       key: "monthly",
       days: 30
     },
     { 
-      name: "Semestral", 
-      price: "R$ 147", 
-      period: "6 meses", 
-      features: ["Melhor custo-benefício", "Prompts ilimitados", "Hospedagem inclusa", "Suporte Prioritário"],
+      name: "15 Dias", 
+      price: "R$ 67", 
+      period: "15 dias", 
+      features: ["Prompts ilimitados", "Todos os navegadores", "Hospedagem inclusa", "Suporte WhatsApp"],
       button: "GARANTIR AGORA",
-      popular: true,
-      key: "semiannual",
-      days: 180
-    },
-    { 
-      name: "Anual", 
-      price: "R$ 397", 
-      period: "365 dias", 
-      features: ["Acesso total", "Todas atualizações", "Hospedagem inclusa", "Suporte VIP"],
-      button: "ASSINAR ANUAL",
       popular: false,
-      key: "annual",
-      days: 365
+      key: "semiannual",
+      days: 15
     }
   ], []);
 

@@ -13,8 +13,8 @@ export interface PlanDefinition {
 
 export const PLAN_CATALOG: Record<PlanCurrency, Record<PlanKey, PlanDefinition>> = {
   BRL: {
-    monthly: { name: "Mensal", priceCents: 4700, durationDays: 30 },
-    semiannual: { name: "Semestral", priceCents: 14700, durationDays: 180 },
+    monthly: { name: "Mensal", priceCents: 9700, durationDays: 30 },
+    semiannual: { name: "15 Dias", priceCents: 6700, durationDays: 15 },
     annual: { name: "Anual", priceCents: 39700, durationDays: 365 },
   },
   USD: {
