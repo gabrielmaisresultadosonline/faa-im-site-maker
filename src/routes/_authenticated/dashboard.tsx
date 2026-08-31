@@ -124,6 +124,11 @@ function Dashboard() {
     mutationFn: (data: any) => createPaymentLink({ data }),
     onSuccess: (data: any) => {
       if (data?.url) {
+        // Baseline: validade paga ANTES do checkout. Só liberamos quando aumentar.
+        paidBaselineRef.current =
+          sub && sub.type !== 'trial' && sub.expires_at
+            ? new Date(sub.expires_at).getTime()
+            : 0;
         window.open(data.url, '_blank');
         setIsWaitingPayment(true);
         toast.success(isEn ? "Payment link opened in new tab!" : "Link de pagamento aberto em nova aba!");
