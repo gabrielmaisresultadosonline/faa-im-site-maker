@@ -110,6 +110,7 @@ INSERT INTO app_settings(key, value) VALUES
   ('min_version', '"1.0.0"'::jsonb),
   ('multi_login_block', 'false'::jsonb),
   ('community_link', '""'::jsonb),
+  ('ip_allowlist', '[]'::jsonb),
   ('download_link', '""'::jsonb),
 
   ('tutorials', '[{"title":"Instalando LOVABLACK","url":"https://youtu.be/NC3t-t6vtpA","thumbnail":"https://img.youtube.com/vi/NC3t-t6vtpA/maxresdefault.jpg"},{"title":"Utilizando LOVABLACK","url":"https://youtu.be/vx066YJhFw8","thumbnail":"https://img.youtube.com/vi/vx066YJhFw8/maxresdefault.jpg"},{"title":"Ainda está gastando créditos? Shadowban","url":"https://youtu.be/aG83VquD9is","thumbnail":"https://img.youtube.com/vi/aG83VquD9is/maxresdefault.jpg"}]'::jsonb)
