@@ -20,11 +20,24 @@ command -v pm2 >/dev/null || bun add -g pm2
 systemctl enable --now postgresql nginx
 install -d -o www-data -g www-data "$UPLOAD_DIR"
 
+# Descobre a porta REAL do cluster nativo (outro Postgres/Docker pode ocupar 5432).
+PGPORT_LOCAL="$(sudo -u postgres psql -tAc 'SHOW port' 2>/dev/null | tr -d '[:space:]')"
+PGPORT_LOCAL="${PGPORT_LOCAL:-5432}"
+echo "==> PostgreSQL nativo na porta $PGPORT_LOCAL"
+
+# Reaproveita segredos ja existentes para nao invalidar o banco em reinstalacoes.
+if [[ -f "$ENV_FILE" ]]; then
+  OLD_URL="$(grep -m1 '^DATABASE_URL=' "$ENV_FILE" | cut -d= -f2-)"
+  OLD_SECRET="$(grep -m1 '^SESSION_SECRET=' "$ENV_FILE" | cut -d= -f2-)"
+  if [[ "$OLD_URL" =~ ^postgresql://lovblack:([^@]+)@ ]]; then DB_PASSWORD="${DB_PASSWORD:-${BASH_REMATCH[1]}}"; fi
+  SESSION_SECRET="${SESSION_SECRET:-$OLD_SECRET}"
+fi
 DB_PASSWORD="${DB_PASSWORD:-$(openssl rand -hex 24)}"
 SESSION_SECRET="${SESSION_SECRET:-$(openssl rand -hex 32)}"
+
 sudo -u postgres psql -v ON_ERROR_STOP=1 --set=dbpass="$DB_PASSWORD" <<'SQL'
 DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname='lovblack') THEN CREATE ROLE lovblack LOGIN; END IF; END $$;
-SELECT format('ALTER ROLE lovblack PASSWORD %L', :'dbpass') \gexec
+SELECT format('ALTER ROLE lovblack LOGIN PASSWORD %L', :'dbpass') \gexec
 SELECT 'CREATE DATABASE lovblack OWNER lovblack' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname='lovblack') \gexec
 SQL
 
@@ -34,7 +47,8 @@ PORT=$PORT
 HOST=127.0.0.1
 NITRO_PORT=$PORT
 NITRO_HOST=127.0.0.1
-DATABASE_URL=postgresql://lovblack:$DB_PASSWORD@127.0.0.1:5432/lovblack
+DATABASE_URL=postgresql://lovblack:$DB_PASSWORD@127.0.0.1:$PGPORT_LOCAL/lovblack
+
 SESSION_SECRET=$SESSION_SECRET
 UPLOAD_DIR=$UPLOAD_DIR
 PUBLIC_URL=https://$DOMAIN
