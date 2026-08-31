@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as InglesRouteImport } from './routes/ingles'
+import { Route as LovablackRouteImport } from './routes/lovablack'
 import { Route as ThanksRouteImport } from './routes/thanks'
 import { Route as ThanksEnRouteImport } from './routes/thanks-en'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -40,6 +41,11 @@ const AdminRouteRoute = AdminRouteRouteImport.update({
 const InglesRoute = InglesRouteImport.update({
   id: '/ingles',
   path: '/ingles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovablackRoute = LovablackRouteImport.update({
+  id: '/lovablack',
+  path: '/lovablack',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ThanksRoute = ThanksRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/ingles': typeof InglesRoute
+  '/lovablack': typeof LovablackRoute
   '/thanks': typeof ThanksRoute
   '/thanks-en': typeof ThanksEnRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteRouteWithChildren
   '/ingles': typeof InglesRoute
+  '/lovablack': typeof LovablackRoute
   '/thanks': typeof ThanksRoute
   '/thanks-en': typeof ThanksEnRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/admin': typeof AdminRouteRouteWithChildren
   '/ingles': typeof InglesRoute
+  '/lovablack': typeof LovablackRoute
   '/thanks': typeof ThanksRoute
   '/thanks-en': typeof ThanksEnRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/ingles'
+    | '/lovablack'
     | '/thanks'
     | '/thanks-en'
     | '/dashboard'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/ingles'
+    | '/lovablack'
     | '/thanks'
     | '/thanks-en'
     | '/dashboard'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/admin'
     | '/ingles'
+    | '/lovablack'
     | '/thanks'
     | '/thanks-en'
     | '/_authenticated/dashboard'
@@ -185,6 +197,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   InglesRoute: typeof InglesRoute
+  LovablackRoute: typeof LovablackRoute
   ThanksRoute: typeof ThanksRoute
   ThanksEnRoute: typeof ThanksEnRoute
   ApiMediaNameRoute: typeof ApiMediaNameRoute
@@ -222,6 +235,13 @@ declare module '@tanstack/react-router' {
       path: '/ingles'
       fullPath: '/ingles'
       preLoaderRoute: typeof InglesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovablack': {
+      id: '/lovablack'
+      path: '/lovablack'
+      fullPath: '/lovablack'
+      preLoaderRoute: typeof LovablackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/thanks': {
@@ -318,6 +338,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   InglesRoute: InglesRoute,
+  LovablackRoute: LovablackRoute,
   ThanksRoute: ThanksRoute,
   ThanksEnRoute: ThanksEnRoute,
   ApiMediaNameRoute: ApiMediaNameRoute,
