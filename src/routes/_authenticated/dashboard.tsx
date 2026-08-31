@@ -342,6 +342,9 @@ function Dashboard() {
           </Button>
         </header>
 
+        <CommunityBanner lang={isEn ? 'en' : 'pt'} />
+
+
         {trialNeverUsed && (
           <Card className="border-[#1A1B1A]/10 bg-white p-6 md:p-8 text-center space-y-4">
             <Gift className="w-12 h-12 text-[#DC0D0D] mx-auto" />
