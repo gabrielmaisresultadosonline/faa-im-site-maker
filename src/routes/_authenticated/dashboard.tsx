@@ -431,30 +431,35 @@ function Dashboard() {
                   <Button
                     className="w-full h-16 text-lg font-bold bg-[#1A1B1A] gap-3"
                     onClick={async () => {
-                      if (!settings?.['download_link']) return;
-                      
+                      const link = settings?.['download_link'];
+                      if (!link) return;
+
+                      // O arquivo é servido pela API local autenticada (/api/media/<arquivo>).
+                      // Links antigos (ex.: https://dominio/arquivo.zip) não existem mais como estáticos,
+                      // então extraímos apenas o nome do arquivo e baixamos via blob.
+                      const fileName = link.split('?')[0]!.split('/').filter(Boolean).pop() ?? '';
+                      if (!fileName) return;
+
                       try {
-                        // Tenta baixar via signed URL se o link público falhar ou for privado
-                        const url = new URL(settings['download_link']);
-                        const path = url.pathname.split('/').pop() || ''; // Extrai apenas o nome do arquivo
-                        
-                        if (path) {
-                          const { data, error } = await supabase.storage
-                            .from('assets')
-                            .createSignedUrl(path, 60, { download: true });
-                          
-                          if (data?.signedUrl) {
-                            window.location.assign(data.signedUrl);
-                            return;
-                          }
-                        }
+                        const res = await fetch(`/api/media/${encodeURIComponent(fileName)}`, {
+                          credentials: 'include',
+                        });
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        const blob = await res.blob();
+                        const objectUrl = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = objectUrl;
+                        a.download = fileName;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        URL.revokeObjectURL(objectUrl);
                       } catch (e) {
-                        console.error("Signed URL fail, falling back to public link", e);
+                        console.error('Download falhou', e);
+                        toast.error(isEn ? 'Download failed. Try again.' : 'Falha no download. Tente novamente.');
                       }
-                      
-                      // Fallback para o link direto salvo
-                      window.open(settings['download_link'], '_blank');
                     }}
+
                   >
                     <Download className="w-6 h-6" /> {isEn ? 'DOWNLOAD EXTENSION (.ZIP)' : 'BAIXAR EXTENSÃO (.ZIP)'}
                   </Button>
