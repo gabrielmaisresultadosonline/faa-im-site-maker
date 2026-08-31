@@ -45,7 +45,7 @@ export const signup = createServerFn({ method: 'POST' })
       const id = inserted.rows[0]?.id;
       if (!id) throw new Error('Falha ao criar usuário');
       await client.query("INSERT INTO user_roles(user_id,role) VALUES($1,'user')", [id]);
-      if (data.startTrial) await client.query("INSERT INTO subscriptions(user_id,type,status,expires_at) VALUES($1,'trial','active',now()+interval '20 minutes')", [id]);
+      if (data.startTrial) await client.query("INSERT INTO subscriptions(user_id,type,status,expires_at) VALUES($1,'trial','active',now()+interval '30 minutes')", [id]);
       return id;
     });
     const token = await createWebSession(userId);

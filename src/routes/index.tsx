@@ -49,7 +49,7 @@ function Index() {
     { 
       name: "Teste Grátis", 
       price: "R$ 0", 
-      period: "20 minutos", 
+      period: "30 minutos", 
       features: ["Acesso total", "Ativação instantânea", "Sem compromisso"],
       button: "COMEÇAR AGORA",
       popular: false,
@@ -183,7 +183,7 @@ function Index() {
             <Dialog>
               <DialogTrigger asChild>
                 <Button size="lg" className="h-14 px-8 text-lg font-bold rounded-full bg-[#1A1B1A] text-white hover:bg-[#080808] transition-all hover:scale-105 shadow-lg shadow-[#D8D0C8] cursor-pointer relative z-10">
-                  🚀 TESTE GRÁTIS 20 MIN
+                  🚀 TESTE GRÁTIS 30 MIN
                 </Button>
               </DialogTrigger>
               <DialogPortal>

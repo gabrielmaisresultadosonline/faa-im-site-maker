@@ -56,7 +56,7 @@ export const Route = createFileRoute('/admin/dashboard')({
 type PlanType = 'trial' | 'monthly' | 'semiannual' | 'annual';
 
 const PLAN_LABELS: Record<PlanType, string> = {
-  trial: 'Teste 20 min',
+  trial: 'Teste 30 min',
   monthly: 'Mensal',
   semiannual: 'Semestral',
   annual: 'Anual',
@@ -899,8 +899,8 @@ function ApiDocs() {
             limpar dados sensíveis e exibir a tela de bloqueio administrativo.
           </DocRule>
           <DocRule icon={Clock} title="2. Expiração de Plano e Compra Direta (is_expired)">
-            Retorna <code>true</code> quando o teste de 20 minutos acabou ou a assinatura expirou.
-            Nessa documentação, precisa aparecer algo exemplo: se ele está usando 20 min e expirando na própria ferramenta, tem que aparecer para ele pagar. O botão de pagar direto na ferramenta, como ele já está logado, ele vai clicar e vai com e-mail e senha dele direto para a área de membros sem precisar pedir login; ele vai acessar direto ali, aparecerá o dashboard do cliente com o acesso dele e os planos para ele fazer isso dentro da área de dashboard. Ou seja, na ferramenta vai um botão para comprar um plano, ele vai clicar e vai direto para área de membros já logado, pois já vai com e-mail e senha dele que está logado na ferramenta extensão e acessará nosso site direto.
+            Retorna <code>true</code> quando o teste de 30 minutos acabou ou a assinatura expirou.
+            Nessa documentação, precisa aparecer algo exemplo: se ele está usando 30 min e expirando na própria ferramenta, tem que aparecer para ele pagar. O botão de pagar direto na ferramenta, como ele já está logado, ele vai clicar e vai com e-mail e senha dele direto para a área de membros sem precisar pedir login; ele vai acessar direto ali, aparecerá o dashboard do cliente com o acesso dele e os planos para ele fazer isso dentro da área de dashboard. Ou seja, na ferramenta vai um botão para comprar um plano, ele vai clicar e vai direto para área de membros já logado, pois já vai com e-mail e senha dele que está logado na ferramenta extensão e acessará nosso site direto.
           </DocRule>
           <DocRule icon={Download} title="3. Controle de Versão (min_version)">
             A extensão compara a versão local do manifest com <code>min_version</code>.
