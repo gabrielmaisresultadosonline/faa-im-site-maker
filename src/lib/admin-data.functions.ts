@@ -41,6 +41,20 @@ export const adminData = createServerFn({ method: 'POST' })
     }
     const entries = Object.entries(data.values ?? {}).filter(([key]) => allowed.has(key));
     if (!entries.length) throw new Error('Dados inválidos');
+
+    // app_settings.value é jsonb: precisa serializar e fazer upsert (a chave pode ainda não existir).
+    if (data.table === 'app_settings' && (data.action === 'update' || data.action === 'insert')) {
+      const key = data.filters['key'] ?? (data.values?.['key'] as string | undefined);
+      if (!key) throw new Error('Chave da configuração ausente');
+      const value = 'value' in (data.values ?? {}) ? data.values!['value'] : null;
+      await query(
+        `INSERT INTO app_settings(key,value) VALUES($1,$2::jsonb)
+         ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=now()`,
+        [key, JSON.stringify(value ?? null)],
+      );
+      return [];
+    }
+
     if (data.action === 'insert') {
       const names = entries.map(([key]) => key).join(',');
       const placeholders = entries.map((_, index) => `$${index + 1}`).join(',');

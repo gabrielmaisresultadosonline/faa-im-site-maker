@@ -134,7 +134,8 @@ function AdminDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-settings'] });
       toast.success("Configuração atualizada!");
-    }
+    },
+    onError: (e: Error) => toast.error(e.message || 'Falha ao salvar configuração'),
   });
 
   const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: ['admin-users'] });
