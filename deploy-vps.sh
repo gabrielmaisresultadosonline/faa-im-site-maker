@@ -97,8 +97,18 @@ server {
 }
 EOF
 ln -sfn /etc/nginx/sites-available/lovblack /etc/nginx/sites-enabled/lovblack
-# Isolamento: nao removemos nem alteramos vhosts de outros sites.
+# Isolamento: desativa apenas vhosts ANTIGOS deste dominio (outros sites ficam intactos).
+for vhost in /etc/nginx/sites-enabled/*; do
+  [[ -e "$vhost" ]] || continue
+  [[ "$(basename "$vhost")" == "lovblack" ]] && continue
+  if grep -Eq "server_name[^;]*(^|[[:space:]])(www\.)?${DOMAIN//./\\.}([[:space:]]|;)" "$vhost"; then
+    if grep -Eq "server_name[^;]*" "$vhost" && ! grep -Eq "server_name[^;]*[[:space:]](?!www\.${DOMAIN})" "$vhost"; then :; fi
+    echo "==> Desativando vhost antigo de $DOMAIN: $vhost"
+    rm -f "$vhost"
+  fi
+done
 nginx -t && systemctl reload nginx
+
 
 for _ in {1..30}; do curl -fsS "http://127.0.0.1:$PORT/" >/dev/null && break; sleep 1; done
 curl -fsS "http://127.0.0.1:$PORT/" >/dev/null || { pm2 logs "$PM2_NAME" --lines 80 --nostream; exit 1; }
