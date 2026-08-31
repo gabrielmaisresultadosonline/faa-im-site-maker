@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Download, PlayCircle, Clock, AlertTriangle, CreditCard, Check, Gift, KeyRound, Image as ImageIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getStoredLanguage } from "@/lib/language";
 import { createPaymentLink } from '@/lib/payments.functions';
 import { startTrial } from '@/lib/trial.functions';
@@ -27,6 +27,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isWaitingPayment, setIsWaitingPayment] = useState(false);
+  const paidBaselineRef = useRef<number | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [playingVideo, setPlayingVideo] = useState<{ title: string; url: string; isMp4: boolean } | null>(null);
   const [signedVideoUrl, setSignedVideoUrl] = useState<string | null>(null);
@@ -124,6 +125,11 @@ function Dashboard() {
     mutationFn: (data: any) => createPaymentLink({ data }),
     onSuccess: (data: any) => {
       if (data?.url) {
+        // Baseline: validade paga ANTES do checkout. Só liberamos quando aumentar.
+        paidBaselineRef.current =
+          sub && sub.type !== 'trial' && sub.expires_at
+            ? new Date(sub.expires_at).getTime()
+            : 0;
         window.open(data.url, '_blank');
         setIsWaitingPayment(true);
         toast.success(isEn ? "Payment link opened in new tab!" : "Link de pagamento aberto em nova aba!");
@@ -180,37 +186,36 @@ function Dashboard() {
   }, [profile]);
 
   const isActive = !!(sub && sub.status === 'active' && !sub.isExpired);
+  // Pagamento só é considerado reconhecido quando existe assinatura PAGA ativa
+  // (webhook InfinitePay/Stripe grava type diferente de 'trial').
+  const isPaidActive = !!(isActive && sub && sub.type !== 'trial');
   const trialNeverUsed = sub === null;
   const accessPassword = (profile as any)?.access_password as string | undefined;
 
-  // Verificação inicial: se o usuário já é ativo ao carregar, garante que não fique preso no modal
+  // Polling: mantém "Aguardando Pagamento" até o webhook confirmar um plano PAGO.
   useEffect(() => {
-    if (isActive && isWaitingPayment) {
+    if (!isWaitingPayment || !user?.id) return;
+
+    // Assinatura paga reconhecida DEPOIS de iniciar o checkout (evita falso positivo
+    // com teste grátis ativo ou plano antigo já existente).
+    const currentExpiry = sub?.expires_at ? new Date(sub.expires_at).getTime() : 0;
+    const baselineExpiry = paidBaselineRef.current;
+    const confirmed = isPaidActive && (baselineExpiry === null || currentExpiry > baselineExpiry);
+
+    if (confirmed) {
       setIsWaitingPayment(false);
-    }
-  }, [isActive, isWaitingPayment]);
-
-  // Polling para verificar se o pagamento foi confirmado via webhook
-  useEffect(() => {
-    let interval: any = null;
-
-    if (isWaitingPayment && !isActive && user?.id) {
-      interval = setInterval(() => {
-        queryClient.invalidateQueries({ queryKey: ['subscription', user.id] });
-      }, 5000);
+      paidBaselineRef.current = null;
+      window.location.assign('/thanks');
+      return;
     }
 
-    if (isWaitingPayment && isActive) {
-      setIsWaitingPayment(false);
-      setTimeout(() => {
-        window.location.assign('/thanks');
-      }, 100);
-    }
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['subscription', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+    }, 5000);
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isWaitingPayment, isActive, user?.id, queryClient, navigate]);
+    return () => clearInterval(interval);
+  }, [isWaitingPayment, isPaidActive, sub?.expires_at, user?.id, queryClient]);
 
   // IMPORTANTE: o early return fica DEPOIS de todos os hooks,
   // caso contrário o React renderiza um número diferente de hooks entre renders.
