@@ -183,7 +183,7 @@ export function AuthModal({ initialMode = 'login', isTrial = false, lang = 'pt',
             <CardHeader>
               <CardTitle>
                 {isTrial 
-                  ? (lang === 'pt' ? 'Iniciar Teste 20 Min' : 'Start 20 Min Trial') 
+                  ? (lang === 'pt' ? 'Iniciar Teste 30 Min' : 'Start 30 Min Trial') 
                   : (lang === 'pt' ? 'Criar Conta' : 'Create Account')}
               </CardTitle>
               <CardDescription>

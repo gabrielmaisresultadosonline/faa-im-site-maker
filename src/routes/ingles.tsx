@@ -48,7 +48,7 @@ function Index() {
     { 
       name: "Free Trial", 
       price: "$ 0", 
-      period: "20 minutes", 
+      period: "30 minutes", 
       features: ["Full access", "Instant activation", "No commitment"],
       button: "START NOW",
       popular: false,
@@ -172,7 +172,7 @@ function Index() {
             <Dialog>
               <DialogTrigger asChild>
                 <Button size="lg" className="h-14 px-8 text-lg font-bold rounded-full bg-[#1A1B1A] text-white hover:bg-[#080808] transition-all hover:scale-105 shadow-lg shadow-[#D8D0C8] cursor-pointer relative z-10">
-                  🚀 20 MIN FREE TRIAL
+                  🚀 30 MIN FREE TRIAL
                 </Button>
               </DialogTrigger>
               <DialogPortal>

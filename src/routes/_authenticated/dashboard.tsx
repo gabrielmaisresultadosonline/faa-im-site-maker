@@ -102,7 +102,7 @@ function Dashboard() {
         queryClient.invalidateQueries({ queryKey: ['profile', user?.id] }),
       ]);
       setShowTrialSuccess(true);
-      toast.success(isEn ? 'Trial activated! You have 20 minutes.' : 'Teste ativado! Você tem 20 minutos.');
+      toast.success(isEn ? 'Trial activated! You have 30 minutes.' : 'Teste ativado! Você tem 30 minutos.');
     },
     onError: (error: Error) => {
       console.error("[Dashboard] Erro ao ativar teste:", error);
@@ -346,12 +346,12 @@ function Dashboard() {
           <Card className="border-[#1A1B1A]/10 bg-white p-6 md:p-8 text-center space-y-4">
             <Gift className="w-12 h-12 text-[#DC0D0D] mx-auto" />
             <h2 className="text-2xl font-bold text-[#1A1B1A]">
-              {isEn ? 'Activate your 20-minute free test' : 'Ative seu teste grátis de 20 minutos'}
+              {isEn ? 'Activate your 30-minute free test' : 'Ative seu teste grátis de 30 minutos'}
             </h2>
             <p className="text-neutral-500 max-w-xl mx-auto">
               {isEn
-                ? 'Click below to release your access credentials, the download and the tutorials for 20 minutes.'
-                : 'Clique abaixo para liberar seus dados de acesso, o download e os tutoriais por 20 minutos.'}
+                ? 'Click below to release your access credentials, the download and the tutorials for 30 minutes.'
+                : 'Clique abaixo para liberar seus dados de acesso, o download e os tutoriais por 30 minutos.'}
             </p>
             <Button
               className="h-14 px-8 text-lg font-bold bg-[#DC0D0D] hover:bg-[#1A1B1A] transition-colors gap-2"
@@ -361,7 +361,7 @@ function Dashboard() {
               <Clock className="w-5 h-5" />
               {trialMutation.isPending
                 ? (isEn ? 'ACTIVATING...' : 'ATIVANDO...')
-                : (isEn ? 'GENERATE 20-MIN TEST' : 'GERAR TESTE DE 20 MIN')}
+                : (isEn ? 'GENERATE 30-MIN TEST' : 'GERAR TESTE DE 20 MIN')}
             </Button>
           </Card>
         )}
@@ -546,7 +546,7 @@ function Dashboard() {
             </Dialog>
           </div>
         ) : (
-          // O aviso de expirado so aparece depois que o teste de 20 min foi usado.
+          // O aviso de expirado so aparece depois que o teste de 30 min foi usado.
           !trialNeverUsed && (
             <Card className="border-red-200 bg-red-50 p-6 text-center">
               <AlertTriangle className="w-12 h-12 text-red-600 mx-auto mb-4" />
