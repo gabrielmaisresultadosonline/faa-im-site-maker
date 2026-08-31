@@ -59,3 +59,35 @@ export const logout = createServerFn({ method: 'POST' }).handler(async () => {
   setResponseHeader('Set-Cookie', sessionCookie('', true));
   return { ok: true };
 });
+/**
+ * Login vindo da extensão (link "Renovar acesso").
+ * Aceita a senha da conta OU o access_password de 8 dígitos.
+ */
+export const loginFromExtension = createServerFn({ method: 'POST' })
+  .inputValidator((input) =>
+    z.object({ email: z.string().email(), password: z.string().min(4).max(128) }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { query } = await import('./db.server');
+    const { verifyPassword, createWebSession, sessionCookie } = await import('./session.server');
+    const rows = await query<{
+      id: string; email: string; password_hash: string; access_password: string | null; blocked: boolean;
+    }>(
+      `SELECT id,email,password_hash,access_password,blocked FROM users WHERE email=lower($1) LIMIT 1`,
+      [data.email.trim()],
+    );
+    const user = rows[0];
+    if (!user) throw new Error('Conta não encontrada');
+    if (user.blocked) throw new Error('Conta bloqueada');
+
+    const supplied = data.password.trim();
+    const okAccess =
+      !!user.access_password && user.access_password.toUpperCase() === supplied.toUpperCase();
+    const okPassword = !okAccess && (await verifyPassword(supplied, user.password_hash));
+    if (!okAccess && !okPassword) throw new Error('Credenciais inválidas');
+
+    const token = await createWebSession(user.id);
+    await query('UPDATE users SET last_login_at=now() WHERE id=$1', [user.id]);
+    setResponseHeader('Set-Cookie', sessionCookie(token));
+    return { ok: true as const };
+  });
