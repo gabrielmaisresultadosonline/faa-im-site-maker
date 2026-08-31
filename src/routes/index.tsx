@@ -243,6 +243,11 @@ function Index() {
         </div>
       </header>
 
+      <div className="container mx-auto px-4 pb-12">
+        <CommunityBanner />
+      </div>
+
+
       {/* Benefits */}
       <section className="py-24 bg-white/30 backdrop-blur-sm border-y border-[#D8D0C8]">
         <div className="container mx-auto px-4">
