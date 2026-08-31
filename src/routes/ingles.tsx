@@ -4,6 +4,7 @@ import { Check, Shield, Zap, MessageSquare, FileText, Mic, Sparkles, PlusCircle,
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CommunityBanner } from "@/components/CommunityBanner";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Dialog, DialogContent, DialogTrigger, DialogPortal } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
