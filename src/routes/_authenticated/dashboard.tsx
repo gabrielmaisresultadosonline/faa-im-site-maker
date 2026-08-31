@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Download, PlayCircle, Clock, AlertTriangle, CreditCard, Check, Gift, KeyRound, Image as ImageIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getStoredLanguage } from "@/lib/language";
 import { createPaymentLink } from '@/lib/payments.functions';
 import { startTrial } from '@/lib/trial.functions';
@@ -27,6 +27,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isWaitingPayment, setIsWaitingPayment] = useState(false);
+  const paidBaselineRef = useRef<number | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [playingVideo, setPlayingVideo] = useState<{ title: string; url: string; isMp4: boolean } | null>(null);
   const [signedVideoUrl, setSignedVideoUrl] = useState<string | null>(null);
