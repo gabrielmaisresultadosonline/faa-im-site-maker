@@ -17,6 +17,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Loader2, Maximize2, X } from "lucide-react";
 import { getSignedVideoUrl } from "@/lib/video.functions";
 
+/**
+ * Converte qualquer URL de YouTube (watch, youtu.be, shorts, embed) em URL embutível.
+ * youtu.be e /watch não podem ser usados em <iframe> — o YouTube recusa a conexão.
+ */
+function toEmbedUrl(raw: string): string {
+  try {
+    const url = new URL(raw, window.location.origin);
+    const host = url.hostname.replace(/^www\./, '');
+    let id = '';
+    if (host === 'youtu.be') id = url.pathname.split('/').filter(Boolean)[0] ?? '';
+    else if (host.endsWith('youtube.com')) {
+      if (url.pathname.startsWith('/embed/')) return `${url.origin}${url.pathname}`;
+      id = url.searchParams.get('v') ?? url.pathname.split('/').filter(Boolean).pop() ?? '';
+    }
+    return id ? `https://www.youtube.com/embed/${id}` : raw;
+  } catch {
+    return raw;
+  }
+}
+
 
 export const Route = createFileRoute('/_authenticated/dashboard')({
   component: Dashboard,
