@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Users, CreditCard, Clock, CheckCircle, XCircle, Download, Video, Settings, BookOpen, Ban, MessageSquare, RefreshCw, UserPlus, AlertTriangle, FileText, Plus, Trash2, Image as ImageIcon, ExternalLink, Clipboard } from 'lucide-react';
+import { Users, CreditCard, Clock, CheckCircle, XCircle, Download, Video, Settings, BookOpen, Ban, MessageSquare, RefreshCw, UserPlus, AlertTriangle, FileText, Plus, Trash2, Image as ImageIcon, ExternalLink, Clipboard, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -451,7 +451,32 @@ function AdminDashboard() {
 
           {/* ============ CONFIGURAÇÕES ============ */}
           <TabsContent value="config" className="space-y-6">
+            <Card className="bg-white border-neutral-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-[#25D366]" /> Link do Grupo (Comunidade WhatsApp)
+                </CardTitle>
+                <CardDescription>Exibido na página inicial, no /dashboard e nas demais páginas</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2">
+                  <Input
+                    key={settings?.['community_link'] || 'community-empty'}
+                    defaultValue={typeof settings?.['community_link'] === 'string' ? settings['community_link'] : ''}
+                    id="community-link-input"
+                    placeholder="https://chat.whatsapp.com/..."
+                  />
+                  <Button onClick={() => {
+                    const val = (document.getElementById('community-link-input') as HTMLInputElement).value.trim();
+                    updateSettingMutation.mutate({ key: 'community_link', value: val });
+                  }}>Salvar</Button>
+                </div>
+                <p className="mt-2 text-[10px] text-neutral-400">Deixe em branco para ocultar a faixa da comunidade.</p>
+              </CardContent>
+            </Card>
+
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
               <Card className="bg-white border-neutral-200">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">

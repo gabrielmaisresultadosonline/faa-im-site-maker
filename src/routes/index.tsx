@@ -5,6 +5,7 @@ import { Check, Shield, Zap, MessageSquare, FileText, Mic, Sparkles, PlusCircle,
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CommunityBanner } from "@/components/CommunityBanner";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Dialog, DialogContent, DialogTrigger, DialogPortal } from "@/components/ui/dialog";
 import { LanguageSelectorModal } from "@/components/LanguageSelectorModal";
@@ -242,6 +243,11 @@ function Index() {
           </div>
         </div>
       </header>
+
+      <div className="container mx-auto px-4 pb-12">
+        <CommunityBanner />
+      </div>
+
 
       {/* Benefits */}
       <section className="py-24 bg-white/30 backdrop-blur-sm border-y border-[#D8D0C8]">

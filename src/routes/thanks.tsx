@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CheckCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CommunityBanner } from '@/components/CommunityBanner';
 import { getStoredLanguage } from "@/lib/language";
 
 export const Route = createFileRoute('/thanks')({
@@ -40,6 +41,7 @@ function ThanksPage() {
             </Button>
           </Link>
 
+          <CommunityBanner lang="pt" />
         </CardContent>
       </Card>
     </div>
