@@ -84,7 +84,7 @@ function Index() {
 
   useEffect(() => {
     let isMounted = true;
-    const PATH = "https://www.youtube.com/embed/vx066YJhFw8";
+    const PATH = "https://www.youtube.com/embed/2cE6GYXywmg";
     const loadHeroVideo = async () => {
       // Simplesmente definimos a URL do YouTube diretamente
       setHeroVideoUrl(PATH);
@@ -167,6 +167,37 @@ function Index() {
           LOVABLE infinito o unico método!
         </h1>
 
+        <div className="max-w-5xl mx-auto space-y-6 text-left mb-12">
+          <div className="bg-white/95 backdrop-blur-md p-5 rounded-3xl flex flex-col md:flex-row items-center justify-between border border-[#D8D0C8] shadow-xl gap-4 md:gap-0">
+             <div className="flex items-center gap-3">
+               <div className="w-3 h-3 rounded-full bg-[#DC0D0D] animate-ping"></div>
+               <p className="text-sm md:text-base font-black text-[#1A1B1A] tracking-tight">🚀 VEJA A FERRAMENTA TRABALHANDO!</p>
+             </div>
+             <div className="flex items-center gap-3">
+               <Badge className="bg-[#DC0D0D] text-white border-0 px-4 py-1 font-bold">ATUALIZADO AGOSTO 2026</Badge>
+               <Badge className="bg-[#1A1B1A] text-white border-0 px-4 py-1 font-bold hidden sm:block">100% FUNCIONAL</Badge>
+             </div>
+          </div>
+
+          <div className="relative rounded-3xl overflow-hidden border-[12px] border-white shadow-2xl bg-neutral-900 aspect-video flex items-center justify-center group shadow-[#D8D0C8]">
+            {heroVideoUrl ? (
+              <iframe
+                src={`${heroVideoUrl}?autoplay=0&rel=0&modestbranding=1`}
+                className="w-full h-full absolute inset-0 z-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="LOVABLACK Hero Video"
+              />
+            ) : (
+              <div className="w-full h-full bg-neutral-900 flex items-center justify-center">
+                <Zap className="w-12 h-12 text-white/20 animate-pulse" />
+              </div>
+            )}
+          </div>
+        </div>
+
+
+
 
         
         <div className="flex flex-col items-center justify-center gap-6 mb-12">
@@ -204,34 +235,6 @@ function Index() {
           </div>
         </div>
 
-        <div className="max-w-5xl mx-auto space-y-6 text-left">
-          <div className="bg-white/95 backdrop-blur-md p-5 rounded-3xl flex flex-col md:flex-row items-center justify-between border border-[#D8D0C8] shadow-xl gap-4 md:gap-0">
-             <div className="flex items-center gap-3">
-               <div className="w-3 h-3 rounded-full bg-[#DC0D0D] animate-ping"></div>
-               <p className="text-sm md:text-base font-black text-[#1A1B1A] tracking-tight">🚀 VEJA A FERRAMENTA TRABALHANDO!</p>
-             </div>
-             <div className="flex items-center gap-3">
-               <Badge className="bg-[#DC0D0D] text-white border-0 px-4 py-1 font-bold">ATUALIZADO AGOSTO 2026</Badge>
-               <Badge className="bg-[#1A1B1A] text-white border-0 px-4 py-1 font-bold hidden sm:block">100% FUNCIONAL</Badge>
-             </div>
-          </div>
-
-          <div className="relative rounded-3xl overflow-hidden border-[12px] border-white shadow-2xl bg-neutral-900 aspect-video flex items-center justify-center group shadow-[#D8D0C8]">
-            {heroVideoUrl ? (
-              <iframe
-                src={`${heroVideoUrl}?autoplay=0&rel=0&modestbranding=1`}
-                className="w-full h-full absolute inset-0 z-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                title="LOVABLACK Hero Video"
-              />
-            ) : (
-              <div className="w-full h-full bg-neutral-900 flex items-center justify-center">
-                <Zap className="w-12 h-12 text-white/20 animate-pulse" />
-              </div>
-            )}
-          </div>
-        </div>
       </header>
 
       <div className="container mx-auto px-4 pb-12">
