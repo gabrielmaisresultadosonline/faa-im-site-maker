@@ -84,7 +84,7 @@ function Index() {
 
   useEffect(() => {
     let isMounted = true;
-    const PATH = "https://www.youtube.com/embed/vx066YJhFw8";
+    const PATH = "https://www.youtube.com/embed/2cE6GYXywmg";
     const loadHeroVideo = async () => {
       // Simplesmente definimos a URL do YouTube diretamente
       setHeroVideoUrl(PATH);
