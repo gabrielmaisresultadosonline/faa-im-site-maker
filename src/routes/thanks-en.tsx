@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CheckCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CommunityBanner } from '@/components/CommunityBanner';
 
 export const Route = createFileRoute('/thanks-en')({
   component: ThanksEnPage,
@@ -40,6 +41,7 @@ function ThanksEnPage() {
               GO TO DASHBOARD <ArrowRight className="w-5 h-5" />
             </Button>
           </Link>
+          <CommunityBanner lang="en" />
         </CardContent>
       </Card>
     </div>
