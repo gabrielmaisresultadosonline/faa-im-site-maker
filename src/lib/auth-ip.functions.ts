@@ -6,6 +6,8 @@ export const checkRegistrationIP = createServerFn({ method: 'GET' }).handler(asy
   const forwarded = request.headers.get('x-forwarded-for');
   const ip = forwarded?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
   if (ip === 'unknown' || ip === '127.0.0.1') return { blocked: false, ip };
+  const { isIpAllowlisted } = await import('./ip-allowlist.server');
+  if (await isIpAllowlisted(ip)) return { blocked: false, ip };
   const { query } = await import('./db.server');
   const rows = await query<{ count: string }>('SELECT count(*)::text count FROM users WHERE registration_ip=$1::inet', [ip]);
   const blocked = Number(rows[0]?.count ?? 0) >= 2;

@@ -476,6 +476,38 @@ function AdminDashboard() {
               </CardContent>
             </Card>
 
+            <Card className="bg-white border-neutral-200">
+              <CardHeader>
+                <CardTitle>IPs liberados do bloqueio de cadastro</CardTitle>
+                <CardDescription>
+                  Um IP por linha (ou separados por vírgula). Estes IPs podem criar contas sem o limite de 2 cadastros.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <textarea
+                    key={JSON.stringify(settings?.['ip_allowlist'] ?? '')}
+                    id="ip-allowlist-input"
+                    className="w-full min-h-[90px] rounded-md border border-neutral-200 bg-background p-2 text-sm font-mono"
+                    placeholder="187.10.20.30&#10;2804:xxxx::1"
+                    defaultValue={
+                      Array.isArray(settings?.['ip_allowlist'])
+                        ? (settings['ip_allowlist'] as string[]).join('\n')
+                        : typeof settings?.['ip_allowlist'] === 'string'
+                          ? settings['ip_allowlist']
+                          : ''
+                    }
+                  />
+                  <Button onClick={() => {
+                    const raw = (document.getElementById('ip-allowlist-input') as HTMLTextAreaElement).value;
+                    const list = raw.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean);
+                    updateSettingMutation.mutate({ key: 'ip_allowlist', value: list });
+                  }}>Salvar IPs liberados</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
               <Card className="bg-white border-neutral-200">

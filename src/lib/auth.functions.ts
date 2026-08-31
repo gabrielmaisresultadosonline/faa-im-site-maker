@@ -34,8 +34,11 @@ export const signup = createServerFn({ method: 'POST' })
     const { query, transaction } = await import('./db.server');
     const { hashPassword, createWebSession, sessionCookie } = await import('./session.server');
     if (ip) {
-      const count = await query<{ count: string }>('SELECT count(*)::text count FROM users WHERE registration_ip=$1::inet', [ip]);
-      if (Number(count[0]?.count ?? 0) >= 2) throw new Error('Limite de contas por IP atingido');
+      const { isIpAllowlisted } = await import('./ip-allowlist.server');
+      if (!(await isIpAllowlisted(ip))) {
+        const count = await query<{ count: string }>('SELECT count(*)::text count FROM users WHERE registration_ip=$1::inet', [ip]);
+        if (Number(count[0]?.count ?? 0) >= 2) throw new Error('Limite de contas por IP atingido');
+      }
     }
     const passwordHash = await hashPassword(data.password);
     const accessPassword = crypto.randomUUID().replaceAll('-', '').slice(0, 8).toUpperCase();
