@@ -538,14 +538,14 @@ function Dashboard() {
                       />
                     ) : (
                       <iframe
-                        src={playingVideo.url.includes('youtube.com') || playingVideo.url.includes('youtu.be') 
-                          ? playingVideo.url.replace('watch?v=', 'embed/').split('&')[0] 
-                          : playingVideo.url}
+                        src={toEmbedUrl(playingVideo.url)}
                         className="w-full h-full"
                         allowFullScreen
-                        allow="autoplay; encrypted-media"
+                        allow="autoplay; encrypted-media; picture-in-picture"
+                        referrerPolicy="strict-origin-when-cross-origin"
                         title={playingVideo.title}
                       />
+
                     )
                   ) : (
                     <div className="text-white flex flex-col items-center gap-4">
