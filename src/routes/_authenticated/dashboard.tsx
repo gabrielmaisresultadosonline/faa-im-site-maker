@@ -180,6 +180,9 @@ function Dashboard() {
   }, [profile]);
 
   const isActive = !!(sub && sub.status === 'active' && !sub.isExpired);
+  // Pagamento só é considerado reconhecido quando existe assinatura PAGA ativa
+  // (webhook InfinitePay/Stripe grava type diferente de 'trial').
+  const isPaidActive = !!(isActive && sub && sub.type !== 'trial');
   const trialNeverUsed = sub === null;
   const accessPassword = (profile as any)?.access_password as string | undefined;
 
