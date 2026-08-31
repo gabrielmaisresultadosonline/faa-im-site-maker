@@ -186,34 +186,30 @@ function Dashboard() {
   const trialNeverUsed = sub === null;
   const accessPassword = (profile as any)?.access_password as string | undefined;
 
-  // Verificação inicial: se o usuário já é ativo ao carregar, garante que não fique preso no modal
+  // Polling: mantém "Aguardando Pagamento" até o webhook confirmar um plano PAGO.
   useEffect(() => {
-    if (isActive && isWaitingPayment) {
+    if (!isWaitingPayment || !user?.id) return;
+
+    // Assinatura paga reconhecida DEPOIS de iniciar o checkout (evita falso positivo
+    // com teste grátis ativo ou plano antigo já existente).
+    const currentExpiry = sub?.expires_at ? new Date(sub.expires_at).getTime() : 0;
+    const baselineExpiry = paidBaselineRef.current;
+    const confirmed = isPaidActive && (baselineExpiry === null || currentExpiry > baselineExpiry);
+
+    if (confirmed) {
       setIsWaitingPayment(false);
-    }
-  }, [isActive, isWaitingPayment]);
-
-  // Polling para verificar se o pagamento foi confirmado via webhook
-  useEffect(() => {
-    let interval: any = null;
-
-    if (isWaitingPayment && !isActive && user?.id) {
-      interval = setInterval(() => {
-        queryClient.invalidateQueries({ queryKey: ['subscription', user.id] });
-      }, 5000);
+      paidBaselineRef.current = null;
+      window.location.assign('/thanks');
+      return;
     }
 
-    if (isWaitingPayment && isActive) {
-      setIsWaitingPayment(false);
-      setTimeout(() => {
-        window.location.assign('/thanks');
-      }, 100);
-    }
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['subscription', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+    }, 5000);
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isWaitingPayment, isActive, user?.id, queryClient, navigate]);
+    return () => clearInterval(interval);
+  }, [isWaitingPayment, isPaidActive, sub?.expires_at, user?.id, queryClient]);
 
   // IMPORTANTE: o early return fica DEPOIS de todos os hooks,
   // caso contrário o React renderiza um número diferente de hooks entre renders.
